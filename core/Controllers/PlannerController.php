@@ -41,6 +41,7 @@ use Models\BikeType;
 use Models\GpxGeometry;
 use Models\KnownRoute;
 use Models\PlannedRoute;
+use Models\PlannerRoutingConfig;
 use Models\RiderActivity;
 use Models\RidemoreCorridors;
 use Models\TileCache;
@@ -49,6 +50,7 @@ use Models\Treasure;
 use Utils\ElevationLookup;
 use Utils\Gpx;
 use Utils\RidemoreRouting;
+use Utils\RoutingPreferences;
 use Utils\RouteSnap;
 use Utils\RoutingProxy;
 use Utils\TileGrid;
@@ -195,15 +197,21 @@ class PlannerController
      * długość `ridemoreM`; reszta to OSM. Z tego UI rysuje obwódkę odcinków
      * Ridemore i udział „Ridemore X% · OSM Y%".
      */
-    public static function calculate(array $body): array
+    public static function calculate(int|array $userId, array $body = []): array
     {
+        // Kompatybilność czystych testów kontrolera sprzed konfiguracji usera;
+        // prawdziwy endpoint zawsze przekazuje jawne id zalogowanej osoby.
+        if (is_array($userId)) {
+            $body = $userId;
+            $userId = Auth::user()?->id ?? 0;
+        }
         $waypoints = self::sanitizeWaypointsForRouting($body['waypoints'] ?? []);
         if (count($waypoints) < 2) {
             return ['success' => false, 'error' => __('Potrzebne są przynajmniej dwa punkty.')];
         }
 
         $base = self::sanitizeBase($body['base'] ?? null);
-        $bike = self::bikeFor($body['profile'] ?? null);
+        $bike = self::bikeFor($body['profile'] ?? null, $userId, $body['routing'] ?? null);
         $segments = $base !== null
             ? self::baseSegments($waypoints, $base, $bike)
             : self::sourceSegments(
@@ -218,6 +226,11 @@ class PlannerController
             'segments'    => $segments,
             'distanceKm'  => round(array_sum(array_column($segments, 'distanceM')) / 1000, 1),
             'durationMin' => (int) round(array_sum(array_column($segments, 'durationS')) / 60),
+            'routing'     => [
+                'character' => $bike['routing']['character'],
+                'configId' => $bike['routingConfigId'],
+                'fingerprint' => RoutingPreferences::fingerprint($bike['routing']),
+            ],
         ];
     }
 
@@ -232,6 +245,7 @@ class PlannerController
             return ['success' => false, 'error' => __('Brakuje nazwy trasy albo policzonej geometrii.')];
         }
 
+        $bike = self::bikeFor($body['profile'] ?? null, $userId, $body['routing'] ?? null);
         $elevation = ElevationLookup::forRoute($coords);
 
         $input = [
@@ -243,7 +257,11 @@ class PlannerController
             'descent_m'      => $elevation['descentM'] ?? null,
             'duration_min'   => isset($body['durationMin']) && is_numeric($body['durationMin']) ? (int) $body['durationMin'] : null,
             'engine'         => RoutingProxy::engine(),
-            'profile'        => BikeType::byCode(is_string($body['profile'] ?? null) ? $body['profile'] : null)['code'] ?? 'cycling',
+            'profile'        => $bike['code'] !== '' ? $bike['code'] : 'cycling',
+            'routing_config_id' => $bike['routingConfigId'],
+            'routing_preferences_json' => json_encode(
+                $bike['routing'], JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION
+            ),
         ];
 
         $routeId = isset($body['routeId']) && is_numeric($body['routeId']) ? (int) $body['routeId'] : null;
@@ -274,6 +292,7 @@ class PlannerController
                 'descentM'    => $route['descent_m'] !== null ? (int) $route['descent_m'] : null,
                 'durationMin' => $route['duration_min'] !== null ? (int) $route['duration_min'] : null,
                 'profile'     => (string) $route['profile'],
+                'routing'     => self::storedRouting($route),
             ],
         ];
     }
@@ -438,8 +457,7 @@ class PlannerController
         array $preferredKeys = []
     ): array
     {
-        $user = Auth::user();
-        $self = $user !== null ? 'u' . $user->id : null;
+        $self = ($bike['userId'] ?? 0) > 0 ? 'u' . $bike['userId'] : null;
         $cacheKey = hash('sha256', serialize([
             round($from['lat'], 5), round($from['lng'], 5), round($to['lat'], 5), round($to['lng'], 5),
             $sources, $sources['mine'] ? $self : null, $fingerprint, RidemoreRouting::PARAMS, $bike, $preferredKeys,
@@ -458,7 +476,11 @@ class PlannerController
             static fn(array $points, array $src, array $dst): ?array => RoutingProxy::table($points, $src, $dst, $bike['profile'], $bike['baseUrl']),
             static fn(array $waypoints): ?array => RoutingProxy::routeLegs($waypoints, $bike['profile'], $bike['baseUrl']),
             self::ASSUMED_SPEED_MPS,
-            ['profile' => $bike['rules'], 'preferredKeys' => $preferredKeys]
+            [
+                'profile' => $bike['rules'],
+                'routingPreferences' => $bike['routing'],
+                'preferredKeys' => $preferredKeys,
+            ]
         );
         // Wygrała trasa bazowa: dalej jedzie po liniach, wzdłuż których i tak biegnie.
         $segment = $result['segment'] ?? self::preferSegment($baseline, $lines);
@@ -734,18 +756,56 @@ class PlannerController
      * albo brak = pierwszy aktywny typ) → zasady warstwy Ridemore i profil
      * silnika routingu z konfiguracji typu (panel „Planer").
      *
-     * @return array{code:string,rules:array,profile:string,baseUrl:?string}
+     * @return array{code:string,rules:array,profile:string,baseUrl:?string,routing:array,routingConfigId:?int,userId:int}
      */
-    private static function bikeFor(mixed $raw): array
+    private static function bikeFor(mixed $raw, int $userId, mixed $routingRaw = null): array
     {
         $type = (is_string($raw) ? BikeType::byCode($raw) : null) ?? (BikeType::all()[0] ?? null);
         $engine = BikeType::engineProfile($type, RoutingProxy::engine());
+        $routingRaw = is_array($routingRaw) ? $routingRaw : [];
+        $config = null;
+        if (isset($routingRaw['configId']) && is_numeric($routingRaw['configId'])) {
+            $candidate = PlannerRoutingConfig::findForUser((int) $routingRaw['configId'], $userId);
+            if ($candidate !== null && $candidate['bikeProfile'] === ($type['code'] ?? '')) {
+                $config = $candidate;
+            }
+        }
+        if ($config === null && !array_key_exists('character', $routingRaw)
+            && !array_key_exists('preferences', $routingRaw) && $type !== null) {
+            $config = PlannerRoutingConfig::defaultForUser($userId, (int) $type['id']);
+        }
+        // Klient może przesłać jeszcze niezapisane zmiany wybranej, należącej
+        // do niego konfiguracji — mają działać od razu przed kliknięciem Zapisz.
+        $character = $routingRaw['character'] ?? ($config['character'] ?? 'balanced');
+        $overrides = $routingRaw['preferences'] ?? ($config['preferences'] ?? []);
         return [
             'code'    => (string) ($type['code'] ?? ''),
             'rules'   => BikeType::plannerRules($type),
             'profile' => $engine['profile'],
             'baseUrl' => $engine['baseUrl'],
+            'routing' => BikeType::routingPreferences($type, $character, $overrides),
+            'routingConfigId' => $config['id'] ?? null,
+            'userId' => $userId,
         ];
+    }
+
+    /** Snapshot preferencji zapisanej trasy; stare rekordy dostają preset profilu. */
+    private static function storedRouting(array $route): array
+    {
+        $snapshot = json_decode((string) ($route['routing_preferences_json'] ?? ''), true);
+        if (is_array($snapshot)) {
+            return [
+                // Snapshot opisuje historyczną trasę, nie bieżący stan
+                // nazwanej konfiguracji. Nie podpinamy go ponownie pod jej id,
+                // bo „Zapisz zmiany” nadpisałoby nowszy profil starymi danymi.
+                'configId' => null,
+                'character' => RoutingPreferences::character($snapshot['character'] ?? null),
+                'preferences' => $snapshot,
+            ];
+        }
+        $type = BikeType::byCode((string) ($route['profile'] ?? ''));
+        $preferences = BikeType::routingPreferences($type);
+        return ['configId' => null, 'character' => 'balanced', 'preferences' => $preferences];
     }
 
     /** @return array{mine:bool,known:bool,community:bool} */

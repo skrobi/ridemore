@@ -42,7 +42,10 @@
         var route = {
             waypoints: [],
             segments: [],
-            context: { sources: { mine: false, known: false, community: false }, autoJoin: false, base: null, profile: '' },
+            context: {
+                sources: { mine: false, known: false, community: false }, autoJoin: false,
+                base: null, profile: '', routing: { configId: null, character: 'balanced', preferences: {} },
+            },
             version: 0,
         };
 
@@ -64,7 +67,7 @@
             var c = route.context;
             // Typ roweru ZAWSZE w sygnaturze: każdy typ może mieć w panelu własny
             // profil silnika routingu, więc zmienia także trasę bazową i dojazdy.
-            var bike = '|bike:' + c.profile;
+            var bike = '|bike:' + c.profile + '|routing:' + JSON.stringify(c.routing || {});
             if (c.base) {
                 var p = c.base.points;
                 return 'base:' + c.base.kind + ':' + c.base.label + ':' + p.length + ':' + p[0] + ':' + p[p.length - 1] + bike;
@@ -204,6 +207,13 @@
                 autoJoin: !!ctx.autoJoin,
                 // Kod typu roweru ze słownika — serwer i tak sprawdza go ze słownikiem.
                 profile: typeof ctx.profile === 'string' && /^[a-z0-9_]{1,64}$/.test(ctx.profile) ? ctx.profile : '',
+                routing: {
+                    configId: ctx.routing && Number(ctx.routing.configId) > 0 ? Number(ctx.routing.configId) : null,
+                    character: ctx.routing && ['road', 'balanced', 'offroad'].indexOf(ctx.routing.character) >= 0
+                        ? ctx.routing.character : 'balanced',
+                    preferences: ctx.routing && ctx.routing.preferences && typeof ctx.routing.preferences === 'object'
+                        ? JSON.parse(JSON.stringify(ctx.routing.preferences)) : {},
+                },
                 base: ctx.base && ctx.base.points && ctx.base.points.length >= 2
                     ? { kind: ctx.base.kind, label: ctx.base.label || '', points: ctx.base.points }
                     : null,
@@ -224,6 +234,7 @@
                 sources: { mine: c.sources.mine, known: c.sources.known, community: c.sources.community },
                 autoJoin: c.autoJoin,
                 profile: c.profile,
+                routing: JSON.parse(JSON.stringify(c.routing)),
                 base: c.base ? { points: c.base.points, label: c.base.label } : null,
             };
         };

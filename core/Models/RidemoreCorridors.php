@@ -14,6 +14,7 @@ namespace Models;
 
 use Core\Database;
 use Utils\DiscoveryGrid;
+use Utils\RoadAttributeCache;
 
 class RidemoreCorridors
 {
@@ -109,6 +110,9 @@ class RidemoreCorridors
         }
         $geometry = ['f' => GpxGeometry::load($full), 't' => $trimmed ? GpxGeometry::loadTrimmed($trimmed) : []];
         $owners = $withOwners ? self::owners(array_map(static fn(string $k): string => substr($k, 2), array_keys($picked))) : [];
+        $attributes = $withOwners
+            ? RoadAttributeCache::many(array_map(static fn(string $k): string => substr($k, 2), array_keys($picked)))
+            : [];
 
         $lines = [];
         foreach ($picked as $key => [$rank, $source, $label]) {
@@ -124,6 +128,14 @@ class RidemoreCorridors
             ];
             if ($withOwners) {
                 $line['owners'] = $source === 'known' ? [] : ($owners[$hash] ?? []);
+                // Przycięta kopia prywatnego śladu zachowuje hash oryginału,
+                // ale nie jego pozycję 0..1. Do czasu jawnego mapowania końców
+                // bezpieczniej zostawić ją neutralną niż przypisać zły wycinek.
+                if ($key[0] !== 't' && isset($attributes[$hash])) {
+                    $line['attributes'] = $attributes[$hash];
+                    $line['attributeFrom'] = 0.0;
+                    $line['attributeTo'] = 1.0;
+                }
             }
             if ($source === 'known') {
                 $line['surface'] = $surface[$hash] ?? ['asphalt' => null, 'gravel' => null, 'trail' => null];
@@ -272,7 +284,7 @@ class RidemoreCorridors
                     (SELECT CONCAT(COUNT(*), ':', COALESCE(MAX(id), 0), ':', COALESCE(SUM(is_active), 0)) FROM known_routes),
                     (SELECT CONCAT(COUNT(*), ':', COALESCE(MAX(id), 0)) FROM edition_tracks)"
         )->fetch(\PDO::FETCH_NUM);
-        return implode('|', array_map('strval', $row ?: []));
+        return implode('|', array_map('strval', $row ?: [])) . '|attrs:' . RoadAttributeCache::fingerprint();
     }
 
     /** @param list<int> $values */

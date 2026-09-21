@@ -22,6 +22,7 @@
 namespace Models;
 
 use Core\Database;
+use Utils\RoutingPreferences;
 
 class BikeType
 {
@@ -139,6 +140,19 @@ class BikeType
             'trailBonus'    => $planner['trailBonus'],
             'countsRidesOf' => $planner['countsRidesOf'],
         ];
+    }
+
+    /**
+     * Warstwa preferencji POD istniejącym typem roweru. `character` nie jest
+     * nowym profilem — np. Gravel + offroad daje „Gravel terenowy".
+     */
+    public static function routingPreferences(?array $type, mixed $character = 'balanced', mixed $overrides = []): array
+    {
+        return RoutingPreferences::resolve(
+            (string) ($type['code'] ?? ''),
+            $character,
+            is_array($overrides) ? $overrides : []
+        );
     }
 
     /**

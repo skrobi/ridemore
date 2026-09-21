@@ -10,8 +10,11 @@
 // punktu 50°N 20°E. Trasa bazowa „OSRM" to prosta 20 km. Fałszywy OSRM liczy
 // odległość w linii prostej (świat bez przeszkód), chyba że test mówi inaczej.
 use Utils\RidemoreRouting;
+use Utils\RoutingPreferences;
+use Utils\RoadAttributeDetector;
 use Utils\RouteSnap;
 use Utils\TileGrid;
+use Controllers\PlannerController;
 
 const RR_M_PER_DEG_LAT = 111320.0;
 
@@ -63,7 +66,8 @@ function rr_line(array $xy, string $source, array $owners = [], ?string $label =
         'known' => $source === 'known', 'flat' => $flat,
         'minPx' => min($xs), 'minPy' => min($ys), 'maxPx' => max($xs), 'maxPy' => max($ys),
         'owners' => array_map(static fn(int $n): array => ['n' => $n, 'last' => $extra['last'] ?? '2026-09-01'], $owners),
-    ] + ($source === 'known' ? ['surface' => $extra['surface'] ?? ['asphalt' => null, 'gravel' => null, 'trail' => null]] : []);
+    ] + ($source === 'known' ? ['surface' => $extra['surface'] ?? ['asphalt' => null, 'gravel' => null, 'trail' => null]] : [])
+      + (isset($extra['attributes']) && is_array($extra['attributes']) ? ['attributes' => $extra['attributes']] : []);
 }
 
 /** Trasa bazowa „OSRM": łamana przez punkty (metry). */
@@ -116,12 +120,28 @@ function rr_route(array $fromXY, array $toXY, array $lines, array $opts = []): a
         'community' => (bool) array_filter($lines, static fn($l) => $l['source'] === 'community'),
     ];
     $baseline = rr_baseline($opts['baseline'] ?? [$fromXY, $toXY]);
+    $profileName = is_string($opts['profile'] ?? null) ? $opts['profile'] : 'gravel';
+    $profiles = [
+        'road' => ['code' => 'szosowy', 'legalRatio' => 1.3, 'minAsphaltPct' => 70, 'trailBonus' => 0.0, 'countsRidesOf' => []],
+        'gravel' => ['code' => 'gravel', 'legalRatio' => 1.5, 'minAsphaltPct' => null, 'trailBonus' => 0.0, 'countsRidesOf' => []],
+        'mtb' => ['code' => 'mtb', 'legalRatio' => 1.8, 'minAsphaltPct' => null, 'trailBonus' => 0.0, 'countsRidesOf' => []],
+    ];
+    $profile = is_array($opts['profile'] ?? null) ? $opts['profile'] : $profiles[$profileName];
+    $routingPreferences = $opts['routingPreferences'] ?? (array_key_exists('profile', $opts)
+        ? RoutingPreferences::resolve($profile['code'], $opts['character'] ?? 'balanced', $opts['preferences'] ?? [])
+        : [
+            'character' => 'balanced',
+            'surface' => array_fill_keys(RoutingPreferences::SURFACES, 0),
+            'roadClass' => array_fill_keys(RoutingPreferences::ROAD_CLASSES, 0),
+            'popularityStrength' => 1.0,
+        ]);
     $result = RidemoreRouting::route(
         rr_pt(...$fromXY), rr_pt(...$toXY), $baseline, $lines,
         $opts['ref'] ?? ['riders' => 0.0, 'passes' => 0.0], $sources, $opts['self'] ?? null,
         $table, $legs, 25000 / 3600,
         [
-            'profile' => $opts['profile'] ?? 'road',
+            'profile' => $profile,
+            'routingPreferences' => $routingPreferences,
             'today' => $opts['today'] ?? '2026-09-19',
             'preferredKeys' => $opts['preferredKeys'] ?? [],
         ]
@@ -211,8 +231,8 @@ t_test('Przypadek 3: popularna trasa ponad 4 km dłuższa — poza budżetem, zo
     t_same('osrm', $r['result']['variant']['chosen'], 'wybór');
 });
 
-t_test('Przypadek 4: popularna trasa +50% — poza elipsą, żadnego zapytania do OSRM', function () {
-    $r = rr_route([0, 0], [20000, 0], [rr_line([[1000, 6000], [19000, 6000]], 'known')]);
+t_test('Przypadek 4: popularna trasa daleko poza budżetem — poza elipsą, żadnego zapytania do OSRM', function () {
+    $r = rr_route([0, 0], [20000, 0], [rr_line([[1000, 8000], [19000, 8000]], 'known')]);
     t_same('osrm', $r['result']['variant']['chosen'], 'wybór');
     t_same(0, $r['calls']['table'] + $r['calls']['legs'], 'bez zapytań');
 });
@@ -402,11 +422,12 @@ t_test('Przypadek 12: gravel — szuter i teren dopuszczone, wygrywa dłuższy k
     t_same('Teren', $r['result']['variant']['corridors'][0]['label'], 'koszt 19,2 km < 19,6 km');
 });
 
-t_test('Przypadek 13: MTB — trasa terenowa dostaje premię (score 1,0)', function () {
+t_test('Przypadek 13: MTB — teren wygrywa przez preferencję drogi, nie przez zmianę popularności', function () {
     $r = rr_route([0, 0], [20000, 0], rr_two_surfaces(), ['profile' => 'mtb']);
     $c = $r['result']['variant']['corridors'][0];
     t_same('Teren', $c['label'], 'wybór');
-    t_true(abs($c['score'] - 1.0) < 1e-9, 'znana trasa terenowa: 0,8 + 0,2');
+    t_true(abs($c['score'] - 0.8) < 1e-9, 'RidemoreScore pozostaje niezależne: 0,8');
+    t_true($c['roadPreferenceM'] < 0, 'teren obniża koszt profilu MTB');
 });
 
 t_test('Profil a przejezdność: OSRM potrzebuje 1,6× korytarza — szosa odrzuca, MTB przyjmuje', function () {
@@ -417,4 +438,176 @@ t_test('Profil a przejezdność: OSRM potrzebuje 1,6× korytarza — szosa odrzu
     t_same('osrm', $road['result']['variant']['chosen'], 'szosa: próg 1,3');
     $mtb = rr_route([0, 0], [20000, 0], $lines, ['block' => $block, 'profile' => 'mtb']);
     t_same('ridemore', $mtb['result']['variant']['chosen'], 'MTB: próg 1,8');
+});
+
+// --- Preferencje nawierzchni i klasy drogi (zaakceptowany etap 4) ----------
+
+function rr_preference_corridors(): array
+{
+    return [
+        rr_line([[7500, 1200], [12500, 1200]], 'known', [], 'Krótki asfalt', [
+            'surface' => ['asphalt' => 100, 'gravel' => 0, 'trail' => 0],
+            'attributes' => ['surface' => ['asphalt' => 100], 'roadClass' => ['residential' => 100]],
+        ]),
+        rr_line([[5000, -1800], [15000, -1800]], 'known', [], 'Dłuższy gravel', [
+            'surface' => ['asphalt' => 0, 'gravel' => 100, 'trail' => 0],
+            'attributes' => ['surface' => ['gravel' => 100], 'roadClass' => ['track' => 100]],
+        ]),
+    ];
+}
+
+t_test('Preferencje 1: Gravel standard — dłuższy gravel może wygrać z krótkim asfaltem', function () {
+    $r = rr_route([0, 0], [20000, 0], rr_preference_corridors(), ['profile' => 'gravel']);
+    t_same('ridemore', $r['result']['variant']['chosen'], 'wybrano wariant Ridemore');
+    t_same('Dłuższy gravel', $r['result']['variant']['corridors'][0]['label'], 'preferowana nawierzchnia');
+    t_true($r['result']['variant']['reason']['roadPreferenceM'] < 0, 'preferencja obniżyła koszt');
+});
+
+t_test('Preferencje 2: Gravel terenowy — track i gravel wygrywają z asfaltem', function () {
+    $r = rr_route([0, 0], [20000, 0], rr_preference_corridors(), ['profile' => 'gravel', 'character' => 'offroad']);
+    t_same('Dłuższy gravel', $r['result']['variant']['corridors'][0]['label'], 'terenowy preset wybiera dukt');
+});
+
+t_test('Preferencje 3: MTB — track/ground wygrywa z lokalnym asfaltem', function () {
+    $r = rr_route([0, 0], [20000, 0], rr_preference_corridors(), ['profile' => 'mtb']);
+    t_same('Dłuższy gravel', $r['result']['variant']['corridors'][0]['label'], 'MTB wybiera wariant terenowy');
+});
+
+t_test('Preferencje 4: MTB bez alternatywy terenowej może zostać na asfalcie OSRM', function () {
+    $r = rr_route([0, 0], [20000, 0], [], ['profile' => 'mtb']);
+    t_same('osrm', $r['result']['variant']['chosen'], 'asfalt bazowy nie jest zakazany');
+});
+
+t_test('Preferencje 5–7: popularność nie miesza się z profilem — terenowy wariant zachowuje własny score', function () {
+    $asphalt = rr_line([[7500, 1000], [12500, 1000]], 'community', ['u1' => 3, 'u2' => 3, 'u3' => 3, 'u4' => 3], 'Popularny asfalt', [
+        'attributes' => ['surface' => ['asphalt' => 100], 'roadClass' => ['residential' => 100]],
+    ]);
+    $track = rr_line([[5000, -1500], [15000, -1500]], 'community', ['u5' => 1, 'u6' => 1], 'Mniej popularny track', [
+        'attributes' => ['surface' => ['ground' => 100], 'roadClass' => ['track' => 100]],
+    ]);
+    $ref = ['riders' => 8, 'passes' => 16];
+    $standard = rr_route([0, 0], [20000, 0], [$asphalt, $track], ['profile' => 'gravel', 'ref' => $ref]);
+    $offroad = rr_route([0, 0], [20000, 0], [$asphalt, $track], ['profile' => 'gravel', 'character' => 'offroad', 'ref' => $ref]);
+    $mtb = rr_route([0, 0], [20000, 0], [$asphalt, $track], ['profile' => 'mtb', 'ref' => $ref]);
+    t_not_null($standard['result']['variant']['chosen'], 'Gravel standard zwraca wyjaśniony wybór');
+    t_same('Mniej popularny track', $offroad['result']['variant']['corridors'][0]['label'], 'Gravel terenowy: preferencja może pokonać popularniejszy asfalt');
+    t_same('Mniej popularny track', $mtb['result']['variant']['corridors'][0]['label'], 'MTB: track może pokonać popularniejszy asfalt');
+    t_true($mtb['result']['variant']['corridors'][0]['score'] < 1.0, 'score tracku nie został sztucznie podniesiony przez profil');
+});
+
+t_test('Preferencje 12: brak surface/highway jest neutralny, nie karany', function () {
+    $prefs = RoutingPreferences::resolve('mtb', 'offroad');
+    $cost = RoutingPreferences::costAdjustment($prefs, [], 10000);
+    t_same(0.0, $cost['adjustmentM'], 'brak metadanych = zero korekty');
+    t_same(0.0, $cost['coverage'], 'jawne zerowe pokrycie');
+
+    $other = RoutingPreferences::resolve('e-bike', 'balanced');
+    $otherCost = RoutingPreferences::costAdjustment($other, [
+        'surface' => ['gravel' => 100], 'roadClass' => ['track' => 100],
+    ], 10000);
+    t_same(0.0, $otherCost['adjustmentM'], 'inne istniejące profile zachowują neutralny preset zamiast udawać Gravel');
+    t_same(-2, RoutingPreferences::resolve('gravel')['roadClass']['motorway'], 'droga główna ma mocną miękką karę');
+
+    $partial = RoutingPreferences::costAdjustment($prefs, [
+        'surface' => ['ground' => 1], 'roadClass' => ['track' => 1], 'coverage' => 0.01,
+    ], 10000);
+    t_true(abs($partial['adjustmentM'] + 16.0) < 0.01, '1% pokrycia daje tylko 1% bonusu, nie bonus całej trasy');
+    t_true(abs($partial['coverage'] - 0.01) < 1e-9, 'zachowane rzeczywiste pokrycie źródła');
+    t_same(0.0, RoutingPreferences::compatibilityPenalty(70, [
+        'surface' => ['unknown' => 100], 'coverage' => 1.0,
+    ], 10000), 'unknown nie udaje 0% asfaltu');
+    $mixedPenalty = RoutingPreferences::compatibilityPenalty(70, [
+        'surface' => ['gravel' => 1, 'unknown' => 99], 'coverage' => 1.0,
+    ], 10000);
+    t_true(abs($mixedPenalty - 45.0) < 0.01, '1% znanej nieasfaltowej nawierzchni daje tylko 1% kary');
+});
+
+t_test('Atrybuty wycinka: lokalny asfalt nie dziedziczy gravelu z reszty długiego śladu', function () {
+    $attributes = [
+        'segments' => [
+            ['from' => 0.0, 'to' => 0.2, 'surface' => 'asphalt', 'roadClass' => 'residential'],
+            ['from' => 0.2, 'to' => 1.0, 'surface' => 'gravel', 'roadClass' => 'track'],
+        ],
+    ];
+    $start = RoutingPreferences::sliceAttributes($attributes, 0.0, 0.1);
+    $end = RoutingPreferences::sliceAttributes($attributes, 0.5, 0.8);
+    t_true(($start['surface']['asphalt'] ?? 0) > 99, 'początek jest lokalnie asfaltem');
+    t_true(($end['surface']['gravel'] ?? 0) > 99, 'dalszy wycinek jest lokalnie gravelem');
+    t_same(1.0, $start['coverage'], 'pełne pokrycie wycinka');
+});
+
+t_test('Bazowy OSRM dostaje koszt drogi tam, gdzie pokrywa wzbogacony korytarz', function () {
+    $baseline = rr_line([[0, 0], [20000, 0]], 'known', [], 'Asfalt bazowy', [
+        'attributes' => [
+            'segments' => [[
+                'from' => 0.0, 'to' => 1.0, 'surface' => 'asphalt', 'roadClass' => 'residential',
+            ]],
+        ],
+    ]);
+    $r = rr_route([0, 0], [20000, 0], [$baseline], ['profile' => 'mtb']);
+    t_same('osrm', $r['result']['variant']['chosen'], 'ta sama geometria nie jest bez sensu zastępowana');
+    t_true($r['result']['variant']['reason']['roadPreferenceM'] > 0, 'asfalt bazowy nie jest już zawsze neutralny');
+    t_true($r['result']['variant']['reason']['attributeCoverage'] > 0.9, 'atrybuty pokrywają bazową geometrię');
+});
+
+t_test('Atrybuty OSM: przestrzenne dopasowanie zachowuje dokładne tagi, nie wymyśla brakujących', function () {
+    $points = [[50.0, 20.0], [50.0, 20.01]];
+    $ways = [[
+        'type' => 'way',
+        'tags' => ['highway' => 'track', 'surface' => 'compacted'],
+        'geometry' => [['lat' => 50.0, 'lon' => 20.0], ['lat' => 50.0, 'lon' => 20.01]],
+    ]];
+    $attributes = RoadAttributeDetector::match($points, $ways);
+    t_not_null($attributes, 'dopasowano drogę');
+    t_true(($attributes['surface']['compacted'] ?? 0) > 99, 'dokładna nawierzchnia');
+    t_true(($attributes['roadClass']['track'] ?? 0) > 99, 'dokładna klasa highway');
+    t_same(1, count($attributes['segments']), 'cache zachowuje lokalny odcinek, nie tylko histogram całości');
+
+    $unknown = RoadAttributeDetector::match($points, [[
+        'type' => 'way', 'tags' => [],
+        'geometry' => [['lat' => 50.0, 'lon' => 20.0], ['lat' => 50.0, 'lon' => 20.01]],
+    ]]);
+    t_true(($unknown['surface']['unknown'] ?? 0) > 99, 'brak tagu pozostaje unknown');
+    t_true(($unknown['roadClass']['unknown'] ?? 0) > 99, 'brak highway pozostaje unknown');
+});
+
+t_test('Atrybuty OSM: kierunek odrzuca przecinającą drogę i wybiera równoległą', function () {
+    $points = [[50.0, 20.0], [50.0, 20.01]];
+    $attributes = RoadAttributeDetector::match($points, [
+        [
+            'id' => 1, 'tags' => ['highway' => 'track', 'surface' => 'ground'],
+            'geometry' => [['lat' => 49.999, 'lon' => 20.005], ['lat' => 50.001, 'lon' => 20.005]],
+        ],
+        [
+            'id' => 2, 'tags' => ['highway' => 'residential', 'surface' => 'asphalt'],
+            'geometry' => [['lat' => 50.00009, 'lon' => 20.0], ['lat' => 50.00009, 'lon' => 20.01]],
+        ],
+    ]);
+    t_true(($attributes['surface']['asphalt'] ?? 0) > 99, 'wybrano równoległy asfalt, nie skrzyżowanie');
+    t_true(($attributes['roadClass']['residential'] ?? 0) > 99, 'klasa pochodzi z równoległej drogi');
+});
+
+t_test('Długi ślad jest dzielony na bezpieczne bbox-y zamiast odrzucany w całości', function () {
+    $method = new ReflectionMethod(RoadAttributeDetector::class, 'analysisChunks');
+    $method->setAccessible(true);
+    $chunks = $method->invoke(null, [[50.0, 20.0], [50.0, 20.6], [50.0, 21.2], [50.0, 21.8]]);
+    t_true(count($chunks) >= 3, 'trasa o rozpiętości >1° ma kilka kawałków');
+    foreach ($chunks as $chunk) {
+        $lons = array_column($chunk, 1);
+        t_true(max($lons) - min($lons) <= 0.75 + 1e-9, 'każdy bbox mieści się w limicie');
+    }
+});
+
+t_test('Wczytana trasa zachowuje snapshot, ale nie id edytowalnej konfiguracji', function () {
+    $method = new ReflectionMethod(PlannerController::class, 'storedRouting');
+    $method->setAccessible(true);
+    $snapshot = RoutingPreferences::resolve('gravel', 'offroad');
+    $routing = $method->invoke(null, [
+        'routing_config_id' => 7,
+        'routing_preferences_json' => json_encode($snapshot, JSON_PRESERVE_ZERO_FRACTION),
+        'profile' => 'gravel',
+    ]);
+    t_null($routing['configId'], 'historyczny zapis nie wskazuje żywej konfiguracji');
+    t_same('offroad', $routing['character'], 'charakter snapshotu zachowany');
+    t_same($snapshot, $routing['preferences'], 'preferencje snapshotu zachowane 1:1');
 });

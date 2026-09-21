@@ -17,6 +17,7 @@ use Models\EventRsvp;
 use Models\KnownRoute;
 use Models\MatchEngine;
 use Models\Organizer;
+use Models\PlannerRoutingConfig;
 use Models\RecommendationDismissal;
 use Models\RecommendationLog;
 use Models\User;
@@ -1468,7 +1469,79 @@ $router->post('/api/planer/oblicz', function () {
     // przeglądarki stałyby w kolejce za tym żądaniem.
     Core\Session::release();
     @set_time_limit(120);
-    echo json_encode(PlannerController::calculate($body), JSON_UNESCAPED_UNICODE);
+    echo json_encode(PlannerController::calculate($user->id, $body), JSON_UNESCAPED_UNICODE);
+});
+
+// Nazwane preferencje POD istniejącym profilem roweru. Wszystkie mutacje są
+// POST, bo Router świadomie obsługuje tylko GET/POST; ownership siedzi w SQL.
+$router->get('/api/planer/preferencje', function () {
+    $user = Auth::user();
+    if ($user === null) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => __('Zaloguj się.')]);
+        return;
+    }
+    echo json_encode(['success' => true, 'items' => PlannerRoutingConfig::forUser($user->id)], JSON_UNESCAPED_UNICODE);
+});
+
+$router->post('/api/planer/preferencje/zapisz', function () {
+    $user = Auth::user();
+    $body = json_decode((string) file_get_contents('php://input'), true);
+    $body = is_array($body) ? $body : [];
+    if ($user === null) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => __('Zaloguj się.')]);
+        return;
+    }
+    if (!Csrf::check($body['csrf_token'] ?? null)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => __('Sesja wygasła — odśwież stronę.')]);
+        return;
+    }
+    try {
+        $item = PlannerRoutingConfig::save(
+            $user->id,
+            $body,
+            isset($body['id']) && is_numeric($body['id']) ? (int) $body['id'] : null
+        );
+        echo json_encode($item !== null
+            ? ['success' => true, 'item' => $item]
+            : ['success' => false, 'error' => __('Podaj nazwę i prawidłowy profil roweru.')], JSON_UNESCAPED_UNICODE);
+    } catch (\PDOException $e) {
+        if ((string) $e->getCode() !== '23000') {
+            throw $e;
+        }
+        http_response_code(409);
+        echo json_encode(['success' => false, 'error' => __('Konfiguracja o tej nazwie już istnieje.')], JSON_UNESCAPED_UNICODE);
+    }
+});
+
+$router->post('/api/planer/preferencje/usun', function () {
+    $user = Auth::user();
+    $body = json_decode((string) file_get_contents('php://input'), true);
+    $body = is_array($body) ? $body : [];
+    if ($user === null || !Csrf::check($body['csrf_token'] ?? null)) {
+        http_response_code($user === null ? 401 : 403);
+        echo json_encode(['success' => false, 'error' => __('Brak dostępu albo sesja wygasła.')]);
+        return;
+    }
+    $ok = isset($body['id']) && is_numeric($body['id'])
+        && PlannerRoutingConfig::delete((int) $body['id'], $user->id);
+    echo json_encode(['success' => (bool) $ok], JSON_UNESCAPED_UNICODE);
+});
+
+$router->post('/api/planer/preferencje/domyslna', function () {
+    $user = Auth::user();
+    $body = json_decode((string) file_get_contents('php://input'), true);
+    $body = is_array($body) ? $body : [];
+    if ($user === null || !Csrf::check($body['csrf_token'] ?? null)) {
+        http_response_code($user === null ? 401 : 403);
+        echo json_encode(['success' => false, 'error' => __('Brak dostępu albo sesja wygasła.')]);
+        return;
+    }
+    $ok = isset($body['id']) && is_numeric($body['id'])
+        && PlannerRoutingConfig::setDefault((int) $body['id'], $user->id);
+    echo json_encode(['success' => (bool) $ok], JSON_UNESCAPED_UNICODE);
 });
 
 $router->post('/api/planer/zapisz', function () {

@@ -818,8 +818,16 @@ Statusy zapisu: `potwierdzony`, `lista_rezerwowa`, `zainteresowany`, `oczekuje_p
   jakiego roweru) pod przyszłą zmianę silnika routingu, bez migracji. `save`,
   `update(id, userId, fields)` (IDOR guard w WHERE, nie w kodzie — `rowCount()===0`
   dla obcego), `findForUser(id, userId)` (null zamiast cudzych danych), `forUser`.
+  Od migr. 092 zapisuje również opcjonalny `routing_config_id` oraz niezależny
+  snapshot `routing_preferences_json`, aby późniejsza edycja nazwanego profilu
+  nie zmieniła już policzonej trasy.
+- [`PlannerRoutingConfig`](../core/Models/PlannerRoutingConfig.php) — CRUD nazwanych
+  preferencji użytkownika pod istniejącym `BikeType`: `forUser`,
+  `findForUser`, `defaultForUser`, `save`, `delete`, `setDefault`. Każdy odczyt
+  i zapis zawiera ownership guard; edycja nie może przenieść konfiguracji do
+  innego typu roweru ani nadpisać globalnego presetu.
 - [`RidemoreCorridors`](../core/Models/RidemoreCorridors.php) — dane **warstwy routingu Ridemore** (2026-09-18; logika w `UtilsRidemoreRouting`). Bez nowej tabeli:
-  `lines(sources, tiles, perSource, withOwners)` — linie zaznaczonych źródeł w kaflach z14 (znane trasy niosą `surface` z `KnownRoute::activeGeometryInfo()` — % asfaltu/szutru/terenu pod profil roweru) (przeniesione z dawnego `PlannerController::sourceLines`: zbiory `TileSource::tracks('me'|'all')` i `KnownRoute::activeGeometryHashes()` — to, co rysują warstwy; społeczność w PRZYCIĘTEJ kopii, §27), opcjonalnie z `owners`;
+  `lines(sources, tiles, perSource, withOwners)` — linie zaznaczonych źródeł w kaflach z14 (znane trasy niosą starsze `surface` oraz — gdy backfill je przygotował — lokalne przedziały i histogramy `attributes.surface`/`attributes.roadClass` z `RoadAttributeCache`; przycięta prywatna kopia pozostaje neutralna, bo nie zachowuje pozycji 0..1 oryginału) (przeniesione z dawnego `PlannerController::sourceLines`: zbiory `TileSource::tracks('me'|'all')` i `KnownRoute::activeGeometryHashes()` — to, co rysują warstwy; społeczność w PRZYCIĘTEJ kopii, §27), opcjonalnie z `owners`;
   `owners(hashes)` — kto jechał śladem i ile razy (`u{id}` => {n, last}): solo po `rider_activities.gpx_hash`, ślad organizatora wyjazdu = wszyscy uczestnicy z „Byłem" (`event_track`), własny ślad = jego autor; `last` = `ride_date` (NIE `discovery_cell_totals.last_seen_at` — to czas pierwszego odkrycia pola zapisany przy imporcie);
   `localReference(bounds)` — lokalna skala: P90 `riders_count`/`passes_count` heksów okolicy (heksy tylko jako odniesienie — popularność odcinka liczy się z geometrii śladów, bo heks nie odróżnia dwóch równoległych dróg);
   `fingerprint()` — odcisk danych (przejazdy, znane trasy, ślady wyjazdów) do klucza pamięci wyniku odcinka.

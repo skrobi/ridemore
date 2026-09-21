@@ -9,6 +9,8 @@ use Controllers\PlannerController;
 use Models\GpxGeometry;
 use Models\KnownRoute;
 use Models\PlannedRoute;
+use Models\PlannerRoutingConfig;
+use Models\BikeType;
 use Utils\RouteSnap;
 use Utils\RoutingProxy;
 use Utils\TileGrid;
@@ -380,4 +382,22 @@ t_test('PlannedRoute::update: właściciel może nadpisać swoją trasę', funct
     ]);
     t_true($ok, 'update() zwraca true dla właściciela');
     t_eq('TEST v2', PlannedRoute::findForUser($id, $owner)['name'], 'nazwa zaktualizowana');
+});
+
+t_test('PlannerRoutingConfig: własne ustawienia są przypięte do istniejącego BikeType i chronione ownership', function () {
+    $owner = t_user(0);
+    $stranger = t_user(1);
+    $type = BikeType::all()[0];
+    $saved = PlannerRoutingConfig::save($owner, [
+        'name' => 'TEST Gravel Bieszczady',
+        'bikeProfile' => $type['code'],
+        'character' => 'offroad',
+        'preferences' => ['surface' => ['asphalt' => -2, 'gravel' => 2]],
+    ]);
+    t_not_null($saved, 'konfiguracja zapisana');
+    t_same($type['code'], $saved['bikeProfile'], 'ten sam słownik bike_type, bez drugiego profilu');
+    t_null(PlannerRoutingConfig::findForUser($saved['id'], $stranger), 'obcy nie odczyta konfiguracji');
+    t_false(PlannerRoutingConfig::delete($saved['id'], $stranger), 'obcy nie usunie konfiguracji');
+    t_true(PlannerRoutingConfig::setDefault($saved['id'], $owner), 'właściciel ustawia domyślną');
+    t_same($saved['id'], PlannerRoutingConfig::defaultForUser($owner, $type['id'])['id'], 'domyślna per BikeType');
 });

@@ -127,8 +127,59 @@ if (!defined('CORE_PATH')) { http_response_code(403); exit; }
                         <?php endforeach; ?>
                     </div>
                 </div>
+                <div class="planner-routing-pref">
+                    <div class="planner-cfg-label"><?= __('Charakter trasy') ?></div>
+                    <div class="planner-character-row" id="plannerCharacterRow">
+                        <button type="button" data-character="road"><?= __('Drogowa') ?></button>
+                        <button type="button" class="active" data-character="balanced"><?= __('Standard') ?></button>
+                        <button type="button" data-character="offroad"><?= __('Terenowa') ?></button>
+                    </div>
+                    <label class="planner-routing-saved">
+                        <span><?= __('Moje ustawienia') ?></span>
+                        <select id="plannerRoutingSaved"><option value=""><?= __('Preset profilu') ?></option></select>
+                    </label>
+                    <details class="planner-routing-advanced" id="plannerRoutingAdvanced">
+                        <summary><?= __('Zaawansowane') ?></summary>
+                        <div id="plannerRoutingControls">
+                            <?php
+                            $routingControls = [
+                                ['surface', 'asphalt,concrete', __('Asfalt / beton')],
+                                ['surface', 'gravel,compacted', __('Gravel / ubita nawierzchnia')],
+                                ['surface', 'dirt,ground,sand,mud', __('Drogi terenowe')],
+                                ['roadClass', 'motorway,trunk,primary,secondary', __('Główne drogi')],
+                                ['roadClass', 'tertiary,unclassified,residential,service', __('Drogi lokalne')],
+                                ['roadClass', 'track', __('Dukty / track')],
+                                ['roadClass', 'path,footway,pedestrian', __('Ścieżki')],
+                                ['roadClass', 'cycleway', __('Drogi rowerowe')],
+                            ];
+                            foreach ($routingControls as [$group, $keys, $label]): ?>
+                            <label class="planner-routing-control">
+                                <span><?= htmlspecialchars($label) ?></span>
+                                <select data-routing-group="<?= $group ?>" data-routing-keys="<?= $keys ?>">
+                                    <option value="2"><?= __('Bardzo preferuj') ?></option>
+                                    <option value="1"><?= __('Preferuj') ?></option>
+                                    <option value="0"><?= __('Neutralnie') ?></option>
+                                    <option value="-1"><?= __('Unikaj') ?></option>
+                                    <option value="-2"><?= __('Mocno unikaj') ?></option>
+                                </select>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </details>
+                    <div class="planner-routing-save">
+                        <input type="text" id="plannerRoutingName" maxlength="80" placeholder="<?= htmlspecialchars(__('np. Gravel Bieszczady')) ?>">
+                        <button type="button" id="plannerRoutingSave"><?= __('Zapisz jako…') ?></button>
+                        <button type="button" id="plannerRoutingDefault" hidden><?= __('Ustaw jako domyślne') ?></button>
+                        <button type="button" id="plannerRoutingDelete" hidden><?= __('Usuń') ?></button>
+                    </div>
+                    <div class="planner-routing-msg" id="plannerRoutingMsg" aria-live="polite"></div>
+                </div>
             </div>
         </details>
+
+        <div class="planner-routing-progress" id="plannerRoutingProgress" role="status" aria-live="polite" hidden>
+            <?= __('Przeliczam trasę…') ?>
+        </div>
 
         <div class="card" id="plannerWaypointsCard">
             <div class="planner-empty" id="plannerEmpty">
@@ -185,6 +236,12 @@ window.PLANNER_CONFIG = {
     // Szablony kafli {z}/{x}/{y} — TA SAMA warstwa „Ślady" co /odkrycia/spolecznosc
     // (Models\TileCache::urlTemplate), Leaflet dociąga je sam przy przesuwaniu mapy.
     trackTiles: <?= json_encode($trackTiles) ?>,
+    routingPresets: <?= json_encode(array_reduce($bikeTypes, static function (array $out, array $type): array {
+        foreach (['road', 'balanced', 'offroad'] as $character) {
+            $out[$type['code']][$character] = Models\BikeType::routingPreferences($type, $character);
+        }
+        return $out;
+    }, []), JSON_UNESCAPED_UNICODE) ?>,
     api: {
         layers: <?= json_encode(Utils\View::url('/api/planer/warstwy')) ?>,
         calculate: <?= json_encode(Utils\View::url('/api/planer/oblicz')) ?>,
@@ -194,8 +251,13 @@ window.PLANNER_CONFIG = {
         sourceSearch: <?= json_encode(Utils\View::url('/api/planer/zrodla')) ?>,
         sourceGeometry: <?= json_encode(Utils\View::url('/api/planer/zrodlo')) ?>,
         sourceUpload: <?= json_encode(Utils\View::url('/api/planer/wgraj-gpx')) ?>,
+        routingList: <?= json_encode(Utils\View::url('/api/planer/preferencje')) ?>,
+        routingSave: <?= json_encode(Utils\View::url('/api/planer/preferencje/zapisz')) ?>,
+        routingDelete: <?= json_encode(Utils\View::url('/api/planer/preferencje/usun')) ?>,
+        routingDefault: <?= json_encode(Utils\View::url('/api/planer/preferencje/domyslna')) ?>,
     },
 };
 </script>
 <script defer src="<?= Utils\View::asset('/assets/js/planner/route-model.js') ?>"></script>
+<script defer src="<?= Utils\View::asset('/assets/js/planner/routing-preferences.js') ?>"></script>
 <script defer src="<?= Utils\View::asset('/assets/js/planner.js') ?>"></script>

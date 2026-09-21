@@ -252,6 +252,26 @@ danych z Etapów 2d i 2f.
 11. Ten sam korytarz jest utrzymywany między kolejnymi waypointami, o ile
     nadal mieści się w budżecie i jest przejezdny. — *test ciągłości.*
 
+### Etap 4 — preferencje dróg i profile użytkownika — ZROBIONY 2026-09-21
+
+- Istniejący `BikeType` pozostaje nadrzędny; `RoutingPreferences` dokłada
+  charakter drogowy/standard/teren i override'y nawierzchni/`highway`.
+- RidemoreScore jest niezależny. Koszt wariantu ma osobne składniki:
+  dystans, preferencję drogi, zgodność profilu, popularność i ciągłość.
+  Brak atrybutów jest neutralny, a limit objazdu i OSRM pozostają twardymi
+  bramkami.
+- Dokładne atrybuty OSM są pochodnym cache, wypełnianym offline przez
+  `backfill_routing_attributes.php`; request planera nigdy nie pyta Overpass.
+  Cache schema 2 zachowuje lokalne przedziały śladu, map-matching uwzględnia
+  kierunek, a długie geometrie są dzielone na bezpieczne bbox-y.
+- Migr. 092 dodaje nazwane ustawienia użytkownika pod istniejącym słownikiem
+  `bike_type` oraz snapshot ustawień w zapisanej trasie.
+- UI: trzy gotowe charaktery, zwijane ustawienia zaawansowane, zapis/edycja/
+  usunięcie/konfiguracja domyślna i jawny stan przeliczania.
+- Testy czyste: 40 scenariuszy `planner_routing_test.php`; test modelu JS
+  obejmuje zmianę preferencji i unieważnienie segmentów. Integracja DB wymaga
+  migr. 092 i lokalnej bazy dev.
+
 ## Testy — przypadki z planu
 
 | # | Przypadek | Test | Stan |
@@ -289,3 +309,11 @@ danych z Etapów 2d i 2f.
   jeźdźca), więc warstwa „Moje przejazdy" widzi tylko te.
 - **Po przejściu na rowerowy OSRM** trasa bazowa często sama jedzie po
   przejazdach usera (88–100% na dev) — warstwa ma wtedy mniej do poprawiania.
+- **Atrybuty surface/highway są niepełne**, dopóki offline backfill nie
+  przygotuje cache schema 2 dla danego hasha. Błąd/rate limit Overpass,
+  uszkodzony pojedynczy chunk i nieotagowane drogi pozostają neutralne;
+  system nie zgaduje.
+- **Publiczny OSRM nie zwraca tagów drogi.** Bazowa geometria jest wyceniana
+  tam, gdzie pokrywa się ze wzbogaconym korytarzem Ridemore; nieznane fragmenty
+  i łączniki pozostają neutralne. Pełna wycena każdego łącznika wymagałaby
+  wzbogaconego źródła metadanych lub routera wspierającego koszty, poza MVP.

@@ -13,9 +13,11 @@ const path = require('path');
 const vm = require('vm');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'planner', 'route-model.js'), 'utf8');
+const preferencesSource = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'planner', 'routing-preferences.js'), 'utf8');
 const sandbox = {};
 vm.createContext(sandbox);
 vm.runInContext(source, sandbox, { filename: 'route-model.js' });
+vm.runInContext(preferencesSource, sandbox, { filename: 'routing-preferences.js' });
 const Route = sandbox.RidemorePlannerRoute;
 if (!Route || typeof Route.create !== 'function') {
     process.stdout.write(JSON.stringify({ error: 'route-model.js nie wystawił RidemorePlannerRoute.create' }));
@@ -78,6 +80,36 @@ function runSteps(r, steps) {
 }
 
 const out = {};
+
+// --- Preferencje pozostają warstwą pod istniejącym profilem roweru --------
+{
+    const presets = {
+        gravel: {
+            balanced: { character: 'balanced', surface: { asphalt: 0, gravel: 2 }, roadClass: { track: 2 } },
+            offroad: { character: 'offroad', surface: { asphalt: -1, gravel: 2 }, roadClass: { track: 2 } },
+        },
+    };
+    const p = sandbox.RidemoreRoutingPreferences.create(presets);
+    p.setConfigs([{
+        id: 7, name: 'Gravel Bieszczady', bikeProfile: 'gravel', character: 'offroad',
+        preferences: presets.gravel.offroad, isDefault: true,
+    }], false);
+    p.setProfile('gravel', true);
+    const defaultPayload = p.payload();
+    p.setGroup('surface', ['asphalt'], -2);
+    const editedPayload = p.payload();
+    p.restore({ configId: 7, character: 'offroad', preferences: presets.gravel.offroad });
+    const restoredPayload = p.payload();
+    const r = build(['START', 'CEL']);
+    r.setContext({ sources: { known: true }, autoJoin: true, profile: 'gravel', routing: editedPayload });
+    out.preferencje = {
+        defaultPayload,
+        editedPayload,
+        restoredPayload,
+        routePayload: r.routingPayload().routing,
+        pending: r.segments.every((s) => s.pending),
+    };
+}
 
 // --- Testy akceptacyjne 1–7 z punktu 11 zgłoszenia ---------------------
 {

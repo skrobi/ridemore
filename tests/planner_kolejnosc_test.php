@@ -172,6 +172,17 @@ t_test('Typ roweru: zmiana zawsze przelicza trasę (własny profil silnika), pow
     t_same('', $w['bogusProfile'], 'kod spoza wzorca odrzucony (serwer weźmie pierwszy typ ze słownika)');
 });
 
+t_test('Preferencje routingu: domyślna własna konfiguracja, override i payload pozostają pod profilem Gravel', function () {
+    $w = planner_kolejnosc_wynik()['preferencje'];
+    t_same(7, $w['defaultPayload']['configId'], 'domyślna konfiguracja usera została wybrana');
+    t_same('offroad', $w['defaultPayload']['character'], 'charakter terenowy');
+    t_same(7, $w['editedPayload']['configId'], 'ręczna zmiana edytuje wybraną własną konfigurację');
+    t_same(-2, $w['editedPayload']['preferences']['surface']['asphalt'], 'override asfaltu');
+    t_null($w['restoredPayload']['configId'], 'historyczny snapshot trasy jest odłączony od edytowalnej konfiguracji');
+    t_same($w['editedPayload'], $w['routePayload'], 'dokładnie te preferencje idą do /api/planer/oblicz');
+    t_true($w['pending'], 'zmiana preferencji unieważnia segmenty');
+});
+
 t_test('Skarb „Po drodze" wstawia się między końce najbliższego odcinka', function () {
     $w = planner_kolejnosc_wynik()['skarb'];
     t_same(1, $w['seg'], 'najbliżej drugiego odcinka (A → CEL)');

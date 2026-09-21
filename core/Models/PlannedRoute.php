@@ -21,9 +21,11 @@ class PlannedRoute
         $pdo = Database::connection();
         $stmt = $pdo->prepare('
             INSERT INTO planned_routes
-                (user_id, name, waypoints_json, geometry_json, distance_km, ascent_m, descent_m, duration_min, engine, profile)
+                (user_id, name, waypoints_json, geometry_json, distance_km, ascent_m, descent_m, duration_min,
+                 engine, profile, routing_config_id, routing_preferences_json)
             VALUES
-                (:user_id, :name, :waypoints_json, :geometry_json, :distance_km, :ascent_m, :descent_m, :duration_min, :engine, :profile)
+                (:user_id, :name, :waypoints_json, :geometry_json, :distance_km, :ascent_m, :descent_m, :duration_min,
+                 :engine, :profile, :routing_config_id, :routing_preferences_json)
         ');
         $stmt->execute(self::bindParams($userId, $input));
         return (int) $pdo->lastInsertId();
@@ -42,7 +44,9 @@ class PlannedRoute
                 descent_m = :descent_m,
                 duration_min = :duration_min,
                 engine = :engine,
-                profile = :profile
+                profile = :profile,
+                routing_config_id = :routing_config_id,
+                routing_preferences_json = :routing_preferences_json
             WHERE id = :id AND user_id = :user_id
         ');
         $params = self::bindParams($userId, $input);
@@ -64,6 +68,9 @@ class PlannedRoute
             'duration_min'   => $input['duration_min'] !== null ? (int) $input['duration_min'] : null,
             'engine'         => (string) ($input['engine'] ?? 'osrm-public'),
             'profile'        => (string) ($input['profile'] ?? 'cycling'),
+            'routing_config_id' => isset($input['routing_config_id']) ? (int) $input['routing_config_id'] : null,
+            'routing_preferences_json' => isset($input['routing_preferences_json'])
+                ? (string) $input['routing_preferences_json'] : null,
         ];
     }
 

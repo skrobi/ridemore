@@ -4570,3 +4570,29 @@ kompromis** — OSRM zostaje silnikiem, bez własnego grafu.
   `variant` zostaje przy odcinku w modelu JS. **Wygląd w przeglądarce
   niesprawdzony** (logowanie). Testy: 32 w `planner_routing_test.php`,
   profil + `variant` w `planner_kolejnosc_test.php`.
+
+### Preferencje dróg nad istniejącym profilem (migr. 092, 2026-09-21)
+
+Profil `bike_type` pozostaje nadrzędny. Planer dokłada charakter
+`drogowy|standardowy|terenowy`, opcjonalne ustawienia zaawansowane i nazwane
+konfiguracje użytkownika; stary użytkownik bez konfiguracji automatycznie
+dostaje preset istniejącego profilu.
+
+Warstwa nie zmienia OSRM i nie tworzy grafu. Wycenia wyłącznie istniejące
+korytarze Ridemore oraz tę część bazowej geometrii OSRM, która pokrywa się ze
+wzbogaconymi danymi Ridemore, według:
+
+`dystans + koszt surface/highway + miękka zgodność BikeType − RidemoreScore − histereza`.
+
+Przejezdność oraz maksymalny objazd pozostają twardymi bramkami przed
+scoringiem. Popularność zachowuje osobną wartość i nie może zalegalizować
+nieprzejezdnej drogi; preferencja terenowa może natomiast pokonać popularny
+asfalt, gdy wariant mieści się w limicie. Brak tagów `surface`/`highway` jest
+neutralny. Dokładne tagi są opcjonalnym, pochodnym cache przygotowanym przez
+`backfill_routing_attributes.php` z OSM/Overpass poza żądaniem użytkownika.
+
+`variant.reason` podaje składniki decyzji, a zapis trasy utrwala snapshot
+preferencji. Nazwane konfiguracje można tworzyć, edytować, usuwać i ustawiać
+domyślnie bez modyfikacji presetów globalnych. Wczytany historyczny snapshot
+jest odłączany od id żywej konfiguracji, więc nie może jej przypadkowo
+nadpisać przy kolejnym zapisie.

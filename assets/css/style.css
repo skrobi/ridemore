@@ -4627,6 +4627,22 @@ body.is-app .lang-banner{bottom:calc(84px + env(safe-area-inset-bottom));}
 .planner-profile-btn span{font-family:var(--f-m);font-size:10px;font-weight:500;color:var(--ink-mute);}
 .planner-profile-btn.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);}
 .planner-profile-btn.active span{color:var(--accent-dark);}
+.planner-routing-pref{display:grid;gap:10px;padding-top:14px;border-top:1px solid var(--hair);}
+.planner-character-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.planner-character-row button{border:1px solid var(--hair-strong);background:var(--paper);color:var(--ink-soft);border-radius:8px;padding:9px 5px;font-size:11px;font-weight:750;text-transform:uppercase;cursor:pointer;}
+.planner-character-row button.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);}
+.planner-routing-saved{display:grid;gap:4px;font-size:11px;font-weight:700;color:var(--ink-soft);}
+.planner-routing-saved select,.planner-routing-control select,.planner-routing-save input{border:1px solid var(--hair-strong);border-radius:8px;background:var(--paper);color:var(--ink);padding:8px;}
+.planner-routing-advanced{font-size:12px;}
+.planner-routing-advanced summary{cursor:pointer;color:var(--accent-dark);font-weight:700;}
+#plannerRoutingControls{display:grid;gap:6px;margin-top:8px;}
+.planner-routing-control{display:grid;grid-template-columns:1fr minmax(120px,auto);gap:8px;align-items:center;color:var(--ink-soft);}
+.planner-routing-control select{padding:6px;font-size:11px;}
+.planner-routing-save{display:grid;grid-template-columns:1fr auto;gap:6px;}
+.planner-routing-save button{border:1px solid var(--hair-strong);border-radius:8px;background:var(--paper);color:var(--accent-dark);padding:7px 9px;font-size:11px;font-weight:700;cursor:pointer;}
+.planner-routing-save button[hidden]{display:none;}
+.planner-routing-msg{min-height:16px;font-size:11px;color:var(--ink-soft);}
+.planner-routing-progress{border:1px solid var(--accent);border-radius:var(--radius);background:var(--accent-soft);color:var(--accent-dark);padding:9px 12px;font-size:12px;font-weight:700;}
 .planner-hint{font-size:11px;color:var(--ink-mute);}
 
 /* ŹRÓDŁA TRASY (2026-09-18) — jedno miejsce wyboru: zaznaczenie = widać na mapie

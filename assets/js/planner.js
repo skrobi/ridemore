@@ -6,7 +6,7 @@
 (function (root) {
     'use strict';
 
-    if (typeof document === 'undefined' || !root.RidemorePlannerRoute) {
+    if (typeof document === 'undefined' || !root.RidemorePlannerRoute || !root.RidemoreRoutingPreferences) {
         return;
     }
 
@@ -52,6 +52,15 @@
         treasureToggle: document.getElementById('plannerShowTreasures'),
         autoJoin: document.getElementById('plannerAutoJoin'),
         autoJoinHint: document.getElementById('plannerAutoJoinHint'),
+        characterRow: document.getElementById('plannerCharacterRow'),
+        routingSaved: document.getElementById('plannerRoutingSaved'),
+        routingControls: document.getElementById('plannerRoutingControls'),
+        routingName: document.getElementById('plannerRoutingName'),
+        routingSave: document.getElementById('plannerRoutingSave'),
+        routingDelete: document.getElementById('plannerRoutingDelete'),
+        routingDefault: document.getElementById('plannerRoutingDefault'),
+        routingMsg: document.getElementById('plannerRoutingMsg'),
+        routingProgress: document.getElementById('plannerRoutingProgress'),
     };
     if (!els.canvas || typeof ridemoreCreateMap !== 'function') {
         return;
@@ -59,6 +68,7 @@
 
     var map = ridemoreCreateMap(els.canvas, [52.0, 19.3]);
     var route = root.RidemorePlannerRoute.create(root.RidemorePlannerRoute.MAX_WAYPOINTS);
+    var routingPreferences = root.RidemoreRoutingPreferences.create(cfg.routingPresets || {});
 
     var state = {
         speedKmh: 25,
@@ -66,6 +76,7 @@
         routeId: cfg.existingRouteId || null,
         durationMin: null,
         recomputeTimer: null,
+        routingSeq: 0,
         layersTimer: null,
         pickerTimer: null,
         pickerSeq: 0,
@@ -144,6 +155,7 @@
             sources: { mine: els.srcMine.checked, known: els.srcKnown.checked, community: els.srcCommunity.checked },
             autoJoin: els.autoJoin.checked,
             profile: state.profile,
+            routing: routingPreferences.payload(),
             base: state.base ? { kind: state.base.kind, label: state.base.label, points: state.base.points } : null,
         };
     }
@@ -154,6 +166,138 @@
         } else {
             renderSources();
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Charakter trasy i nazwane ustawienia użytkownika. To warstwa POD
+    // istniejącym profilem roweru; zmiana zawsze unieważnia segmenty modelu.
+    // ------------------------------------------------------------------
+    function renderRoutingPreferences() {
+        var current = routingPreferences.current();
+        if (els.characterRow) {
+            els.characterRow.querySelectorAll('[data-character]').forEach(function (btn) {
+                btn.classList.toggle('active', btn.dataset.character === current.character);
+            });
+        }
+        if (els.routingSaved) {
+            var first = els.routingSaved.options[0];
+            els.routingSaved.innerHTML = '';
+            els.routingSaved.appendChild(first);
+            current.configs.filter(function (c) { return c.bikeProfile === current.profile; }).forEach(function (c) {
+                var option = document.createElement('option');
+                option.value = String(c.id);
+                option.textContent = c.name + (c.isDefault ? ' ★' : '');
+                els.routingSaved.appendChild(option);
+            });
+            els.routingSaved.value = current.configId ? String(current.configId) : '';
+        }
+        if (els.routingControls) {
+            els.routingControls.querySelectorAll('[data-routing-group]').forEach(function (select) {
+                var group = current.preferences[select.dataset.routingGroup] || {};
+                var keys = select.dataset.routingKeys.split(',');
+                var values = keys.map(function (key) { return Number(group[key] || 0); });
+                select.value = String(values.every(function (v) { return v === values[0]; }) ? values[0] : 0);
+            });
+        }
+        if (els.routingName && current.configId) {
+            var selected = current.configs.find(function (c) { return c.id === current.configId; });
+            if (selected && document.activeElement !== els.routingName) els.routingName.value = selected.name;
+        }
+        if (els.routingSave) els.routingSave.textContent = current.configId ? __('Zapisz zmiany') : __('Zapisz jako…');
+        if (els.routingDelete) els.routingDelete.hidden = !current.configId;
+        if (els.routingDefault) els.routingDefault.hidden = !current.configId;
+    }
+
+    function routingChanged() {
+        renderRoutingPreferences();
+        syncContext();
+    }
+
+    if (els.characterRow) {
+        els.characterRow.querySelectorAll('[data-character]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                routingPreferences.setCharacter(btn.dataset.character);
+                routingChanged();
+            });
+        });
+    }
+    if (els.routingControls) {
+        els.routingControls.querySelectorAll('[data-routing-group]').forEach(function (select) {
+            select.addEventListener('change', function () {
+                routingPreferences.setGroup(select.dataset.routingGroup, select.dataset.routingKeys.split(','), select.value);
+                routingChanged();
+            });
+        });
+    }
+    if (els.routingSaved) {
+        els.routingSaved.addEventListener('change', function () {
+            if (els.routingSaved.value) {
+                routingPreferences.selectConfig(Number(els.routingSaved.value));
+            } else {
+                routingPreferences.usePreset(routingPreferences.current().character);
+                if (els.routingName) els.routingName.value = '';
+            }
+            routingChanged();
+        });
+    }
+
+    function routingPost(url, payload) {
+        payload.csrf_token = cfg.csrfToken;
+        return fetch(url, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        }).then(function (r) { return r.json(); });
+    }
+
+    function loadRoutingConfigs(useDefault) {
+        return fetch(cfg.api.routingList).then(function (r) { return r.json(); }).then(function (data) {
+            if (!data.success) return;
+            routingPreferences.setConfigs(data.items || [], !!useDefault);
+            renderRoutingPreferences();
+            if (useDefault) syncContext();
+        }).catch(function () {
+            if (els.routingMsg) els.routingMsg.textContent = __('Nie udało się wczytać ustawień. Używany jest preset profilu.');
+        });
+    }
+
+    if (els.routingSave) {
+        els.routingSave.addEventListener('click', function () {
+            var name = els.routingName.value.trim();
+            if (!name) { els.routingMsg.textContent = __('Podaj nazwę ustawień.'); return; }
+            var current = routingPreferences.current();
+            routingPost(cfg.api.routingSave, {
+                id: current.configId, name: name, bikeProfile: current.profile,
+                character: current.character, preferences: current.preferences,
+            }).then(function (data) {
+                if (!data.success) { els.routingMsg.textContent = data.error || __('Nie udało się zapisać ustawień.'); return; }
+                routingPreferences.upsert(data.item);
+                els.routingMsg.textContent = __('Ustawienia zapisane.');
+                routingChanged();
+            }).catch(function () { els.routingMsg.textContent = __('Nie udało się zapisać ustawień.'); });
+        });
+    }
+    if (els.routingDelete) {
+        els.routingDelete.addEventListener('click', function () {
+            var id = routingPreferences.current().configId;
+            if (!id) return;
+            routingPost(cfg.api.routingDelete, { id: id }).then(function (data) {
+                if (!data.success) { els.routingMsg.textContent = __('Nie udało się usunąć ustawień.'); return; }
+                routingPreferences.remove(id);
+                els.routingName.value = '';
+                els.routingMsg.textContent = __('Ustawienia usunięte.');
+                routingChanged();
+            });
+        });
+    }
+    if (els.routingDefault) {
+        els.routingDefault.addEventListener('click', function () {
+            var id = routingPreferences.current().configId;
+            if (!id) return;
+            routingPost(cfg.api.routingDefault, { id: id }).then(function (data) {
+                if (!data.success) { els.routingMsg.textContent = __('Nie udało się ustawić konfiguracji domyślnej.'); return; }
+                els.routingMsg.textContent = __('Ustawiono jako domyślne dla tego profilu.');
+                loadRoutingConfigs(false);
+            });
+        });
     }
 
     // Status „Aktualna baza" to JEDYNE miejsce, które mówi, z czego korzysta
@@ -675,6 +819,12 @@
             }
             return line;
         });
+        if (v.reason) {
+            parts.push(__('Wpływ preferencji: {m} m · bonus popularności: {p} m', {
+                m: Math.round(v.reason.roadPreferenceM + v.reason.profileCompatibilityM),
+                p: Math.round(v.reason.popularityBonusM),
+            }));
+        }
         return { text: text, title: parts.join('\n') };
     }
 
@@ -774,9 +924,12 @@
     function recompute() {
         if (route.waypoints.length < 2) {
             els.statsCard.style.display = 'none';
+            if (els.routingProgress) els.routingProgress.hidden = true;
             updateSaveState();
             return;
         }
+        var requestId = ++state.routingSeq;
+        if (els.routingProgress) els.routingProgress.hidden = false;
         var version = route.version;
         var payload = route.routingPayload();
         payload.csrf_token = cfg.csrfToken;
@@ -789,6 +942,7 @@
             // kolejności punktów albo innych źródeł, a nowsze przeliczenie
             // jest już w drodze.
             if (version !== route.version) return;
+            if (requestId === state.routingSeq && els.routingProgress) els.routingProgress.hidden = true;
             if (!data.success) {
                 showRoutingError(data.error);
                 return;
@@ -806,6 +960,7 @@
             render();
         }).catch(function () {
             if (version !== route.version) return;
+            if (requestId === state.routingSeq && els.routingProgress) els.routingProgress.hidden = true;
             showRoutingError();
         });
     }
@@ -825,6 +980,8 @@
         if (chosen) {
             state.speedKmh = parseFloat(chosen.dataset.speed) || 25;
             state.profile = chosen.dataset.profile || '';
+            routingPreferences.setProfile(state.profile, true);
+            renderRoutingPreferences();
         }
     }
     selectProfileButton(null);
@@ -832,10 +989,8 @@
     if (els.profileRow) {
         els.profileRow.querySelectorAll('.planner-profile-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                els.profileRow.querySelectorAll('.planner-profile-btn').forEach(function (b) { b.classList.remove('active'); });
-                btn.classList.add('active');
-                state.speedKmh = parseFloat(btn.dataset.speed) || 25;
-                state.profile = btn.dataset.profile || '';
+                selectProfileButton(btn.dataset.profile || '');
+                if (els.routingName) els.routingName.value = '';
                 if (route.setContext(currentContext())) {
                     onRouteChanged();
                     return;
@@ -880,6 +1035,7 @@
             durationMin: state.durationMin,
             routeId: state.routeId,
             profile: state.profile,
+            routing: routingPreferences.payload(),
         };
         fetch(cfg.api.save, {
             method: 'POST',
@@ -912,6 +1068,8 @@
             els.name.value = data.route.name;
             // Typ roweru, z którym trasę zapisano (gdy dalej jest w słowniku).
             selectProfileButton(data.route.profile || null);
+            routingPreferences.restore(data.route.routing || null);
+            renderRoutingPreferences();
             route.setContext(currentContext());
             route.replaceWaypoints(data.route.waypoints);
             if (route.waypoints.length) {
@@ -921,6 +1079,7 @@
         });
     }
 
+    loadRoutingConfigs(!cfg.existingRouteId);
     route.setContext(currentContext());
     render();
 })(typeof window !== 'undefined' ? window : this);

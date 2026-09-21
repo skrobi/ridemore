@@ -27,6 +27,8 @@ final class RidemoreRouting
 {
     /** Wszystkie parametry warstwy — JEDYNE miejsce do strojenia. */
     public const PARAMS = [
+        // Część klucza cache odcinka; bump przy zmianie semantyki kosztu.
+        'algorithmVersion'    => 2,
         // Sondy wsparcia: co ile metrów i w jakim promieniu ślad „jedzie tą samą drogą".
         'probeM'             => 100.0,
         'supportRadiusM'     => 30.0,
@@ -130,9 +132,15 @@ final class RidemoreRouting
         $variant = [
             'chosen' => 'osrm', 'baselineM' => (int) round($baseM), 'chosenM' => (int) round($baseM),
             'extraM' => 0, 'corridors' => [], 'considered' => 0,
+            'reason' => [
+                'decision' => 'baseline', 'distanceM' => (int) round($baseM), 'detourM' => 0,
+                'roadPreferenceM' => 0, 'profileCompatibilityM' => 0,
+                'popularityBonusM' => 0, 'continuityBonusM' => 0, 'attributeCoverage' => 0.0,
+            ],
         ];
         $area = self::area($from, $to, $baseM);
         if ($area === null || !$lines || count($baseline['coords']) < 2) {
+            $variant['reason']['decision'] = !$lines ? 'no-ridemore-data' : 'invalid-baseline';
             return ['segment' => null, 'variant' => $variant];
         }
 
@@ -145,10 +153,25 @@ final class RidemoreRouting
         foreach (self::runs($baseTrack['scores'], $baseTrack['cumM'], 0.0, $baseTrack['stepM']) as [$a, $b]) {
             $baseBonus += self::bonusM($baseTrack['cumM'][$b] - $baseTrack['cumM'][$a], self::mean($baseTrack['scores'], $a, $b));
         }
-        $baseCost = $baseM - $baseBonus;
+        $baseBonus *= (float) ($ctx['routingPreferences']['popularityStrength'] ?? 1.0);
+        // Publiczny OSRM nie zwraca surface/highway. Tam, gdzie jego geometria
+        // pokrywa się ze wzbogaconym korytarzem Ridemore, korzystamy jednak z
+        // tych samych lokalnych atrybutów. Reszta bazowej trasy pozostaje
+        // neutralna — nie zgadujemy danych dla nieznanych odcinków.
+        $baseAttributes = self::trackAttributes($baseTrack);
+        $baseRoad = RoutingPreferences::costAdjustment($ctx['routingPreferences'], $baseAttributes, $baseM);
+        $baseCompatibility = RoutingPreferences::compatibilityPenalty(
+            $ctx['profile']['minAsphaltPct'] ?? null, $baseAttributes, $baseM
+        );
+        $baseCost = $baseM + $baseRoad['adjustmentM'] + $baseCompatibility - $baseBonus;
+        $variant['reason']['popularityBonusM'] = (int) round($baseBonus);
+        $variant['reason']['roadPreferenceM'] = (int) round($baseRoad['adjustmentM']);
+        $variant['reason']['profileCompatibilityM'] = (int) round($baseCompatibility);
+        $variant['reason']['attributeCoverage'] = round($baseRoad['coverage'], 3);
 
         $candidates = self::candidates($area, $ctx);
         if (!$candidates) {
+            $variant['reason']['decision'] = 'no-eligible-corridor';
             return ['segment' => null, 'variant' => $variant];
         }
         $variants = self::variants($candidates, $area);
@@ -178,6 +201,7 @@ final class RidemoreRouting
         }
         $matrix = $table($points, $src, $dst);
         if (!is_array($matrix) || !isset($matrix['distances'])) {
+            $variant['reason']['decision'] = 'routing-unavailable';
             return ['segment' => null, 'variant' => $variant, 'degraded' => true];
         }
         $D = $matrix['distances'];
@@ -201,29 +225,47 @@ final class RidemoreRouting
                     break;
                 }
             }
-            $scored['choiceCost'] = $scored['cost'] - ($continues ? $p['continuityBonusM'] : 0.0);
+            // Histereza nie może utrzymać korytarza niezgodnego z profilem.
+            // Działa tylko na wariancie neutralnym albo preferowanym.
+            $continuityBonus = $continues && $scored['preferenceM'] + $scored['compatibilityM'] <= 0.0
+                ? $p['continuityBonusM'] : 0.0;
+            $scored['continuityBonusM'] = $continuityBonus;
+            $scored['choiceCost'] = $scored['cost'] - $continuityBonus;
             if ($best === null || $scored['choiceCost'] < $best['choiceCost'] - 0.5
                 || (abs($scored['choiceCost'] - $best['choiceCost']) <= 0.5 && $scored['lenM'] < $best['lenM'])) {
                 $best = $scored + ['parts' => $v['parts']];
             }
         }
         if ($best === null || $best['choiceCost'] > $baseCost - $p['minGainM']) {
+            $variant['reason']['decision'] = $best === null ? 'no-feasible-corridor' : 'baseline-lower-cost';
             return ['segment' => null, 'variant' => $variant];
         }
 
         $segment = self::assemble($from, $to, $best['parts'], $candidates, $legs, $speedMps);
         if ($segment === null) {
+            $variant['reason']['decision'] = 'routing-unavailable';
             return ['segment' => null, 'variant' => $variant, 'degraded' => true];
         }
         if ($segment['distanceM'] > $area['maxLenM'] * 1.03) {
             // Macierz obiecała wariant w limicie, a geometria wyszła dłuższa
             // (inne przyciągnięcie punktów) — wtedy zostaje OSRM.
+            $variant['reason']['decision'] = 'detour-limit';
             return ['segment' => null, 'variant' => $variant];
         }
 
         $variant['chosen'] = 'ridemore';
         $variant['chosenM'] = (int) round($segment['distanceM']);
         $variant['extraM'] = (int) round($segment['distanceM'] - $baseM);
+        $variant['reason'] = [
+            'decision' => 'selected-ridemore',
+            'distanceM' => (int) round($best['lenM']),
+            'detourM' => (int) round($best['lenM'] - $baseM),
+            'roadPreferenceM' => (int) round($best['preferenceM']),
+            'profileCompatibilityM' => (int) round($best['compatibilityM']),
+            'popularityBonusM' => (int) round($best['popularityBonusM']),
+            'continuityBonusM' => (int) round($best['continuityBonusM']),
+            'attributeCoverage' => round($best['attributeCoverage'], 2),
+        ];
         foreach ($best['parts'] as $u) {
             $c = $candidates[$u];
             $variant['corridors'][] = [
@@ -233,6 +275,8 @@ final class RidemoreRouting
                 'riders'  => $c['riders'],
                 'passes'  => $c['passes'],
                 'score'   => round($c['score'], 2),
+                'roadPreferenceM' => (int) round($c['preferenceM']),
+                'attributeCoverage' => round($c['attributeCoverage'], 2),
             ];
         }
         $continuityKeys = [];
@@ -266,11 +310,10 @@ final class RidemoreRouting
      * w LOKALNEJ skali (log, żeby 30 osób nie ważyło 10× tyle co 3), od dwóch
      * osób wzwyż. Znana trasa i mój przejazd podnoszą wynik do swojej podłogi.
      * Przejazdy (społeczność, moje) mnoży świeżość; znanej trasy nie — jest
-     * kuratorowana, nie „ostatnio jeżdżona". Sonda przy znanej trasie
-     * niezgodnej z profilem (`blocked`) ma 0 — popularność nie nadpisuje
-     * profilu roweru.
+     * kuratorowana, nie „ostatnio jeżdżona". Profil nie zmienia samego
+     * RidemoreScore — jego zgodność jest osobnym kosztem wariantu.
      *
-     * @param array{riders:int,passes:int,known:bool,mine:int,ageDays?:?int,blocked?:bool,trail?:int} $s
+     * @param array{riders:int,passes:int,known:bool,mine:int,ageDays?:?int,trail?:int} $s
      * @param array{riders:float,passes:float} $ref
      * @param array{mine:bool,known:bool,community:bool} $sources
      * @param ?array{legalRatio:float,minAsphaltPct:?int,trailBonus:float} $profile brak = PARAMS['defaultProfile']
@@ -279,9 +322,6 @@ final class RidemoreRouting
     {
         $p = self::PARAMS;
         $profile ??= $p['defaultProfile'];
-        if (!empty($s['blocked'])) {
-            return 0.0;
-        }
         $fresh = self::recencyFactor($s['ageDays'] ?? null);
         $score = 0.0;
         if (!empty($sources['community']) && $s['riders'] >= $p['minCommunityRiders']) {
@@ -290,11 +330,7 @@ final class RidemoreRouting
             $score = ($p['weightRiders'] * $pop + $p['weightPasses'] * $rep) * $fresh;
         }
         if (!empty($sources['known']) && $s['known']) {
-            $known = $p['knownFloor'];
-            if (($s['trail'] ?? 0) >= $p['trailPct']) {
-                $known += $profile['trailBonus'];
-            }
-            $score = max($score, min(1.0, $known));
+            $score = max($score, $p['knownFloor']);
         }
         if (!empty($sources['mine']) && $s['mine'] > 0) {
             $score = max($score, min(1.0, $p['mineFloor'] + $p['mineStep'] * ($s['mine'] - 1)) * $fresh);
@@ -379,6 +415,9 @@ final class RidemoreRouting
             : self::PARAMS['defaultProfile'];
         $today = strtotime((string) ($opts['today'] ?? date('Y-m-d')));
         $counts = $profile['countsRidesOf'];
+        $routingPreferences = is_array($opts['routingPreferences'] ?? null)
+            ? $opts['routingPreferences']
+            : RoutingPreferences::resolve((string) ($profile['code'] ?? ''), 'balanced');
         foreach ($lines as $j => $line) {
             // Przejazdy na rowerze, którego ten profil nie uznaje za dowód (np.
             // MTB dla szosy), nie są wsparciem. Właściciel zostaje, jeśli choć
@@ -405,8 +444,6 @@ final class RidemoreRouting
                 }
             }
             $lines[$j]['ageDays'] = $last !== null ? max(0, (int) floor(($today - strtotime($last)) / 86400)) : null;
-            $asphalt = $line['surface']['asphalt'] ?? null;
-            $lines[$j]['fits'] = $profile['minAsphaltPct'] === null || $asphalt === null || $asphalt >= $profile['minAsphaltPct'];
         }
 
         $mpp = $area['mpp'];
@@ -426,24 +463,39 @@ final class RidemoreRouting
             // dziurach dotyczy wyłącznie nagrań GPS (utrata sygnału, pauza).
             $gapLimit2 = !empty($line['known']) ? INF : $maxGap2;
             $f = $line['flat'];
+            $prefix = [0.0];
+            for ($i = 2, $n = count($f); $i + 1 < $n; $i += 2) {
+                $prefix[] = end($prefix) + hypot($f[$i] - $f[$i - 2], $f[$i + 1] - $f[$i - 1]);
+            }
+            $totalPx = max(1e-9, (float) end($prefix));
+            $attrFrom = (float) ($line['attributeFrom'] ?? 0.0);
+            $attrTo = (float) ($line['attributeTo'] ?? 1.0);
             $cur = [];
+            $curFrom = null;
+            $curTo = null;
             for ($i = 0, $n = count($f); $i + 1 < $n; $i += 2) {
                 $x = $f[$i];
                 $y = $f[$i + 1];
+                $vertex = intdiv($i, 2);
+                $ratio = $attrFrom + ($attrTo - $attrFrom) * ($prefix[$vertex] / $totalPx);
                 $inside = $x >= $clip[0] && $x <= $clip[2] && $y >= $clip[1] && $y <= $clip[3];
                 $jump = $cur && (($x - $cur[count($cur) - 2]) ** 2 + ($y - $cur[count($cur) - 1]) ** 2) > $gapLimit2;
                 if (!$inside || $jump) {
                     if (count($cur) >= 4) {
-                        $clipped[] = self::withFlat($line, $cur);
+                        $clipped[] = self::withFlat($line, $cur, $curFrom, $curTo);
                     }
                     $cur = $inside ? [$x, $y] : [];
+                    $curFrom = $inside ? $ratio : null;
+                    $curTo = $inside ? $ratio : null;
                     continue;
                 }
+                $curFrom ??= $ratio;
+                $curTo = $ratio;
                 $cur[] = $x;
                 $cur[] = $y;
             }
             if (count($cur) >= 4) {
-                $clipped[] = self::withFlat($line, $cur);
+                $clipped[] = self::withFlat($line, $cur, $curFrom, $curTo);
             }
         }
 
@@ -453,10 +505,11 @@ final class RidemoreRouting
             'lines' => $clipped, 'flats' => $flats, 'grid' => RouteSnap::gridIndex($flats, $cell, $clip),
             'cell' => $cell, 'radiusPx' => $radiusPx, 'mpp' => $mpp,
             'ref' => $ref, 'sources' => $sources, 'self' => $self, 'clip' => $clip, 'profile' => $profile,
+            'routingPreferences' => $routingPreferences,
         ];
     }
 
-    private static function withFlat(array $line, array $flat): array
+    private static function withFlat(array $line, array $flat, ?float $attributeFrom = null, ?float $attributeTo = null): array
     {
         $xs = [];
         $ys = [];
@@ -469,6 +522,20 @@ final class RidemoreRouting
         $line['maxPx'] = max($xs);
         $line['minPy'] = min($ys);
         $line['maxPy'] = max($ys);
+        if ($attributeFrom !== null && $attributeTo !== null) {
+            $line['attributeFrom'] = $attributeFrom;
+            $line['attributeTo'] = $attributeTo;
+            $prefix = [0.0];
+            for ($i = 1; $i < count($xs); $i++) {
+                $prefix[] = end($prefix) + hypot($xs[$i] - $xs[$i - 1], $ys[$i] - $ys[$i - 1]);
+            }
+            $total = max(1e-9, (float) end($prefix));
+            $line['attributeRatios'] = array_map(
+                static fn(float $distance): float => $attributeFrom
+                    + ($attributeTo - $attributeFrom) * ($distance / $total),
+                $prefix
+            );
+        }
         return $line;
     }
 
@@ -536,11 +603,11 @@ final class RidemoreRouting
      * supportRadiusM, czy leży tam znana trasa i ile razy jechał tędy
      * pytający (`mine`). Ten sam przejazd w pełnej i przyciętej kopii liczy
      * się raz (po hashu). Do tego: wiek najświeższego przejazdu (`ageDays`),
-     * % terenu znanej trasy (`trail`) i `blocked` — w pobliżu jest wyłącznie
-     * znana trasa NIEZGODNA z profilem roweru.
+     * % terenu znanej trasy (`trail`). Zgodność nawierzchni jest kosztem
+     * kandydata, a nie twardym odrzuceniem sondy.
      *
      * @param list<array{0:int,1:int}> $probes
-     * @return list<array{riders:int,passes:int,known:bool,mine:int,ageDays:?int,blocked:bool,trail:int}>
+     * @return list<array{riders:int,passes:int,known:bool,mine:int,ageDays:?int,trail:int}>
      */
     private static function support(array $probes, array $ctx): array
     {
@@ -548,8 +615,8 @@ final class RidemoreRouting
         $perProbe = [];
         foreach ($near as $j => $matches) {
             $hash = $ctx['lines'][$j]['hash'];
-            foreach ($matches as $k => $_) {
-                $perProbe[$k][$hash] = $j;
+            foreach ($matches as $k => $vertex) {
+                $perProbe[$k][$hash] = [$j, $vertex];
             }
         }
         $cap = self::PARAMS['passCapPerRider'];
@@ -557,18 +624,26 @@ final class RidemoreRouting
         foreach ($probes as $k => $_) {
             $owners = [];
             $known = false;
-            $unfit = false;
             $trail = 0;
             $age = null;
-            foreach ($perProbe[$k] ?? [] as $j) {
+            $attribute = null;
+            $attributeRank = PHP_INT_MAX;
+            foreach ($perProbe[$k] ?? [] as [$j, $vertex]) {
                 $line = $ctx['lines'][$j];
-                if (!empty($line['known'])) {
-                    if ($line['fits'] ?? true) {
-                        $known = true;
-                        $trail = max($trail, (int) ($line['surface']['trail'] ?? 0));
-                    } else {
-                        $unfit = true;
+                if (is_array($line['attributes'] ?? null)
+                    && isset($line['attributeRatios'][$vertex])
+                    && (int) ($line['rank'] ?? PHP_INT_MAX) < $attributeRank) {
+                    $candidateAttribute = RoutingPreferences::attributeAt(
+                        $line['attributes'], (float) $line['attributeRatios'][$vertex]
+                    );
+                    if ($candidateAttribute !== null) {
+                        $attribute = $candidateAttribute;
+                        $attributeRank = (int) ($line['rank'] ?? PHP_INT_MAX);
                     }
+                }
+                if (!empty($line['known'])) {
+                    $known = true;
+                    $trail = max($trail, (int) ($line['surface']['trail'] ?? 0));
                     continue;
                 }
                 foreach ($line['owners'] ?? [] as $owner => $info) {
@@ -588,11 +663,48 @@ final class RidemoreRouting
                 'known'   => $known,
                 'mine'    => $ctx['self'] !== null ? ($owners[$ctx['self']] ?? 0) : 0,
                 'ageDays' => $age,
-                'blocked' => $unfit && !$known,
                 'trail'   => $trail,
+                'attribute' => $attribute,
             ];
         }
         return $out;
+    }
+
+    /** Histogram atrybutów rzeczywiście pokrytych przez próbki danej geometrii. */
+    private static function trackAttributes(array $track): array
+    {
+        $surface = [];
+        $roads = [];
+        $matched = 0.0;
+        $total = max(0.0, (float) end($track['cumM']));
+        for ($i = 1; $i < count($track['cumM']); $i++) {
+            $length = max(0.0, $track['cumM'][$i] - $track['cumM'][$i - 1]);
+            $attribute = $track['support'][$i - 1]['attribute']
+                ?? $track['support'][$i]['attribute']
+                ?? null;
+            if (!is_array($attribute) || $length <= 0.0) {
+                continue;
+            }
+            $matched += $length;
+            $surfaceKey = (string) ($attribute['surface'] ?? 'unknown');
+            $roadKey = (string) ($attribute['roadClass'] ?? 'unknown');
+            $surface[$surfaceKey] = ($surface[$surfaceKey] ?? 0.0) + $length;
+            $roads[$roadKey] = ($roads[$roadKey] ?? 0.0) + $length;
+        }
+        if ($total <= 0.0 || $matched <= 0.0) {
+            return [];
+        }
+        $percentages = static function (array $amounts) use ($total): array {
+            foreach ($amounts as $key => $amount) {
+                $amounts[$key] = 100.0 * $amount / $total;
+            }
+            return $amounts;
+        };
+        return [
+            'surface' => $percentages($surface),
+            'roadClass' => $percentages($roads),
+            'coverage' => min(1.0, $matched / $total),
+        ];
     }
 
     /**
@@ -644,7 +756,15 @@ final class RidemoreRouting
             $line = $ctx['lines'][$piece['line']];
             $track = self::track($piece['px'], $ctx, $p['maxProbesPerPiece']);
             foreach (self::runs($track['scores'], $track['cumM'], $p['minCorridorM'], $track['stepM']) as [$a, $b]) {
-                foreach (self::entryExit($track, $a, $b, $area) as $best) {
+                $attributes = is_array($line['attributes'] ?? null)
+                    ? $line['attributes']
+                    : (is_array($line['surface'] ?? null) ? $line['surface'] : []);
+                foreach (self::entryExit(
+                    $track, $a, $b, $area, $attributes,
+                    (float) ($piece['attributeFrom'] ?? 0.0),
+                    (float) ($piece['attributeTo'] ?? 1.0),
+                    $ctx['routingPreferences'], $ctx['profile']
+                ) as $best) {
                     [$i, $j] = [$best['entry'], $best['exit']];
                     [$lo, $hi] = [min($i, $j), max($i, $j)];
                     $slice = array_slice($track['dense'], $track['idx'][$lo], $track['idx'][$hi] - $track['idx'][$lo] + 1);
@@ -682,25 +802,46 @@ final class RidemoreRouting
             $f = $line['flat'];
             $run = [];
             $len = 0.0;
+            $prefix = [0.0];
+            for ($i = 2, $n = count($f); $i + 1 < $n; $i += 2) {
+                $prefix[] = end($prefix) + hypot($f[$i] - $f[$i - 2], $f[$i + 1] - $f[$i - 1]);
+            }
+            $totalPx = max(1e-9, (float) end($prefix));
+            $attrFrom = (float) ($line['attributeFrom'] ?? 0.0);
+            $attrTo = (float) ($line['attributeTo'] ?? 1.0);
+            $runFrom = null;
+            $runTo = null;
             for ($i = 0, $n = count($f); $i + 1 < $n; $i += 2) {
                 $x = $f[$i];
                 $y = $f[$i + 1];
+                $vertex = intdiv($i, 2);
+                $ratio = $attrFrom + ($attrTo - $attrFrom) * ($prefix[$vertex] / $totalPx);
                 if (hypot($x - $sx, $y - $sy) + hypot($x - $cx, $y - $cy) <= $max) {
                     if ($run) {
                         $prev = $run[count($run) - 1];
                         $len += hypot($x - $prev[0], $y - $prev[1]);
                     }
+                    $runFrom ??= $ratio;
+                    $runTo = $ratio;
                     $run[] = [$x, $y];
                     continue;
                 }
                 if ($len >= $minPx) {
-                    $out[] = ['line' => $j, 'px' => $run, 'lenPx' => $len];
+                    $out[] = [
+                        'line' => $j, 'px' => $run, 'lenPx' => $len,
+                        'attributeFrom' => $runFrom, 'attributeTo' => $runTo,
+                    ];
                 }
                 $run = [];
                 $len = 0.0;
+                $runFrom = null;
+                $runTo = null;
             }
             if ($len >= $minPx) {
-                $out[] = ['line' => $j, 'px' => $run, 'lenPx' => $len];
+                $out[] = [
+                    'line' => $j, 'px' => $run, 'lenPx' => $len,
+                    'attributeFrom' => $runFrom, 'attributeTo' => $runTo,
+                ];
             }
         }
         return $out;
@@ -768,7 +909,17 @@ final class RidemoreRouting
      *
      * @return list<array{entry:int,exit:int,lenM:float,score:float,bonusM:float,est:float}>
      */
-    private static function entryExit(array $track, int $a, int $b, array $area): array
+    private static function entryExit(
+        array $track,
+        int $a,
+        int $b,
+        array $area,
+        array $attributes,
+        float $attributeFrom,
+        float $attributeTo,
+        array $routingPreferences,
+        array $profile
+    ): array
     {
         $p = self::PARAMS;
         [$sx, $sy] = $area['S'];
@@ -816,9 +967,23 @@ final class RidemoreRouting
                 }
                 [$lo, $hi] = [min($i, $j), max($i, $j)];
                 $mean = ($pre[$hi] - ($lo > $a ? $pre[$lo - 1] : 0.0)) / ($hi - $lo + 1);
-                $bonus = self::bonusM($len, $mean);
-                $est = $p['detourFactor'] * ($info[$i][0] + $info[$j][1]) + $len - $bonus;
-                $option = ['entry' => $i, 'exit' => $j, 'lenM' => $len, 'score' => $mean, 'bonusM' => $bonus, 'est' => $est];
+                $bonus = self::bonusM($len, $mean) * (float) ($routingPreferences['popularityStrength'] ?? 1.0);
+                $trackTotal = max(1e-9, (float) end($track['cumM']));
+                $ratioI = $attributeFrom + ($attributeTo - $attributeFrom) * ($track['cumM'][$i] / $trackTotal);
+                $ratioJ = $attributeFrom + ($attributeTo - $attributeFrom) * ($track['cumM'][$j] / $trackTotal);
+                $localAttributes = RoutingPreferences::sliceAttributes($attributes, $ratioI, $ratioJ);
+                $road = RoutingPreferences::costAdjustment($routingPreferences, $localAttributes, $len);
+                $compatibility = RoutingPreferences::compatibilityPenalty(
+                    $profile['minAsphaltPct'] ?? null, $localAttributes, $len
+                );
+                $est = $p['detourFactor'] * ($info[$i][0] + $info[$j][1])
+                    + $len + $road['adjustmentM'] + $compatibility - $bonus;
+                $option = [
+                    'entry' => $i, 'exit' => $j, 'lenM' => $len, 'score' => $mean,
+                    'bonusM' => $bonus, 'preferenceM' => $road['adjustmentM'],
+                    'compatibilityM' => $compatibility,
+                    'attributeCoverage' => $road['coverage'], 'est' => $est,
+                ];
                 if ($best === null || $est < $best['est']) {
                     $best = $option;
                 }
@@ -872,7 +1037,8 @@ final class RidemoreRouting
                     continue;
                 }
                 $est = $p['detourFactor'] * ($d($area['S'], $A['entryPx']) + $d($A['exitPx'], $B['entryPx']) + $d($B['exitPx'], $area['C']))
-                    + $A['lenM'] - $A['bonusM'] + $B['lenM'] - $B['bonusM'];
+                    + $A['lenM'] + $A['preferenceM'] + $A['compatibilityM'] - $A['bonusM']
+                    + $B['lenM'] + $B['preferenceM'] + $B['compatibilityM'] - $B['bonusM'];
                 $pairs[] = ['parts' => [$a, $b], 'est' => $est];
             }
         }
@@ -886,7 +1052,7 @@ final class RidemoreRouting
      * (legalRatio), a całość mieścić się w limicie długości.
      *
      * @param array<string,callable> $T
-     * @return array{lenM:float,cost:float}|null
+     * @return array{lenM:float,cost:float,preferenceM:float,compatibilityM:float,popularityBonusM:float,attributeCoverage:float}|null
      */
     private static function evaluate(array $parts, array $candidates, array $T, float $maxLenM, float $legalRatio): ?array
     {
@@ -895,6 +1061,10 @@ final class RidemoreRouting
             return null;
         }
         $bonus = 0.0;
+        $preference = 0.0;
+        $compatibility = 0.0;
+        $coverageWeighted = 0.0;
+        $corridorM = 0.0;
         foreach ($parts as $k => $u) {
             $c = $candidates[$u];
             $through = $T['ex']($u);
@@ -903,6 +1073,10 @@ final class RidemoreRouting
             }
             $len += $c['lenM'];
             $bonus += $c['bonusM'];
+            $preference += $c['preferenceM'];
+            $compatibility += $c['compatibilityM'];
+            $coverageWeighted += $c['attributeCoverage'] * $c['lenM'];
+            $corridorM += $c['lenM'];
             $next = isset($parts[$k + 1]) ? $T['xe']($u, $parts[$k + 1]) : $T['xC']($u);
             if ($next === null) {
                 return null;
@@ -912,7 +1086,14 @@ final class RidemoreRouting
         if ($len > $maxLenM) {
             return null;
         }
-        return ['lenM' => $len, 'cost' => $len - $bonus];
+        return [
+            'lenM' => $len,
+            'cost' => $len + $preference + $compatibility - $bonus,
+            'preferenceM' => $preference,
+            'compatibilityM' => $compatibility,
+            'popularityBonusM' => $bonus,
+            'attributeCoverage' => $corridorM > 0.0 ? $coverageWeighted / $corridorM : 0.0,
+        ];
     }
 
     /**

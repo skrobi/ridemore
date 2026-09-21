@@ -1634,3 +1634,26 @@ widget dopasowania (`match-grid.php`, 2026-08-14), ekran skarbu (`.ts`,
 `.rs` to CELOWO osobny prefiks od `.ts` — ta sama sylwetka CSS, ale inny
 właściciel danych (`RiderActivity::record`, nie `Treasure::award`); kopiowanie
 klasy między nimi byłoby myleniem właściciela, nie oszczędnością.
+
+## Route Planner — preferencje routingu (2026-09-21)
+
+`views/web/pages/planner.php` nadal używa jednego istniejącego wyboru profilu
+roweru. Bezpośrednio pod nim pokazuje trzy charaktery trasy: drogowy,
+standardowy i terenowy, listę zapisów użytkownika oraz zwijane ustawienia
+zaawansowane. Zaawansowane UI grupuje wartości w osiem czytelnych kategorii;
+nie pokazuje współczynników kosztu.
+
+Stan jest rozdzielony zgodnie z odpowiedzialnością:
+
+- `assets/js/planner/route-model.js` — punkty, segmenty, sygnatura kontekstu i
+  payload kalkulacji/zapisu;
+- `assets/js/planner/routing-preferences.js` — czysty stan presetów,
+  konfiguracji użytkownika i override'ów;
+- `assets/js/planner.js` — Leaflet, requesty i DOM.
+
+Zmiana charakteru lub wartości unieważnia segmenty i jawnie pokazuje
+„Przeliczam trasę…”. Zapis/edycja/usunięcie/ustawienie domyślnej konfiguracji
+korzysta z endpointów planera. Wczytanie zapisanej trasy odtwarza jej snapshot,
+a nie bieżącą wersję nazwanego profilu. Snapshot jest zawsze odłączony od id
+konfiguracji użytkownika: można go zapisać jako nowy profil, ale nie nadpisze
+bez ostrzeżenia nowszej wersji profilu, z którego trasa pierwotnie korzystała.

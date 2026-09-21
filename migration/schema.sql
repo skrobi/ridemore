@@ -1469,7 +1469,28 @@ CREATE TABLE content_translations (
   CONSTRAINT fk_ct_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ROUTE PLANNER, prywatne robocze trasy usera (migr. 090, 2026-09-17).
+-- NAZWANE PREFERENCJE ROUTINGU użytkownika (migr. 092, 2026-09-21).
+-- Każdy wpis rozszerza istniejący słownik `bike_type`; nie jest drugim
+-- systemem profili roweru. NULL w is_default pozwala mieć wiele wpisów
+-- niedomyślnych i najwyżej jeden domyślny dla pary user + typ roweru.
+CREATE TABLE planner_routing_configs (
+  id                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id           BIGINT UNSIGNED NOT NULL,
+  bike_type_item_id INT UNSIGNED NOT NULL,
+  name              VARCHAR(80) NOT NULL,
+  character_code    VARCHAR(16) NOT NULL DEFAULT 'balanced',
+  preferences_json  JSON NOT NULL,
+  is_default        TINYINT UNSIGNED NULL DEFAULT NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_planner_routing_name (user_id, name),
+  UNIQUE KEY uq_planner_routing_default (user_id, bike_type_item_id, is_default),
+  KEY idx_planner_routing_profile (user_id, bike_type_item_id, updated_at),
+  CONSTRAINT fk_planner_routing_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT fk_planner_routing_bike FOREIGN KEY (bike_type_item_id) REFERENCES dictionary_items (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ROUTE PLANNER, prywatne robocze trasy usera (migr. 090–092, 2026-09-17).
 -- `engine`/`profile` = prowenencja wyliczenia (którym silnikiem/dla jakiego
 -- roweru), na wypadek przyszłej zmiany silnika routingu.
 CREATE TABLE planned_routes (
@@ -1484,8 +1505,12 @@ CREATE TABLE planned_routes (
   duration_min   INT UNSIGNED NULL,
   engine         VARCHAR(20) NOT NULL DEFAULT 'osrm-public',
   profile        VARCHAR(64) NOT NULL DEFAULT 'cycling',   -- kod typu roweru (migr. 091)
+  routing_config_id BIGINT UNSIGNED NULL,
+  routing_preferences_json JSON NULL,
   created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_planned_routes_user (user_id, updated_at),
-  CONSTRAINT fk_planned_routes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+  KEY idx_planned_route_routing_config (routing_config_id),
+  CONSTRAINT fk_planned_routes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT fk_planned_route_routing_config FOREIGN KEY (routing_config_id) REFERENCES planner_routing_configs (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

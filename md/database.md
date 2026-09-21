@@ -817,6 +817,22 @@ finalna opinia prawna.
 - IDOR pilnowany w SQL (`WHERE id = :id AND user_id = :user_id`), nie w kodzie —
   patrz `Models\PlannedRoute::findForUser`/`update`.
 
+## `planner_routing_configs` + snapshot trasy (migr. 092, 2026-09-21)
+
+- Nazwana konfiguracja **rozszerza istniejący** `dictionary_items` ze słownika
+  `bike_type` przez `bike_type_item_id`; nie powstaje drugi profil roweru.
+- `character_code` to prosty preset `road|balanced|offroad`, a
+  `preferences_json` przechowuje znormalizowane wagi nawierzchni i klas dróg.
+  Globalnych presetów nie zapisujemy w DB, więc użytkownik nie może ich
+  nadpisać.
+- Unikalne `(user_id, name)` pilnuje nazw. `is_default` ma wartość `1` albo
+  `NULL`, dzięki czemu indeks `(user_id, bike_type_item_id, is_default)`
+  dopuszcza wiele konfiguracji i najwyżej jedną domyślną na profil.
+- `planned_routes.routing_config_id` wskazuje nazwany zapis, ale ma `ON DELETE
+  SET NULL`. Niezależny `routing_preferences_json` jest snapshotem użytym do
+  obliczenia trasy, więc skasowanie lub późniejsza edycja konfiguracji nie
+  zmienia historycznej trasy.
+
 ## Kamienie milowe migracji (skrót historii)
 
 `001` auth · `002` region · `003` edycja eventu + współpracownicy/rozliczenia · `004(b)` profil
