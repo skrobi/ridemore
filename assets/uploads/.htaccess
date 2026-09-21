@@ -1,0 +1,20 @@
+# Warstwa obrony w głąb: katalog przyjmuje pliki wgrywane przez userów
+# (zdjęcia, GPX). Nazwy plików są dziś generowane losowo przez Utils\Upload,
+# więc wykonanie .php nie powinno tu być możliwe — ale to jedyna linia
+# obrony, gdyby to się kiedyś zmieniło (nowy typ MIME, nowy endpoint importu).
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+
+<FilesMatch "\.(php|php\d?|phtml|phar)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
