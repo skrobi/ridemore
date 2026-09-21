@@ -120,16 +120,20 @@ function rr_route(array $fromXY, array $toXY, array $lines, array $opts = []): a
         rr_pt(...$fromXY), rr_pt(...$toXY), $baseline, $lines,
         $opts['ref'] ?? ['riders' => 0.0, 'passes' => 0.0], $sources, $opts['self'] ?? null,
         $table, $legs, 25000 / 3600,
-        ['profile' => $opts['profile'] ?? 'road', 'today' => $opts['today'] ?? '2026-09-19']
+        [
+            'profile' => $opts['profile'] ?? 'road',
+            'today' => $opts['today'] ?? '2026-09-19',
+            'preferredKeys' => $opts['preferredKeys'] ?? [],
+        ]
     );
     return ['result' => $result, 'calls' => $calls];
 }
 
 // --- Parametry: limit wydłużenia, bonus, RidemoreScore -------------------
 
-t_test('Limit wydłużenia zależy od długości trasy bazowej (+25% / +15% / +12%, najwyżej +8 km)', function () {
-    t_true(abs(RidemoreRouting::maxLengthM(8000) - 10000) < 0.01, 'krótka 8 km → 10 km');
-    t_true(abs(RidemoreRouting::maxLengthM(20000) - 23000) < 0.01, 'średnia 20 km → 23 km');
+t_test('Płynny budżet objazdu: minimum +4 km, potem 12%, najwyżej +8 km', function () {
+    t_true(abs(RidemoreRouting::maxLengthM(8000) - 12000) < 0.01, 'krótka 8 km → 12 km');
+    t_true(abs(RidemoreRouting::maxLengthM(20000) - 24000) < 0.01, 'średnia 20 km → 24 km');
     t_true(abs(RidemoreRouting::maxLengthM(60000) - 67200) < 0.01, 'długa 60 km → 67,2 km');
     t_true(abs(RidemoreRouting::maxLengthM(100000) - 108000) < 0.01, 'bardzo długa: nie więcej niż +8 km');
 });
@@ -180,6 +184,17 @@ t_test('Przypadek 1: najkrótsza trasa jest też popularna — zostaje trasa baz
     t_same('osrm', $r['result']['variant']['chosen'], 'wybór');
 });
 
+t_test('Ciągłość: poprzednio wybrany korytarz nie znika przez lokalny objazd', function () {
+    $line = rr_line([[2500, 3000], [17500, 3000]], 'known', [], 'Szlak');
+    $withoutState = rr_route([0, 0], [20000, 0], [$line]);
+    t_null($withoutState['result']['segment'], 'sam lokalny objazd nie wygrywa z bazą');
+
+    $withState = rr_route([0, 0], [20000, 0], [$line], ['preferredKeys' => [$line['hash']]]);
+    t_same('ridemore', $withState['result']['variant']['chosen'], 'utrzymuje ten sam korytarz');
+    t_true($withState['result']['variant']['extraM'] > 2000, 'akceptuje kilka kilometrów dodatkowej drogi');
+    t_same([$line['hash']], $withState['result']['continuityKeys'], 'przekazuje stan do kolejnego odcinka');
+});
+
 t_test('Przypadek 2: popularna trasa +5% — wygrywa korytarz', function () {
     $r = rr_route([0, 0], [20000, 0], [rr_line([[2500, 1658], [17500, 1658]], 'known', [], 'Szlak')]);
     $v = $r['result']['variant'];
@@ -191,7 +206,7 @@ t_test('Przypadek 2: popularna trasa +5% — wygrywa korytarz', function () {
     t_same(1, $r['calls']['legs'], 'jedno zapytanie o geometrię');
 });
 
-t_test('Przypadek 3: popularna trasa +20% — poza limitem +15%, zostaje trasa bazowa', function () {
+t_test('Przypadek 3: popularna trasa ponad 4 km dłuższa — poza budżetem, zostaje trasa bazowa', function () {
     $r = rr_route([0, 0], [20000, 0], [rr_line([[1000, 2828], [19000, 2828]], 'known')]);
     t_same('osrm', $r['result']['variant']['chosen'], 'wybór');
 });

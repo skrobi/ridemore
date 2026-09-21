@@ -1,7 +1,7 @@
 // tests/planner_kolejnosc.js
 // Sterownik Node dla tests/planner_kolejnosc_test.php. Wczytuje PRAWDZIWY
-// assets/js/planner.js — bez DOM-u plik kończy się na modelu trasy
-// (RidemorePlannerRoute) — i przepuszcza przez niego scenariusze ze
+// assets/js/planner/route-model.js (RidemorePlannerRoute) i przepuszcza przez
+// niego scenariusze ze
 // zgłoszenia 2026-09-18 („NOWY ląduje na końcu"). Te same wywołania co UI:
 // przeciągnięcie odcinka = insertBetween(id poprzedniego, id następnego),
 // przesunięcie markera = moveWaypoint(indeks po id). Wypisuje JSON, asercje
@@ -12,13 +12,13 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'planner.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'planner', 'route-model.js'), 'utf8');
 const sandbox = {};
 vm.createContext(sandbox);
-vm.runInContext(source, sandbox, { filename: 'planner.js' });
+vm.runInContext(source, sandbox, { filename: 'route-model.js' });
 const Route = sandbox.RidemorePlannerRoute;
 if (!Route || typeof Route.create !== 'function') {
-    process.stdout.write(JSON.stringify({ error: 'planner.js nie wystawił RidemorePlannerRoute.create' }));
+    process.stdout.write(JSON.stringify({ error: 'route-model.js nie wystawił RidemorePlannerRoute.create' }));
     process.exit(1);
 }
 

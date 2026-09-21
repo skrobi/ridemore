@@ -22,7 +22,9 @@ wymagałyby dużego objazdu.
    nic o RidemoreScore.
 2. **Popularność to BONUS, nigdy kara.** Brak danych Ridemore = sygnał
    neutralny. OSM zawsze jest wariantem zapasowym.
-3. **Twardy limit wydłużenia** względem trasy bazowej OSRM, zależny od długości.
+3. **Twardy budżet wydłużenia** względem trasy bazowej OSRM: płynna
+   funkcja bez progów, z miejscem na lokalny zjazd i powrót. Zmienione
+   decyzją usera 2026-09-21; dawne progi 12–25% zostały odrzucone.
 4. **OSM rozstrzyga, czy tędy da się jechać** — popularność nie może wybrać
    drogi niedostępnej, nieprzejezdnej ani absurdalnej.
 5. **Długi, spójny korytarz > krótkie kawałki** (100 m popularności nie
@@ -62,7 +64,8 @@ wymagałyby dużego objazdu.
 ```
 planner.js → /api/planer/oblicz → PlannerController::sourceSegments()
    przełącznik „Dołączaj dłuższe odcinki Ridemore" WYŁ. → samo przyciąganie (jak dotąd)
-   WŁ. → na każdy odcinek (para punktów), z pamięcią wyniku na dobę:
+   WŁ. → kolejne odcinki (pary punktów) ze stanem wybranego korytarza
+      przekazywanym między nimi i z pamięcią wyniku na dobę:
       RoutingProxy::route          trasa bazowa (rowerowy OSRM)
       RidemoreRouting::area        elipsa START–CEL z limitu wydłużenia + kafle z14
       RidemoreCorridors::lines     linie zaznaczonych źródeł w elipsie + kto nimi jechał
@@ -202,6 +205,27 @@ Zapytanie SQL tylko do odczytu (wolumeny, rozkład osób na pole, udział
 jednego jeźdźca) do uruchomienia przez usera; potem strojenie `bonusPerM`,
 limitów i progów w `RidemoreRouting::PARAMS`.
 
+### Etap 2g — ciągłość korytarza i płynny budżet objazdu — ZROBIONY 2026-09-21
+
+- Usunięte skokowe progi 12–25%. Limit jest ograniczeniem zasobu
+  (epsilon-constraint): `min(8 km, max(4 km, 12% trasy bazowej))`. Daje to
+  kilka kilometrów na lokalny zjazd i powrót także na krótkiej trasie,
+  ale nie pozwala popularności kupić dowolnie długiego objazdu.
+- `sourceSegments()` przekazuje hash wybranego korytarza do następnej pary
+  waypointów. Ten sam korytarz dostaje premię przejścia (histerezę), więc
+  lokalny szum kosztu ani sztuczna granica waypointu nie zrywają trasy.
+  OSRM nadal musi potwierdzić przejezdność i twardy budżet.
+- To lekki odpowiednik modelu stanów z map matchingu HMM: obserwacją jest
+  koszt aktualnego wariantu, a przejściem — pozostanie na tym samym korytarzu.
+  Nie budujemy pełnego grafu ani Viterbiego, bo kandydaci i warianty już są
+  jawne, a planner potrzebuje deterministycznej decyzji online.
+- Podstawa naukowa: Newson i Krumm, *Hidden Markov Map Matching Through Noise
+  and Sparseness* (2009); Brakatsoulas i in., *On Map-Matching Vehicle
+  Tracking Data* (2005); Beasley i Christofides, resource-constrained
+  shortest path (1989); Broach i in., cyclist route-choice utility (2012).
+- Test regresyjny rozróżnia ten sam boczny korytarz bez stanu (przegrywa)
+  i po wcześniejszym wyborze (zostaje wybrany i przekazuje stan dalej).
+
 ### V3 — poza zakresem tego kontraktu
 
 GraphHopper / własny routing / wagi krawędzi — decyzja dopiero po zebraniu
@@ -211,8 +235,9 @@ danych z Etapów 2d i 2f.
 
 1. Popularny korytarz tylko nieznacznie dłuższy od trasy OSRM jest wybierany;
    duży objazd wraca do OSRM. — *Etap 1: testy 2, 3, 4; na żywo Wiślana trasa.*
-2. Wydłużenie nigdy nie przekracza limitu (≤10 km: +25%, ≤50 km: +15%,
-   dłuższe: +12%, najwyżej +8 km). — *test limitów + 3, 10.*
+2. Wydłużenie nigdy nie przekracza płynnego budżetu: co najmniej 4 km
+   miejsca na zjazd/powrót, dalej 12% trasy, najwyżej +8 km.
+   — *test budżetu + przypadki 3, 10.*
 3. Korytarz, którego rowerowy OSRM nie przejedzie (wejście→wyjście > 1,3×),
    odpada. — *test 16; na żywo Przełom Dunajca odrzucony (35 km zamiast 9,4).*
 4. Brak danych Ridemore = zero dodatkowych zapytań do OSRM. — *test 8.*
@@ -224,6 +249,8 @@ danych z Etapów 2d i 2f.
    pokazać powód. — *Etap 1; komunikat w Etapie 2c.*
 9. Profile Szosa/Gravel/MTB wpływają na wybór. — *Etap 2b: testy 11, 11b, 12, 13, przejezdność per profil.*
 10. `php tests/run.php planner` zielone.
+11. Ten sam korytarz jest utrzymywany między kolejnymi waypointami, o ile
+    nadal mieści się w budżecie i jest przejezdny. — *test ciągłości.*
 
 ## Testy — przypadki z planu
 

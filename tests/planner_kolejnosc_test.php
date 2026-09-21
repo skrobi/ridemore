@@ -3,7 +3,7 @@
 // ROUTE PLANNER — MODEL TRASY I KOLEJNOŚĆ WAYPOINTÓW (zgłoszenie 2026-09-18:
 // przeciągnięty odcinek A–B dawał START → A → NOWY → B → CEL → NOWY).
 //
-// Model żyje w JS (assets/js/planner.js, createRoute), więc test uruchamia
+// Model żyje w JS (assets/js/planner/route-model.js), więc test uruchamia
 // PRAWDZIWY plik w Node przez tests/planner_kolejnosc.js — te same wywołania
 // co UI: przeciągnięcie odcinka = insertBetween(id poprzedniego, id
 // następnego), przesunięcie markera = moveWaypoint(indeks po id) — i sprawdza
@@ -21,7 +21,7 @@ function planner_kolejnosc_wynik(): array
         exec('node ' . escapeshellarg(__DIR__ . '/planner_kolejnosc.js') . ' 2>&1', $linie, $kod);
         $dane = json_decode(implode("\n", $linie), true);
         if ($kod !== 0 || !is_array($dane) || isset($dane['error'])) {
-            t_fail('Node nie uruchomił modelu trasy z assets/js/planner.js (kod ' . $kod . '): '
+            t_fail('Node nie uruchomił modelu trasy z assets/js/planner/route-model.js (kod ' . $kod . '): '
                 . implode(' | ', array_slice($linie, 0, 5)));
         }
         $wynik = $dane;

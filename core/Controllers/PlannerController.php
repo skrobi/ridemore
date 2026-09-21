@@ -401,15 +401,23 @@ class PlannerController
             return array_map(static fn(array $route): array => self::preferSegment($route, $lines), $natural);
         }
 
-        // Warstwa Ridemore — odcinek po odcinku, póki starcza budżetu czasu
-        // (nowe odcinki czekają na OSRM: jedno zapytanie na sekundę).
+        // Warstwa Ridemore — odcinek po odcinku, póki starcza budżetu czasu.
+        // Wybrane korytarze są stanem przejścia dla kolejnego odcinka:
+        // planer nie porzuca tej samej drogi tylko dlatego, że waypoint dzieli
+        // ją na dwie osobno liczone pary punktów.
         $deadline = microtime(true) + self::LAYER_BUDGET_S;
         $fingerprint = RidemoreCorridors::fingerprint();
         $segments = [];
+        $preferredKeys = [];
         foreach ($natural as $i => $route) {
-            $segments[] = microtime(true) < $deadline
-                ? self::ridemoreSegment($waypoints[$i], $waypoints[$i + 1], $route, $sources, $fingerprint, $bike)
+            $segment = microtime(true) < $deadline
+                ? self::ridemoreSegment($waypoints[$i], $waypoints[$i + 1], $route, $sources, $fingerprint, $bike, $preferredKeys)
                 : self::preferSegment($route, []);
+            if (array_key_exists('_continuity', $segment)) {
+                $preferredKeys = $segment['_continuity'];
+                unset($segment['_continuity']);
+            }
+            $segments[] = $segment;
         }
         return $segments;
     }
@@ -420,13 +428,21 @@ class PlannerController
      * i parametrów warstwy — przeliczenie całej trasy po przesunięciu jednego
      * punktu nie liczy od nowa odcinków, których zmiana nie dotyczy.
      */
-    private static function ridemoreSegment(array $from, array $to, array $baseline, array $sources, string $fingerprint, array $bike): array
+    private static function ridemoreSegment(
+        array $from,
+        array $to,
+        array $baseline,
+        array $sources,
+        string $fingerprint,
+        array $bike,
+        array $preferredKeys = []
+    ): array
     {
         $user = Auth::user();
         $self = $user !== null ? 'u' . $user->id : null;
         $cacheKey = hash('sha256', serialize([
             round($from['lat'], 5), round($from['lng'], 5), round($to['lat'], 5), round($to['lng'], 5),
-            $sources, $sources['mine'] ? $self : null, $fingerprint, RidemoreRouting::PARAMS, $bike,
+            $sources, $sources['mine'] ? $self : null, $fingerprint, RidemoreRouting::PARAMS, $bike, $preferredKeys,
         ]));
         $cached = self::layerCacheGet($cacheKey);
         if ($cached !== null) {
@@ -442,11 +458,14 @@ class PlannerController
             static fn(array $points, array $src, array $dst): ?array => RoutingProxy::table($points, $src, $dst, $bike['profile'], $bike['baseUrl']),
             static fn(array $waypoints): ?array => RoutingProxy::routeLegs($waypoints, $bike['profile'], $bike['baseUrl']),
             self::ASSUMED_SPEED_MPS,
-            ['profile' => $bike['rules']]
+            ['profile' => $bike['rules'], 'preferredKeys' => $preferredKeys]
         );
         // Wygrała trasa bazowa: dalej jedzie po liniach, wzdłuż których i tak biegnie.
         $segment = $result['segment'] ?? self::preferSegment($baseline, $lines);
         $segment['variant'] = $result['variant'];
+        // Gdy baza już biegnie korytarzem, route() słusznie jej nie zmienia;
+        // stan zachowujemy, aby kolejny waypoint nie zrywał ciągłości.
+        $segment['_continuity'] = $result['continuityKeys'] ?? $preferredKeys;
 
         if (empty($result['degraded'])) {
             self::layerCachePut($cacheKey, $segment);

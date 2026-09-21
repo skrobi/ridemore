@@ -2804,7 +2804,7 @@ return array (
   'kliknij, by dodać jako cel lub po drodze' => 'click to add as the finish or on the way',
   'Działanie planera' => 'Planner behaviour',
   'Dołączaj dłuższe odcinki Ridemore' => 'Join longer Ridemore sections',
-  'Planer sam wybierze sprawdzone odcinki Ridemore, jeśli nadłożą najwyżej 12–25% drogi (im dłuższa trasa, tym mniej). Wyłączone: tylko odcinki, którymi trasa i tak biegnie.' => 'The planner picks proven Ridemore sections on its own if they add at most 12–25% to the distance (less on longer routes). Off: only sections the route already follows.',
+  'Planer porównuje dystans, jakość i ciągłość trasy. Gdy już prowadzi korytarzem Ridemore, utrzymuje go między kolejnymi punktami i może zaakceptować kilka kilometrów dodatkowej drogi, jeśli OSRM potwierdzi przejezdny powrót.' => 'The planner compares distance, quality and route continuity. Once it follows a Ridemore corridor, it keeps it across consecutive waypoints and may accept a few extra kilometres if OSRM confirms a rideable return.',
   '+{km} km — prowadzi sprawdzonymi odcinkami Ridemore' => '+{km} km — follows proven Ridemore sections',
   'Prowadzi sprawdzonymi odcinkami Ridemore' => 'Follows proven Ridemore sections',
   'liczba osób: {n}' => 'riders: {n}',
