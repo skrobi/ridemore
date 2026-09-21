@@ -1,0 +1,493 @@
+<!-- /admin/profil-organizatora.html — ridemore.bike — profil organizatora -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Profil organizatora — ridemore.bike</title>
+<style>
+:root{
+  --paper:#F4F5F1;--card:#FFFFFF;--tint:#EDF1EC;--line:#E2E5DD;--line-2:#D3D8CE;
+  --ink:#15201A;--tx-2:#5E6A62;--tx-3:#8A948C;
+  --pine:#1E4B38;--pine-2:#2C6B4F;--blaze:#FFC93F;
+  --s-red:#C3382F;--s-blue:#2B57C8;--s-green:#2E7D4F;
+  --f-d:"Archivo",system-ui,sans-serif;--f-b:"Instrument Sans",system-ui,sans-serif;--f-m:"IBM Plex Mono",monospace;
+  --gut:clamp(1.1rem,4vw,3.5rem);--max:1240px;--r:14px;--r-l:20px;
+  --e:cubic-bezier(.22,.61,.36,1);--sh:0 1px 2px rgba(21,32,26,.04),0 10px 26px -20px rgba(21,32,26,.30);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-b);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--f-d);font-weight:700;margin:0;line-height:1.1;font-variation-settings:"wdth" 110;letter-spacing:-.025em}
+p{margin:0}a{color:inherit}img{max-width:100%;display:block}
+:focus-visible{outline:3px solid var(--pine);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--max);margin:0 auto;padding-inline:var(--gut)}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+[hidden]{display:none!important}
+.blaze{width:14px;height:22px;flex:none;border-radius:2px;background:linear-gradient(#fff 0 33.3%,var(--bz,var(--s-red)) 33.3% 66.6%,#fff 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.12)}
+
+/* przyciski — min 44px wysokości (reguła Touch & Interaction) */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-family:var(--f-b);font-weight:600;font-size:.95rem;min-height:48px;padding:.7rem 1.35rem;border-radius:999px;border:1px solid transparent;text-decoration:none;cursor:pointer;transition:.18s var(--e)}
+.btn:hover{transform:translateY(-1px)}
+.btn--pine{background:var(--pine);color:#fff}.btn--pine:hover{background:var(--pine-2)}
+.btn--ghost{border-color:var(--line-2);background:var(--card)}.btn--ghost:hover{border-color:var(--ink)}
+.btn--sm{min-height:44px;padding:.5rem 1.05rem;font-size:.88rem}
+.btn--danger{border-color:#E7C4C1;background:var(--card);color:var(--s-red)}
+.btn--danger:hover{border-color:var(--s-red)}
+
+/* Header */
+.hdr{position:sticky;top:0;z-index:80;background:rgba(244,245,241,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hdr__in{display:flex;align-items:center;gap:1.5rem;height:62px}
+.logo{font-family:var(--f-d);font-weight:800;font-variation-settings:"wdth" 100;font-size:1.08rem;letter-spacing:-.03em;text-decoration:none;display:flex;align-items:center;gap:.5rem}
+.logo b{color:var(--pine)}
+.logo .mark{width:13px;height:21px;border-radius:2px;background:linear-gradient(var(--paper) 0 33.3%,var(--blaze) 33.3% 66.6%,var(--paper) 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.15)}
+.hdr__x{margin-left:auto;font-size:.9rem;color:var(--tx-2);text-decoration:none}
+.hdr__x:hover{color:var(--ink)}
+
+.crumb{font-family:var(--f-m);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-3);padding-top:1.2rem}
+.crumb a{text-decoration:none}.crumb a:hover{color:var(--pine)}
+.top{padding-block:.8rem 0}
+.top h1{font-size:clamp(1.7rem,3.6vw,2.5rem);font-variation-settings:"wdth" 116}
+.top p{margin-top:.6rem;color:var(--tx-2);max-width:64ch}
+
+/* ===== UKŁAD: szyna + treść ===== */
+.layout{display:grid;grid-template-columns:252px 1fr;gap:clamp(1.2rem,3vw,2.2rem);align-items:start;padding-block:1.6rem 3.5rem}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.rail{position:sticky;top:78px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);padding:.55rem;box-shadow:var(--sh)}
+.rail a{display:flex;align-items:center;gap:.65rem;min-height:48px;padding:.6rem .8rem;border-radius:12px;text-decoration:none;color:var(--tx-2);font-size:.95rem}
+.rail a:hover{background:var(--tint);color:var(--ink)}
+.rail a[aria-current="page"]{background:var(--ink);color:#fff}
+.rail svg{flex:none;opacity:.85}
+.rail .warn-dot{width:7px;height:7px;border-radius:50%;background:var(--blaze);margin-left:auto;flex:none}
+.rail__sep{height:1px;background:var(--line);margin:.5rem .8rem}
+.rail__note{padding:.6rem .8rem .3rem;font-size:.82rem;color:var(--tx-3)}
+.rail__note a{display:inline;min-height:0;padding:0;color:var(--pine);text-decoration:underline;text-underline-offset:3px}
+@media(max-width:900px){
+  .rail{position:static;display:flex;gap:.35rem;overflow-x:auto;scrollbar-width:none;padding:.45rem}
+  .rail::-webkit-scrollbar{display:none}
+  .rail a{white-space:nowrap;border-radius:999px}
+  .rail__sep,.rail__note{display:none}
+}
+
+/* ===== PANELE I KARTY ===== */
+.panel[hidden]{display:none}
+.panel > h2{font-size:clamp(1.35rem,2.4vw,1.8rem);margin-bottom:.4rem}
+.panel > .intro{color:var(--tx-2);margin-bottom:1.2rem;max-width:66ch;font-size:.97rem}
+.fs{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);padding:1.25rem 1.35rem 1.35rem;box-shadow:var(--sh);margin-bottom:1rem}
+.fs h3{font-size:1.05rem;margin-bottom:.3rem}
+.fs__d{color:var(--tx-2);font-size:.92rem;margin-bottom:1.1rem}
+.fs h4{font-family:var(--f-d);font-size:.95rem;margin:1.3rem 0 .6rem;font-weight:700}
+.vis{display:inline-flex;align-items:center;gap:.3rem;font-family:var(--f-m);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .5rem;border-radius:999px;margin-left:.5rem;vertical-align:middle}
+.vis--pub{background:#E9F3EC;color:var(--s-green)}
+.vis--priv{background:var(--tint);color:var(--tx-2)}
+
+.row{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:.95rem}
+.row:last-child{margin-bottom:0}
+.f{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:.32rem}
+.f--full{flex:1 1 100%}
+.f > label{font-size:.93rem;font-weight:600}
+.f > label .req{color:var(--s-red);margin-left:.15rem}
+.f small{font-size:.85rem;color:var(--tx-3);font-weight:400}
+.f .err{font-size:.85rem;color:var(--s-red);font-weight:500}
+input[type=text],input[type=email],input[type=url],input[type=tel],input[type=number],input[type=password],select,textarea{
+  font:inherit;font-size:1rem;min-height:50px;padding:.65rem .85rem;border:1.5px solid var(--line-2);border-radius:11px;background:var(--paper);color:var(--ink);width:100%}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pine);background:var(--card);box-shadow:0 0 0 3px rgba(30,75,56,.1)}
+input:disabled{color:var(--tx-3);background:var(--tint)}
+input[aria-invalid="true"]{border-color:var(--s-red);background:#FDF6F5}
+.cnt{font-family:var(--f-m);font-size:.75rem;color:var(--tx-3);text-align:right}
+.note{padding:.85rem 1rem;background:var(--tint);border:1px solid var(--line);border-radius:11px;font-size:.9rem;color:var(--tx-2)}
+.ok{padding:.8rem 1rem;background:#F1F8F3;border:1px solid #C6E0CE;border-radius:11px;font-size:.91rem;color:var(--s-green);display:flex;gap:.55rem;align-items:center}
+.warn{padding:.95rem 1.1rem;background:#FFF8E2;border:1px solid #F3E1A8;border-radius:12px;font-size:.93rem}
+.warn b{display:block;margin-bottom:.25rem}
+
+/* stopka karty z zapisem — nazwa mówi, CO zapisuje */
+.save{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--line)}
+.save__s{font-size:.86rem;color:var(--tx-3)}
+.save__s.done{color:var(--s-green)}
+.save__s.dirty{color:var(--s-red);font-weight:500}
+
+/* wybory */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+@media(max-width:620px){.tiles{grid-template-columns:1fr}}
+.tile{display:block;padding:.9rem 1rem;background:var(--paper);border:1.5px solid var(--line-2);border-radius:12px;cursor:pointer;transition:.15s var(--e)}
+.tile:hover{border-color:var(--pine)}
+.tile input{position:absolute;opacity:0}
+.tile b{display:flex;align-items:center;gap:.5rem;font-size:1rem}
+.tile b::before{content:"";width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex:none}
+.tile small{display:block;color:var(--tx-2);font-size:.87rem;margin-top:.3rem;line-height:1.4}
+.tile:has(input:checked){border-color:var(--pine);background:#F1F6F2}
+.tile:has(input:checked) b::before{border-color:var(--pine);background:var(--pine);box-shadow:inset 0 0 0 3px #F1F6F2}
+.opts{display:flex;gap:.45rem;flex-wrap:wrap}
+.opt{display:inline-flex;align-items:center;gap:.5rem;min-height:44px;padding:.45rem .9rem;border:1.5px solid var(--line-2);border-radius:999px;background:var(--paper);cursor:pointer;font-size:.93rem}
+.opt input{width:17px;height:17px;accent-color:var(--pine);margin:0}
+.opt:has(input:checked){border-color:var(--pine);background:#F1F6F2}
+.sw{display:flex;align-items:flex-start;gap:.7rem;padding:.7rem .85rem;border:1px solid var(--line);border-radius:11px;background:var(--paper);margin-bottom:.5rem;cursor:pointer}
+.sw:hover{border-color:var(--line-2)}
+.sw input{width:19px;height:19px;accent-color:var(--pine);margin:.2rem 0 0;flex:none}
+.sw b{font-weight:600;font-size:.96rem}
+.sw small{display:block;color:var(--tx-2);font-size:.86rem}
+.sw:has(input:checked){border-color:#C6E0CE;background:#F4FAF6}
+.more{width:100%;display:flex;align-items:center;gap:.6rem;min-height:48px;padding:.65rem 1rem;background:none;border:1.5px dashed var(--line-2);border-radius:12px;cursor:pointer;font:inherit;font-size:.94rem;color:var(--tx-2);text-align:left}
+.more:hover{border-color:var(--pine);color:var(--pine)}
+.more em{font-style:normal;margin-left:auto;font-size:.84rem;color:var(--tx-3)}
+.morebox{margin-top:1rem;padding-left:1rem;border-left:3px solid var(--line);display:grid;gap:1.1rem}
+
+/* zdjęcia */
+.avrow{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+.avprev{width:74px;height:74px;border-radius:50%;flex:none;background:var(--pine);color:#fff;display:grid;place-items:center;font-family:var(--f-d);font-weight:700;font-size:1.55rem;border:1px solid var(--line)}
+.up{display:inline-flex;align-items:center;gap:.6rem;min-height:48px;padding:.65rem 1.1rem;border:1.5px dashed var(--line-2);border-radius:12px;background:var(--paper);cursor:pointer;font-size:.93rem;color:var(--tx-2)}
+.up:hover{border-color:var(--pine);color:var(--pine)}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:.55rem;margin-bottom:.8rem}
+.thumb{position:relative;aspect-ratio:4/3;border-radius:11px;overflow:hidden;border:1px solid var(--line)}
+.ph{width:100%;height:100%}
+.ph--1{background:linear-gradient(180deg,#B9CBD4 0%,#D8DFD5 30%,#8FA377 33%,#4B6540 66%,#2A3B2E 100%)}
+.ph--2{background:linear-gradient(180deg,#C8D4D8 0%,#E0DCC9 28%,#8FA07A 32%,#4E6642 62%,#2C3F30 100%)}
+.ph--3{background:linear-gradient(180deg,#EFE3C8 0%,#D8C79C 26%,#A3A175 30%,#556349 62%,#2E3B2E 100%)}
+.thumb .rm{position:absolute;top:.35rem;right:.35rem;background:rgba(21,32,26,.7);color:#fff;border:0;border-radius:999px;width:30px;height:30px;display:grid;place-items:center;cursor:pointer;font-size:.9rem;line-height:1}
+.thumb .rm:hover{background:var(--s-red)}
+
+.meter{height:8px;border-radius:99px;background:var(--tint);border:1px solid var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--blaze)}
+.meterl{display:flex;justify-content:space-between;margin-top:.45rem;font-family:var(--f-m);font-size:.75rem;color:var(--tx-2)}
+.todo{list-style:none;margin:.85rem 0 0;padding:0;display:grid;gap:.5rem;font-size:.89rem}
+.todo li{display:flex;gap:.55rem;align-items:flex-start;color:var(--tx-2)}
+.todo i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line-2);flex:none;margin-top:.2rem;display:grid;place-items:center;font-size:.58rem;font-style:normal}
+.todo li.on{color:var(--ink)}
+.todo li.on i{background:var(--s-green);border-color:var(--s-green);color:#fff}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="hdr"><div class="wrap hdr__in">
+  <a class="logo" href="/"><span class="mark" aria-hidden="true"></span>ride<b>more</b>.bike</a>
+  <a class="hdr__x" href="/organizatorzy/ridemore-bike">Zobacz profil publiczny →</a>
+</div></header>
+
+<div class="wrap">
+  <nav class="crumb"><a href="/">Start</a> / <a href="/admin">Panel</a> / <span>Profil organizatora</span></nav>
+  <div class="top">
+    <h1>Profil organizatora</h1>
+    <p>To, co widzą ludzie, gdy zastanawiają się, czy pojechać z Tobą. Ustawienia Ciebie jako
+      uczestnika są <a href="/admin/moje-konto">w Moim koncie</a>.</p>
+  </div>
+</div>
+
+<div class="wrap layout">
+  <nav class="rail" aria-label="Sekcje profilu organizatora">
+    <a href="/admin/profil-organizatora/zdjecia" data-p="zdjecia" aria-current="page">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.5"/></svg>Zdjęcia</a>
+    <a href="/admin/profil-organizatora/dane" data-p="dane">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/></svg>Kim jesteście<span class="warn-dot" title="Do uzupełnienia"></span></a>
+    <a href="/admin/profil-organizatora/kontakt" data-p="kontakt">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.4 7-11a7 7 0 1 0-14 0c0 4.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>Lokalizacja i kontakt</a>
+    <a href="/admin/profil-organizatora/bezpieczenstwo" data-p="bezpieczenstwo">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.4 8.3-8 9-4.6-.7-8-4-8-9V7l8-4Z"/></svg>Bezpieczeństwo</a>
+    <div class="rail__sep"></div>
+    <a href="/admin/profil-organizatora/rozliczenia" data-p="rozliczenia">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Dane rozliczeniowe</a>
+    <p class="rail__note">Ustawienia konta? <a href="/admin/moje-konto">Moje konto →</a></p>
+  </nav>
+
+  <main>
+    <!-- ══ ZDJĘCIA ══ -->
+    <section class="panel" id="p-zdjecia">
+      <h2>Zdjęcia</h2>
+      <p class="intro">Awatar podpisuje każde Twoje wydarzenie na liście. Zdjęcia w tle otwierają profil.</p>
+
+      <div class="fs">
+        <h3>Kompletność profilu</h3>
+        <p class="fs__d">Uzupełniony profil to jedyna rzecz, po której ktoś oceni, czy z Tobą pojechać.</p>
+        <div class="meter"><i style="width:62%"></i></div>
+        <p class="meterl"><span>8 z 13 pól</span><span>62%</span></p>
+        <ul class="todo">
+          <li class="on"><i>✓</i>Awatar i zdjęcia w tle</li>
+          <li class="on"><i>✓</i>Miasto i region</li>
+          <li class="on"><i>✓</i>Telefon</li>
+          <li><i></i>Opis „O nas" — <b>najważniejszy brak</b></li>
+          <li><i></i>Rok założenia</li>
+          <li><i></i>Strona albo Facebook</li>
+          <li><i></i>Deklaracje bezpieczeństwa</li>
+        </ul>
+      </div>
+
+      <div class="fs">
+        <h3>Awatar <span class="vis vis--pub">widoczny publicznie</span></h3>
+        <p class="fs__d">Pokazujemy go przy każdym Twoim wyjeździe na liście i u góry profilu.</p>
+        <div class="avrow">
+          <span class="avprev">rb</span>
+          <div>
+            <label class="up"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.5"/></svg>Zmień awatar<input type="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+            <p style="font-size:.85rem;color:var(--tx-3);margin-top:.4rem">JPEG, PNG lub WebP. Kwadrat wygląda najlepiej.
+              <button type="button" style="background:none;border:0;color:var(--s-red);cursor:pointer;text-decoration:underline;font:inherit;font-size:.85rem">Usuń awatar</button></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="fs">
+        <h3>Zdjęcia w tle <span class="vis vis--pub">widoczne publicznie</span></h3>
+        <p class="fs__d">Do pięciu. Pierwsze służy za okładkę profilu.</p>
+        <div class="thumbs">
+          <div class="thumb"><div class="ph ph--1"></div><button class="rm" type="button" aria-label="Usuń pierwsze zdjęcie">×</button></div>
+          <div class="thumb"><div class="ph ph--2"></div><button class="rm" type="button" aria-label="Usuń drugie zdjęcie">×</button></div>
+          <div class="thumb"><div class="ph ph--3"></div><button class="rm" type="button" aria-label="Usuń trzecie zdjęcie">×</button></div>
+          <div class="thumb"><div class="ph ph--2"></div><button class="rm" type="button" aria-label="Usuń czwarte zdjęcie">×</button></div>
+        </div>
+        <label class="up"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>Dodaj zdjęcia (do 5 naraz)<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
+        <p class="note" style="margin-top:.8rem">Nie masz zdjęć? Pokażemy okładki Twoich ostatnich wyjazdów.</p>
+        <div class="save">
+          <button class="btn btn--pine btn--sm" type="button">Zapisz zdjęcia</button>
+          <span class="save__s"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ KIM JESTEŚCIE ══ -->
+    <section class="panel" id="p-dane" hidden>
+      <h2>Kim jesteście</h2>
+      <p class="intro">Od rodzaju organizatora zależy, jakie wyjazdy możesz wystawiać.</p>
+
+      <div class="fs">
+        <h3>Rodzaj organizatora <span class="vis vis--pub">widoczny publicznie</span></h3>
+        <p class="fs__d">Uczestnik widzi to na profilu i przy każdym wyjeździe — decyduje o tym, czego może oczekiwać.</p>
+        <div class="tiles">
+          <label class="tile"><input type="radio" name="ot" value="peer" checked>
+            <b>Organizator społecznościowy</b>
+            <small>Wspólne jazdy z pasji, uczestnicy jadą na własną odpowiedzialność. Wyjazdy jedno- i wielodniowe bez wpisowego.</small></label>
+          <label class="tile"><input type="radio" name="ot" value="professional_operator">
+            <b>Operator turystyczny</b>
+            <small>Działalność gospodarcza z wpisem do rejestru organizatorów turystyki. Tylko ten rodzaj może wystawiać płatne wielodniówki.</small></label>
+        </div>
+
+        <div id="regBox" hidden style="margin-top:1rem">
+          <div class="row">
+            <div class="f f--full">
+              <label for="reg">Numer wpisu w rejestrze organizatorów turystyki <span class="req" aria-hidden="true">*</span></label>
+              <input id="reg" type="text" placeholder="np. TO/2024/00123" data-req="Operator turystyczny musi podać numer wpisu.">
+              <small>Pokażemy go na profilu — uczestnik może go sprawdzić w Centralnej Ewidencji.</small>
+            </div>
+          </div>
+          <p class="warn"><b>Numer weryfikujemy ręcznie.</b>
+            Do czasu potwierdzenia profil jest widoczny jako niezweryfikowany, a płatne wielodniówki zapisują się jako szkic.</p>
+        </div>
+      </div>
+
+      <div class="fs">
+        <h3>O nas <span class="vis vis--pub">widoczne publicznie</span></h3>
+        <p class="fs__d">Najważniejsze pole na całej stronie. Bez opinii i historii to jedyne, co ktoś o Was wie.</p>
+        <div class="row">
+          <div class="f f--full">
+            <label for="bio">Opis</label>
+            <textarea id="bio" maxlength="2000" placeholder="Kto jeździ, w jakim stylu, od kiedy. Napisz tak, jak powiedziałbyś to komuś na parkingu przed startem."></textarea>
+            <p class="cnt" id="bioCnt">0 / 2000</p>
+          </div>
+        </div>
+        <div class="save">
+          <button class="btn btn--pine btn--sm" type="button">Zapisz dane organizatora</button>
+          <span class="save__s"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ LOKALIZACJA I KONTAKT ══ -->
+    <section class="panel" id="p-kontakt" hidden>
+      <h2>Lokalizacja i kontakt</h2>
+      <p class="intro">Po regionie ludzie filtrują organizatorów. Kontakt to często jedyny dowód,
+        że istniejecie naprawdę.</p>
+
+      <div class="fs">
+        <h3>Gdzie działacie <span class="vis vis--pub">widoczne publicznie</span></h3>
+        <div class="row">
+          <div class="f"><label for="city">Miasto</label><input id="city" type="text" value="Mielec" maxlength="120" autocomplete="address-level2"></div>
+          <div class="f"><label for="rg">Główny region</label>
+            <select id="rg"><option value="">— wybierz —</option>
+              <option selected>Bieszczady</option><option>Tatry</option><option>Beskidy</option>
+              <option>Mazury</option><option>Podkarpacie</option></select></div>
+        </div>
+        <div class="row">
+          <div class="f"><label for="yr">Rok założenia</label>
+            <input id="yr" type="number" min="1900" max="2026" inputmode="numeric" placeholder="np. 2019">
+            <small>Pokazujemy jako „na rynku X lat" — mocny sygnał dla kogoś, kto Was nie zna.</small></div>
+          <div class="f"><label for="lg">Języki</label><input id="lg" type="text" placeholder="np. polski, angielski" maxlength="200"></div>
+        </div>
+        <div class="save">
+          <button class="btn btn--pine btn--sm" type="button">Zapisz lokalizację</button>
+          <span class="save__s"></span>
+        </div>
+      </div>
+
+      <div class="fs">
+        <h3>Kontakt <span class="vis vis--pub">widoczny publicznie</span></h3>
+        <div class="row">
+          <div class="f"><label for="ph">Telefon</label><input id="ph" type="tel" value="506 593 124" maxlength="30" autocomplete="tel"></div>
+          <div class="f"><label for="ce">E-mail kontaktowy</label>
+            <input id="ce" type="email" placeholder="kontakt@…" maxlength="190" autocomplete="email">
+            <small>Niezależny od e-maila logowania. Tu też trafią powiadomienia o zapisach, wpłatach i pytaniach.</small></div>
+        </div>
+        <div class="row">
+          <div class="f"><label for="www">Strona internetowa</label><input id="www" type="url" placeholder="https://…" autocomplete="url"></div>
+          <div class="f"><label for="fb">Facebook</label><input id="fb" type="url" placeholder="https://facebook.com/…"></div>
+        </div>
+        <div class="row">
+          <div class="f"><label for="ig">Instagram</label><input id="ig" type="url" placeholder="https://instagram.com/…"></div>
+          <div class="f"><label for="st">Klub Strava</label><input id="st" type="url" placeholder="https://strava.com/clubs/…"></div>
+        </div>
+        <div class="save">
+          <button class="btn btn--pine btn--sm" type="button">Zapisz kontakt</button>
+          <span class="save__s"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ BEZPIECZEŃSTWO ══ -->
+    <section class="panel" id="p-bezpieczenstwo" hidden>
+      <h2>Bezpieczeństwo</h2>
+      <p class="intro">Zaznacz tylko to, co realnie zapewniacie.</p>
+
+      <div class="fs">
+        <h3>Deklaracje <span class="vis vis--pub">widoczne publicznie</span></h3>
+        <p class="fs__d">Na profilu pokazujemy wyłącznie zaznaczone pozycje. Niezaznaczonych
+          <b>nie przedstawiamy jako braku</b> — piszemy tylko „nie zadeklarowano".</p>
+        <label class="sw"><input type="checkbox"><span><b>Prowadzący zna trasę</b><small>Wyjazd prowadzi ktoś, kto jechał ją wcześniej.</small></span></label>
+        <label class="sw"><input type="checkbox"><span><b>Apteczka w grupie</b><small>Ktoś wiezie apteczkę na całej trasie.</small></span></label>
+        <label class="sw"><input type="checkbox" checked><span><b>Zamykający grupę</b><small>Ktoś jedzie na końcu i pilnuje, żeby nikt nie został sam.</small></span></label>
+        <label class="sw"><input type="checkbox"><span><b>Samochód wsparcia</b><small>Jedzie za grupą, zabiera bagaże i rowery po awarii.</small></span></label>
+        <label class="sw"><input type="checkbox"><span><b>Kurs pierwszej pomocy</b><small>Ktoś w ekipie ma aktualne przeszkolenie.</small></span></label>
+        <label class="sw" style="margin-bottom:0"><input type="checkbox"><span><b>Ubezpieczenie OC organizatora</b><small>Polisa obejmująca prowadzenie wyjazdów.</small></span></label>
+        <div class="save">
+          <button class="btn btn--pine btn--sm" type="button">Zapisz deklaracje</button>
+          <span class="save__s"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ROZLICZENIA ══ -->
+    <section class="panel" id="p-rozliczenia" hidden>
+      <h2>Dane rozliczeniowe</h2>
+      <p class="intro">Dane, z których <b>wystawiasz</b> faktury uczestnikom, oraz konto do wypłat.
+        Wymagane przed publikacją płatnego wyjazdu z zapisami na ridemore.bike.</p>
+
+      <p class="ok" style="margin-bottom:1rem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m4 12 6 6L20 6"/></svg>Dane kompletne — możesz publikować płatne wyjazdy.</p>
+
+      <div class="fs">
+        <h3>Dane do faktury <span class="vis vis--priv">niewidoczne</span></h3>
+        <p class="fs__d">Trafią na faktury, które wystawisz uczestnikom.</p>
+        <div class="row">
+          <div class="f"><label for="ln2">Nazwa firmy lub imię i nazwisko <span class="req" aria-hidden="true">*</span></label>
+            <input id="ln2" type="text" value="ridemore" maxlength="200" data-req="Bez tego nie wystawisz faktury." autocomplete="organization"></div>
+          <div class="f"><label for="nip2">NIP</label><input id="nip2" type="text" inputmode="numeric" placeholder="opcjonalnie"></div>
+        </div>
+        <div class="row">
+          <div class="f f--full"><label for="ad2">Adres <span class="req" aria-hidden="true">*</span></label>
+            <input id="ad2" type="text" value="ul. Długa 64E" data-req="Podaj adres." autocomplete="street-address"></div>
+        </div>
+        <div class="save">
+          <button class="btn btn--pine btn--sm" type="button">Zapisz dane do faktury</button>
+          <span class="save__s"></span>
+        </div>
+      </div>
+
+      <div class="fs">
+        <h3>Konto do wypłat <span class="vis vis--priv">niewidoczne</span></h3>
+        <p class="fs__d">Posiadacz konta może być inną osobą lub podmiotem niż dane do faktury —
+          np. firma rozlicza się prywatnym kontem właściciela.</p>
+        <div class="row">
+          <div class="f"><label for="bh">Posiadacz konta <span class="req" aria-hidden="true">*</span></label>
+            <input id="bh" type="text" placeholder="Imię i nazwisko lub nazwa firmy" data-req="Podaj posiadacza konta."></div>
+          <div class="f"><label for="ib">Numer konta (IBAN) <span class="req" aria-hidden="true">*</span></label>
+            <input id="ib" type="text" class="mono" placeholder="PL00 0000 0000 0000 0000 0000 0000" data-req="Podaj numer konta."></div>
+        </div>
+        <div class="save">
+          <button class="btn btn--pine btn--sm" type="button">Zapisz konto do wypłat</button>
+          <span class="save__s"></span>
+        </div>
+      </div>
+
+      <div class="fs">
+        <h3>Jak działają płatności</h3>
+        <p class="fs__d" style="margin:0">Nie pośredniczymy w płatnościach i nie pobieramy prowizji.
+          Uczestnik płaci bezpośrednio Tobie, a Ty potwierdzasz wpłatę w panelu. Te dane trzymamy po to,
+          żeby wygenerować dokumenty i żeby uczestnik wiedział, komu płaci.
+          <a href="/jak-to-dziala">Jak to działa →</a></p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+var BASE="/admin/profil-organizatora", DEFAULT="zdjecia";
+/* ===== Wspólny mechanizm zakładek (assets/js/settings-tabs.js) =====
+   Zakładka = własny adres. pushState, nie replaceState — „wstecz" wraca
+   do poprzedniej zakładki, a nie wyrzuca ze strony. */
+(function(){
+  var rail=document.querySelector('.rail'), links=[].slice.call(rail.querySelectorAll('a[data-p]'));
+  function show(id,push){
+    var found=false;
+    links.forEach(function(l){
+      var on=l.dataset.p===id;
+      if(on)found=true;
+      l.setAttribute('aria-current',on?'page':'false');
+      if(!on)l.removeAttribute('aria-current');
+    });
+    if(!found)return false;
+    [].forEach.call(document.querySelectorAll('.panel'),function(p){p.hidden=p.id!=='p-'+id});
+    var t=document.querySelector('#p-'+id+' > h2'); if(t){t.setAttribute('tabindex','-1');t.focus({preventScroll:true});}
+    if(push)history.pushState({p:id},'',BASE+'/'+id);
+    window.scrollTo({top:0,behavior:'smooth'});
+    return true;
+  }
+  links.forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();show(l.dataset.p,true)})});
+  window.addEventListener('popstate',function(e){show((e.state&&e.state.p)||DEFAULT,false)});
+  var seg=location.pathname.split('/').pop();
+  if(!show(seg,false))show(DEFAULT,false);
+
+  /* stan „niezapisane" i potwierdzenie zapisu — osobno dla każdej karty */
+  [].forEach.call(document.querySelectorAll('.fs'),function(card){
+    var st=card.querySelector('.save__s'), btn=card.querySelector('.save .btn');
+    if(!st||!btn)return;
+    card.addEventListener('input',function(){st.className='save__s dirty';st.textContent='Niezapisane zmiany'});
+    btn.addEventListener('click',function(){
+      btn.disabled=true; st.className='save__s'; st.textContent='Zapisuję…';
+      setTimeout(function(){
+        btn.disabled=false; st.className='save__s done';
+        st.textContent='Zapisano '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+      },600);
+    });
+  });
+
+  /* walidacja przy opuszczeniu pola, komunikat POD polem */
+  [].forEach.call(document.querySelectorAll('[data-req]'),function(i){
+    i.addEventListener('blur',function(){
+      var box=i.closest('.f'), err=box.querySelector('.err');
+      var bad=!i.value.trim()||(i.type==='email'&&!/.+@.+\..+/.test(i.value));
+      i.setAttribute('aria-invalid',bad?'true':'false');
+      if(bad&&!err){err=document.createElement('span');err.className='err';box.appendChild(err)}
+      if(err)err.textContent=bad?(i.dataset.req||'To pole jest wymagane.'):'';
+    });
+  });
+
+  /* rozwijane „możesz pominąć" */
+  [].forEach.call(document.querySelectorAll('[data-open]'),function(b){
+    b.addEventListener('click',function(){
+      var box=document.querySelector(b.dataset.open); box.hidden=!box.hidden;
+      b.setAttribute('aria-expanded',!box.hidden);
+      b.firstChild.textContent=(box.hidden?'+ ':'− ')+b.textContent.replace(/^[+−]\s*/,'').replace(/możesz pominąć$/,'').trim()+' ';
+    });
+  });
+})();
+</script>
+<script>
+/* rejestr tylko dla operatora turystycznego */
+(function(){
+  var rs=[].slice.call(document.querySelectorAll('input[name=ot]'));
+  function s(){document.getElementById('regBox').hidden=document.querySelector('input[name=ot]:checked').value!=='professional_operator'}
+  rs.forEach(function(r){r.addEventListener('change',s)}); s();
+  var bio=document.getElementById('bio');
+  bio.addEventListener('input',function(){document.getElementById('bioCnt').textContent=bio.value.length+' / 2000'});
+})();
+</script>
+</body>
+</html>

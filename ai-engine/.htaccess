@@ -1,0 +1,11 @@
+# Kod silnika AI (Python) — nie powinien być serwowany przez HTTP. Odpalany
+# WYŁĄCZNIE z CLI przez core/Utils/AiEngineBridge.php (proc_open), nigdy
+# bezpośrednio z przeglądarki. Ten sam wzorzec blokady co storage/.htaccess
+# (mod_authz_core dla Apache 2.4, mod_access_compat dla 2.2 — różne hostingi).
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

@@ -1,0 +1,218 @@
+/* ============================================================================
+   BADGE STYLES - Reusable medal card components
+   ============================================================================ */
+
+/* Card gradients */
+.card-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    transition: opacity 0.4s ease;
+}
+
+.gradient-earned {
+    background: linear-gradient(135deg, 
+        rgba(16, 185, 129, 0.08) 0%, 
+        rgba(5, 150, 105, 0.05) 50%, 
+        rgba(255, 255, 255, 1) 100%);
+}
+
+.gradient-locked {
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.06) 0%, 
+        rgba(37, 99, 235, 0.03) 50%, 
+        rgba(255, 255, 255, 1) 100%);
+}
+
+/* Pattern overlay */
+.badge-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.03;
+    z-index: 1;
+    background-image: radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0);
+    background-size: 20px 20px;
+}
+
+/* Medal Cards */
+.medal-card {
+    position: relative;
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    border: 1.5px solid rgba(128,128,128,1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+}
+
+.medal-card-earned {
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.medal-card-locked {
+    border-color: rgba(0,0,0,0.06) !important;
+}
+
+.medal-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+}
+
+.medal-card-earned:hover {
+    box-shadow: 0 12px 24px rgba(16, 185, 129, 0.15);
+}
+
+.medal-card * {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.medal-card > div:last-child {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Badge overlays */
+.badge-prestige {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    z-index: 30;
+}
+
+.badge-physical {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 30;
+    background: white;
+    border: 1.5px solid #f59e0b;
+    border-radius: 6px;
+    padding: 3px 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+}
+
+.badge-tier {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 20;
+    background: white;
+    border-radius: 8px;
+    padding: 4px 8px;
+    border: 1.5px solid;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-rarity {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 20;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Medal container */
+.medal-ring {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 12px;
+}
+
+.medal-image-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.medal-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.medal-locked-overlay {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    background: rgba(0,0,0,0.75);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.medal-checkmark {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #10b981;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    z-index: 10;
+}
+
+/* Text styles */
+.medal-name {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.3;
+    color: var(--color-text);
+}
+
+.medal-challenge-name {
+    font-size: 9px;
+    color: var(--color-text-muted);
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.medal-progress {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.medal-milestone {
+    font-size: 9px;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}

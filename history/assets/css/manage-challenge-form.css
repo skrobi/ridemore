@@ -1,0 +1,519 @@
+/* ============================================================================
+   Challenge Form Styles - WERSJA 2.0 - Z UPLOADEM
+   ============================================================================ */
+
+.challenge-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ============================================================================
+   ERROR SUMMARY - Podsumowanie błędów na górze
+   ============================================================================ */
+
+.form-errors-summary {
+    background: #fef2f2;
+    border: 2px solid #fca5a5;
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.form-errors-summary h4 {
+    color: #dc2626;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-errors-summary ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.form-errors-summary li {
+    color: #991b1b;
+    margin-bottom: 4px;
+}
+
+.form-errors-summary strong {
+    color: #dc2626;
+}
+
+/* Nawigacja sekcji */
+.challenge-form-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    border-bottom: 2px solid var(--color-border);
+    overflow-x: auto;
+}
+
+.form-nav-btn {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition: all 0.2s;
+    white-space: nowrap;
+    position: relative;
+}
+
+.form-nav-btn:hover {
+    color: var(--color-primary);
+    background: rgba(0, 212, 255, 0.05);
+}
+
+.form-nav-btn.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.form-nav-btn.has-error::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background: #dc2626;
+    border-radius: 50%;
+}
+
+.form-nav-btn i {
+    margin-right: 8px;
+}
+
+/* Sekcje formularza */
+.challenge-form-section {
+    display: none;
+}
+
+.challenge-form-section.active {
+    display: block;
+}
+
+.challenge-form-section h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--color-text);
+}
+
+/* ============================================================================
+   IMAGE UPLOAD
+   ============================================================================ */
+
+.upload-image-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.upload-image-wrapper .form-input {
+    flex: 1;
+}
+
+.image-preview {
+    max-width: 200px;
+    max-height: 100px;
+    margin-top: 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    object-fit: cover;
+}
+
+.medal-image-upload {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.medal-image-upload .form-input {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Upload section */
+.route-upload-section {
+    margin-bottom: 24px;
+}
+
+.divider-text {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 24px 0;
+}
+
+.divider-text::before,
+.divider-text::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.divider-text span {
+    padding: 0 16px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+.upload-progress {
+    margin-top: 12px;
+}
+
+.progress-bar {
+    height: 4px;
+    background: var(--color-bg-secondary);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+/* Wyszukiwarka tras */
+.route-search-box {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.route-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-top: 4px;
+}
+
+.route-search-results.show {
+    display: block;
+}
+
+.route-search-result {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    background: white;
+}
+
+.route-search-result:last-child {
+    border-bottom: none;
+}
+
+.route-search-result:hover {
+    background: #f9fafb;
+}
+
+.route-search-result.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f3f4f6;
+}
+
+.route-search-result-info {
+    flex: 1;
+}
+
+.route-search-result-name {
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.route-search-result-meta {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+.route-search-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--color-text-secondary);
+    background: white;
+}
+
+/* Lista wybranych tras */
+.selected-routes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.selected-routes-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.selected-routes-list::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+    border-radius: 4px;
+}
+
+.selected-routes-list::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+.selected-routes-list::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+}
+
+.selected-route-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+}
+
+.selected-route-item:hover {
+    background: var(--color-bg-hover);
+}
+
+.route-item-info {
+    flex: 1;
+}
+
+.route-item-name {
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.route-item-meta {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+/* Medale */
+.medals-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.medals-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.medals-grid::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+    border-radius: 4px;
+}
+
+.medals-grid::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+.medals-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+}
+
+.medal-row-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 100px 100px 80px 60px 150px auto 120px 150px 40px;
+    gap: 8px;
+    align-items: center;
+    padding: 16px;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+}
+
+.medal-row-item:hover {
+    background: var(--color-bg-hover);
+}
+
+.medal-row-item .form-input {
+    margin-bottom: 0;
+}
+
+.medal-row-item .form-checkbox {
+    margin-bottom: 0;
+}
+
+/* Empty states */
+.empty-state-inline {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--color-text-secondary);
+}
+
+.empty-state-inline i {
+    font-size: 48px;
+    opacity: 0.3;
+    margin-bottom: 16px;
+}
+
+.empty-state-inline p {
+    margin: 0;
+    font-size: 15px;
+}
+
+/* Akcje formularza */
+.challenge-form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 0;
+    margin-top: 32px;
+    border-top: 1px solid var(--color-border);
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: var(--color-bg-secondary);
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .medal-row-item {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .medal-row-item > * {
+        grid-column: span 1;
+    }
+    
+    .remove-medal-btn {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .challenge-form-nav {
+        gap: 4px;
+    }
+    
+    .form-nav-btn {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .form-nav-btn i {
+        display: none;
+    }
+    
+    .medal-row-item {
+        grid-template-columns: 1fr;
+    }
+    
+    .medal-row-item > * {
+        grid-column: span 1;
+    }
+    
+    .upload-image-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

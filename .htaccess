@@ -1,0 +1,110 @@
+# Kill-switch dla starego Service Workera (dawna apka One Page pod tym
+# adresem) — musi zawsze docierać świeży, żeby przeglądarki go w ogóle
+# zauważyły i się z niego wyrejestrowały. Zob. sw.js / service-worker.js.
+<IfModule mod_headers.c>
+# `sw-app.js` (2026-08-29) dołączony do tej samej reguły z INNEGO powodu niż
+# kill-switch: to działający service worker apki, a przeglądarka pobiera plik
+# workera z pominięciem zwykłego cache'u tylko wtedy, gdy serwer o to prosi.
+# Bez tego poprawka w strategii cache'owania mogłaby nie dojść do urządzeń.
+<FilesMatch "^(sw|service-worker|sw-app)\.js$">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</FilesMatch>
+</IfModule>
+
+# Skrypty administracyjne jednorazowego użytku (migracje, backfill) — bez
+# własnej autoryzacji, mają działać tylko z CLI (php run_migrations.php).
+# Blokada obu składni Apache (2.2 i 2.4) pod różne hostingi.
+#
+# `cron` DOPISANY 2026-09-12. Nie był blokowany, mimo że leży w katalogu
+# serwowanym — czyli `https://.../cron.php` był publicznym spustem dziesięciu
+# zadań, w tym wysyłki maili i pushy. Ratował przypadek: żądanie HTTP nie ma
+# `APP_ENV`, więc spadało na konfigurację 'dev', której na produkcji nie ma.
+# To zabezpieczenie przez pomyłkę, nie przez projekt — i zniknęłoby w chwili
+# ustawienia APP_ENV na poziomie serwera, czyli dokładnie wtedy, gdy ktoś
+# porządkuje konfigurację crona. Sam `cron.php` ma od tej daty także własną
+# bramkę `PHP_SAPI !== 'cli'`, bo ten plik bywa nadpisany przy wdrożeniu.
+# `polar_webhook` (2026-09-14) — zakłada webhook Polara i wypisuje jego sekret.
+<FilesMatch "^(run_migrations|backfill_elevation_profiles|tiles|cron|polar_webhook|i18n)\.php$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Manifesty zależności — nie są tajemnicą, ale nie mają po co wychodzić
+# (zmierzone 2026-09-12: `/composer.json` oddawał 163 B). Lista bibliotek
+# z wersjami to gotowa odpowiedź na pytanie „co tu jest przestarzałe".
+# Osobny blok, bo wzorzec wyżej łapie wyłącznie `.php`.
+<FilesMatch "^(composer\.(json|lock)|package(-lock)?\.json|capacitor\.config\.(ts|json))$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# KAFLE MAP (migr. 051) — świadomie BEZ własnej reguły.
+#
+# Kafel leży pod /assets/tiles/{warstwa}/{klucz}/{z}/{x}/{y}.png, czyli dokładnie
+# tam, gdzie wskazuje jego adres. Dzięki temu obsługują go DWIE reguły, które już
+# tu były: `Cache-Control: immutable` z bloku niżej (adres niesie ?v=<epoka>, więc
+# zmiana danych daje nowy adres — ta sama zasada co ?v=<filemtime> przy assetach)
+# oraz `RewriteCond %{REQUEST_FILENAME} !-f` na dole pliku, przez którą istniejący
+# kafel idzie prosto z dysku, a brakujący trafia do PHP-a i tam się generuje.
+#
+# Gdyby kafle leżały gdzie indziej niż mówi URL, trzeba by je serwować PHP-em na
+# zawsze — i cała oszczędność by zniknęła.
+
+# Cache długoterminowy dla assetów statycznych — bezpieczne, bo Utils\View::asset()
+# dokleja ?v=<filemtime> do każdego linku (cache-busting: zmiana pliku = nowy
+# URL = nowe pobranie), więc "immutable" nie ryzykuje serwowania starej wersji.
+# Wyjątek (negative lookahead) na sw.js/service-worker.js/sw-app.js — mają swój
+# WŁASNY, przeciwny no-cache w bloku na górze pliku; bez wykluczenia ta reguła
+# (też dopasowuje *.js) nadpisałaby go długim cache'em.
+#
+# `sw-app.js` dopisany 2026-08-29. Bez niego plik dostawał `immutable` na rok
+# (zmierzone) mimo reguły no-cache wyżej — a service worker zamrożony na rok
+# to najgorszy możliwy stan: poprawki strategii cache'owania nie doszłyby do
+# urządzeń, a to on decyduje, co apka w ogóle pobiera.
+<IfModule mod_headers.c>
+  <FilesMatch "^(?!sw\.js$|service-worker\.js$|sw-app\.js$).+\.(css|js|png|jpe?g|webp|svg|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/css text/javascript application/javascript
+  AddOutputFilterByType DEFLATE text/html application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+RewriteEngine On
+
+# SEO (audyt Search Console, 2026-08-09): www.ridemore.bike serwował całą
+# stronę identycznie jak ridemore.bike pod 200 OK, bez żadnego przekierowania
+# — Google widział każdą podstronę pod dwoma adresami i zgłaszał to jako
+# duplikaty. Kanoniczna domena to zawsze bez "www" (patrz core/config.php,
+# klucz 'app_url' środowiska 'prod'), więc konsolidujemy tu, na poziomie
+# serwera — sam tag <link rel="canonical"> w HTML-u nie wystarczył, bo Google
+# musiał najpierw zdążyć zaufać sygnałowi zamiast zaindeksować obie wersje.
+# Warunek dopasowuje WYŁĄCZNIE prawdziwą domenę produkcyjną (z lub bez https),
+# więc na dev (localhost) ta reguła nigdy się nie uruchamia.
+RewriteCond %{HTTP_HOST} ^www\.ridemore\.bike$ [NC]
+RewriteRule ^ https://ridemore.bike%{REQUEST_URI} [L,R=301]
+
+# Alias service-worker.js -> sw.js: jeden plik źródłowy dla dwóch historycznych
+# URL-i rejestracji Service Workera (były to dwa fizyczne pliki, bajt w bajt
+# identyczne — łatwo było zaktualizować jeden i zapomnieć drugi). Bez własnego
+# RewriteCond, więc działa niezależnie od reguły "!-f" niżej.
+RewriteRule ^service-worker\.js$ sw.js [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+

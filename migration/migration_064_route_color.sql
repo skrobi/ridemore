@@ -1,0 +1,39 @@
+-- migration_064_route_color.sql
+-- Kolor znanej trasy na mapie.
+--
+-- POWOD (zgloszenie usera 2026-08-20): warstwa „Znane trasy" rysowala WSZYSTKIE
+-- szlaki jednym kolorem (#2C6B4F). Na mapie odkryc, gdzie linie ida po szarej
+-- mgle i czesto biegna tym samym korytarzem, dwie trasy nakladajace sie na
+-- siebie byly nie do rozroznienia — widac bylo jedna zielona plame zamiast
+-- kilku szlakow.
+--
+-- DLACZEGO KOLUMNA, A NIE WYLICZANIE PRZY RENDERZE KAFLA. Kafel jest PLIKIEM
+-- na dysku i zyje latami (Cache-Control: immutable). Gdyby kolor zalezal od
+-- tego, co akurat widac na danym kaflu — „ile tras jest dookola" — ta sama
+-- trasa wychodzilaby zielona na jednym kaflu i niebieska na sasiednim, a po
+-- dodaniu kolejnego szlaku zmienialaby kolor tylko tam, gdzie kafel akurat
+-- odswiezono. Kolor musi byc WLASNOSCIA TRASY, jednakowa na kazdej mapie
+-- serwisu: mapie odkryc, profilu rowerzysty i stronie samej trasy.
+--
+-- SASIEDZTWO DECYDUJE O DOBORZE, NIE O TRWALOSCI. Kolor przydziela sie RAZ,
+-- przy wgraniu trasy (Models\KnownRoute::assignColor): trasa dostaje ten kolor
+-- z palety, ktorego nie maja szlaki lezace obok, a przy remisie ten najrzadziej
+-- uzywany w calym katalogu. Raz przydzielony sie nie zmienia — dzieki temu
+-- dolozenie nowej trasy nie przemalowuje sasiadow i nie trzeba kasowac calej
+-- piramidy kafli (unieważnianie idzie po sladzie, patrz TileCache::
+-- invalidateTrack).
+--
+-- NULL ZNACZY „JESZCZE NIE PRZYDZIELONO" i renderer traktuje go jak kolor
+-- bazowy (zielen brandowa), wiec trasa bez koloru rysuje sie dokladnie tak jak
+-- przed ta migracja. Zaden ekran nie przestaje dzialac przed backfillem.
+--
+-- BACKFILL ROBI `run_migrations.php` zaraz po tej migracji (tak samo jak
+-- przewyzszenia po migr. 063): koloruje istniejacy katalog tras zachlannie,
+-- zaczynajac od tych z najwieksza liczba sasiadow. Nie da sie tego zrobic
+-- SQL-em, bo sasiedztwo liczy sie na wspolrzednych osiowych pol.
+--
+-- URUCHOMIENIE (prod): php run_migrations.php
+-- Lokalnie: mysql -u USER -p ridemorebike2 < migration_064_route_color.sql
+
+ALTER TABLE known_routes
+    ADD COLUMN color_index TINYINT UNSIGNED NULL AFTER cover_photo_url;

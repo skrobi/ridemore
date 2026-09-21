@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Ridemore – importer eventów</title>
+<link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar__row">
+    <button id="btnEngineScan" class="btn btn-ai" type="button" title="Zbiera model elementów strony (tekst/pozycja/styl) i wysyła go przez lokalny most PHP→Python do AI (Groq albo Ollama, zależnie od AI_PROVIDER w ai-engine/.env)">🧠 AI-Engine</button>
+  </div>
+  <div class="topbar__row">
+    <button id="btnGroupScan" class="btn btn-group" type="button" title="Zbiera posty z feedu grupy FB, który właśnie widzisz (tylko to, co jest na ekranie — bez masowego scrapowania), i przez AI oznacza te, w których ktoś szuka towarzystwa na przejazd. Autor trafia jako organizator, wiadomość do autora wysyłasz sam(a) przez 💬 Czat">👥 Skanuj grupę FB</button>
+    <button id="btnPickPosts" class="btn btn-group" type="button" title="Gdy auto-skan nie trafi na posty (FB zmienia DOM między kontami), zaznacz je ręcznie: klikaj na stronie grupy posty, które mają trafić na ridemore.bike, a na końcu ✓ Zakończ na stronie. AI potraktuje je tak samo jak auto-skan">🖱️ Wskaż posty</button>
+  </div>
+  <div class="topbar__row">
+    <button id="btnPostToEvent" class="btn btn-group" type="button" title="Wskaż POST będący ogłoszeniem zorganizowanego wydarzenia (rajd/wyścig/wycieczka z datą, ceną, trasą). Jego treść pójdzie przez zwykły AI-Engine i WYPEŁNI formularz wydarzenia — inaczej niż „Skanuj grupę/Wskaż posty", które szukają tylko postów „szukam towarzystwa”.">📄 Post → wydarzenie</button>
+  </div>
+  <div class="topbar__row">
+    <button id="btnCollectLinks" class="btn btn-group" type="button" title="Zbiera z WYRENDEROWANEJ strony-listy (kalendarz — także renderowany JavaScriptem/SPA, np. brevety.pl) linki do pojedynczych wydarzeń. Otwórz każdy i użyj 🧠 AI-Engine, żeby wypełnić formularz. Dla źródeł, których serwerowy importer (import_events.php) nie odczyta.">🔗 Zbierz linki</button>
+  </div>
+  <div class="topbar__row">
+    <button id="btnTreasureScan" class="btn btn-treasure" type="button" title="Skana stronę Wikipedii (lub inną) i zaproponuj skarb na ridemore.bike — współrzędne, nazwa, opis i kategoria z treści strony. Potrzebujesz potem tylko zatwierdzić w formularzu zgłoszenia.">🗺️ Dodaj skarb</button>
+  </div>
+  <div class="topbar__row">
+    <button id="btnClear" class="btn btn-ghost" type="button" title="Wyczyść wszystkie pola">🧹 Wyczyść</button>
+    <button id="btnEngineSettings" class="btn btn-ghost" type="button" title="Adres mostu ridemore.bike (dev)">⚙️ AI-Engine</button>
+    <button id="btnMeSettings" class="btn btn-ghost" type="button" title="Twoje imię/e-mail — do pól „zgłaszającego”, gdy kreator ich wymaga">👤 Twoje dane</button>
+  </div>
+  <div id="engineSettingsBox" class="aisettings" hidden>
+    <div class="field">
+      <label for="f_engineUrl">Adres mostu ridemore.bike <small>(lokalny XAMPP w trybie dev — most PHP odpala silnik Pythona za Ciebie, nic ręcznie nie uruchamiasz)</small></label>
+      <input id="f_engineUrl" type="text" placeholder="http://localhost/ridemore/api/ai/engine-analyze">
+    </div>
+    <button type="button" id="btnSaveEngineUrl" class="btn btn-primary btn-sm">Zapisz</button>
+  </div>
+  <!-- Trwałe, NIE per-event (nie czyszczone przez "Wyczyść wszystkie pola",
+       nie wykrywane przez AI ze strony źródłowej — to Twoja własna tożsamość,
+       nie fakt o evencie). Kreator wymaga tego pod "submitter_name"/
+       "submitter_email" (script.php), gdy sesja nie jest zalogowana — patrz
+       validateBeforeSubmit(). Zapisywane osobno (STORAGE_KEY_ME), nie w
+       zwykłym stanie per-skan. -->
+  <div id="meSettingsBox" class="aisettings" hidden>
+    <div class="field">
+      <label for="f_meName">Twoje imię <small>(pole "zgłaszający" w kreatorze — wymagane tylko, gdy sesja ridemore.bike nie jest zalogowana)</small></label>
+      <input id="f_meName" type="text">
+    </div>
+    <div class="field">
+      <label for="f_meEmail">Twój e-mail</label>
+      <input id="f_meEmail" type="email">
+    </div>
+    <button type="button" id="btnSaveMe" class="btn btn-primary btn-sm">Zapisz</button>
+  </div>
+  <p id="scanStatus" class="hint"></p>
+  <div class="dictrow">
+    <p id="dictStatus" class="hint">Słowniki: ładuję…</p>
+    <button type="button" id="btnRefreshDict" class="link-inline" title="Odśwież słowniki z ridemore.bike">🔄</button>
+  </div>
+</header>
+
+<main>
+  <!-- Wyniki skanowania grupy FB (tryb "Skanuj grupę FB") — sekcja pojawia
+       się po kliknięciu 👥 w topbarze; każdy post = karta z autorem, treścią
+       i akcjami. Tworzona w całości w sidepanel.js (renderGroupResults),
+       dlatego bez szablonu tutaj. -->
+  <section id="groupSection" class="grp" hidden>
+    <h2>Posty z grupy FB <small id="groupSourceLabel"></small></h2>
+    <p id="groupHint" class="hint"></p>
+    <div id="groupResultsList"></div>
+  </section>
+
+  <!-- Wynik skanowania strony w trybie "Dodaj skarb" (mapa→skarb) — sekcja
+       pojawia się po kliknięciu 🗺️ w topbarze; jeden wynik = karta z danymi
+       skarbu (nazwa/współrzędne/opis/kategoria) i akcjami (Zapisz/🔄). -->
+  <section id="treasureSection" class="grp" hidden>
+    <h2>Propozycja skarbu <small id="treasureSourceLabel"></small></h2>
+    <p id="treasureHint" class="hint"></p>
+    <div id="treasureResult"></div>
+  </section>
+
+  <!-- Wyniki trybu „🔗 Zbierz linki" — lista linków wydarzeń wyłuskanych
+       z wyrenderowanej strony-listy (działa na SPA). Każdy wiersz otwiera
+       stronę wydarzenia w nowej karcie, gdzie użytkownik odpala 🧠 AI-Engine.
+       Renderowana w sidepanel.js (renderCollectedLinks). -->
+  <section id="linksSection" class="grp" hidden>
+    <h2>Linki wydarzeń <small id="linksSourceLabel"></small></h2>
+    <p id="linksHint" class="hint">Otwórz każdy link i użyj 🧠 AI-Engine, żeby wypełnić formularz.</p>
+    <div id="linksResultsList"></div>
+  </section>
+
+  <form id="rmiForm">
+
+    <section class="grp">
+      <h2>Typ wydarzenia</h2>
+      <!-- Bazowe 3 radiobuttony wprost tu (odporność offline — panel ma
+           działać nawet gdy /api/dictionaries jest niedostępne). syncEventTypeRadios()
+           w sidepanel.js DOKŁADA do tego wiersza każdy typ z ridemore.bike,
+           którego tu jeszcze nie ma (np. "Wyścig") — nic nie usuwa/przebudowuje,
+           patrz komentarz przy tej funkcji. -->
+      <div class="radiorow" id="f_typeRow">
+        <label><input type="radio" name="f_type" value="ustawka" checked> Wspólna jazda</label>
+        <label><input type="radio" name="f_type" value="wycieczka_wielodniowa"> Wycieczka wielodniowa</label>
+        <label><input type="radio" name="f_type" value="pokrec_z_kims"> Pokręcę z kimś</label>
+      </div>
+    </section>
+
+    <details class="grp" open>
+      <summary>Kogo dotyczy</summary>
+      <div class="field">
+        <label for="f_organizer">Organizator <small>(gdy nie dopasujemy istniejącego — trafi jako propozycja nowego)</small></label>
+        <div class="fieldrow"><input id="f_organizer" type="text" data-pick="text"><button type="button" class="pickbtn" data-pick-target="f_organizer">🎯</button></div>
+      </div>
+      <div id="orgMatchBox" class="orgmatch" hidden></div>
+      <!-- Wymagane przez kreator (script.php::validateBeforeSubmit()) przy
+           KAŻDYM nowym organizatorze (bez dopasowania), niezależnie od
+           zalogowania — "do kontaktu w sprawie przejęcia profilu". Bez tego
+           kreator BLOKUJE publikację. AI szuka kontaktowego maila klubu
+           (np. w stopce/"Kontakt"), nie maila do zapisów na TEN event. -->
+      <div class="field">
+        <label for="f_organizerEmail">E-mail organizatora <small>(wymagany przez kreator dla NOWEGO organizatora — do przejęcia profilu)</small></label>
+        <div class="fieldrow"><input id="f_organizerEmail" type="email" data-pick="text"><button type="button" class="pickbtn" data-pick-target="f_organizerEmail">🎯</button></div>
+      </div>
+    </details>
+
+    <details class="grp" open>
+      <summary>Kiedy</summary>
+      <div class="field2">
+        <div class="field"><label for="f_date">Data</label><input id="f_date" type="date"></div>
+        <div class="field"><label for="f_time">Godzina zbiórki</label><input id="f_time" type="time"></div>
+      </div>
+      <p id="dateRawHint" class="hint"></p>
+      <!-- Data zakończenia + termin elastyczny istnieją w kreatorze TYLKO dla
+           pokrec_z_kims (step-kiedy.php); u wielodniówki datę końca kreator
+           liczy z liczby dni, ustawka/wyścig w ogóle jej nie mają — chowa je
+           syncTypeVisibility() w sidepanel.js (patrz tam). -->
+      <div class="field2" id="endDateBox">
+        <div class="field"><label for="f_endDate">Data zakończenia <small>(opcjonalnie)</small></label><input id="f_endDate" type="date"></div>
+        <div class="field"><label class="checkrow"><input id="f_dateIsFlexible" type="checkbox"> Termin elastyczny / do potwierdzenia</label></div>
+      </div>
+      <!-- Dodatkowe terminy TEGO SAMEGO wydarzenia (turnusy) — np. cykl
+           wyjazdów co tydzień. Osobna, prosta lista (nie tak złożona jak
+           warianty — sam tekst daty, bez plików). Tylko typy nie-pokrec —
+           kreator pokazuje turnusy przy x-show="type!=='pokrec_z_kims'"
+           (step-kiedy.php), chowa syncTypeVisibility(). -->
+      <div class="field" id="datesBox">
+        <label>Dodatkowe terminy <small>(ten sam event, inne daty — turnusy)</small></label>
+        <div id="datesList"></div>
+        <button type="button" id="btnAddDate" class="btn btn-ghost btn-sm">+ Dodaj termin</button>
+      </div>
+    </details>
+
+    <details class="grp" open>
+      <summary>Gdzie</summary>
+      <div class="field">
+        <label for="f_region">Region <small>(z listy ridemore.bike — 🎯 dopasuje po kliknięciu tekstu)</small></label>
+        <div class="fieldrow"><select id="f_region"><option value="">— nie wybrano —</option></select><button type="button" class="pickbtn" data-pick-target="f_region" data-pick-mode="dict:regions">🎯</button></div>
+      </div>
+      <div class="field">
+        <label for="f_meetingLabel">Nazwa miejsca zbiórki</label>
+        <div class="fieldrow"><input id="f_meetingLabel" type="text" data-pick="text"><button type="button" class="pickbtn" data-pick-target="f_meetingLabel">🎯</button></div>
+      </div>
+      <div class="field2">
+        <div class="field"><label for="f_lat">Szer. (lat)</label><input id="f_lat" type="number" step="0.000001"></div>
+        <div class="field"><label for="f_lng">Dł. (lng)</label><input id="f_lng" type="number" step="0.000001"></div>
+      </div>
+      <div class="field">
+        <label for="f_mapLink">Link do Google/OSM Maps <small>(opcjonalnie — wyciągniemy współrzędne)</small></label>
+        <div class="fieldrow"><input id="f_mapLink" type="text"><button type="button" id="btnExtractCoords" class="btn btn-ghost">Wyodrębnij</button></div>
+      </div>
+    </details>
+
+    <!-- Dni wielodniówki — odpowiednik kroku "Plan" kreatora (step-plan.php):
+         edytowalna lista dni z noclegiem/posiłkami/notatkami, czyli dokładnie
+         to, czego panel wcześniej nie miał i co trzeba było dopisywać ręcznie
+         w kreatorze. AI-Engine dokłada wykryte dni (addStageRow), potem można
+         je poprawić. Widoczna TYLKO dla wycieczka_wielodniowa
+         (syncTypeVisibility()). -->
+    <details class="grp" id="stagesSection">
+      <summary>Plan — dni (wielodniówka)</summary>
+      <div id="stagesList"></div>
+      <button type="button" id="btnAddStage" class="btn btn-ghost btn-sm">+ Dodaj dzień</button>
+    </details>
+
+    <details class="grp" open id="trasaSection">
+      <summary>Trasa</summary>
+      <div class="field">
+        <label for="f_gpxUrl">Plik GPX — link</label>
+        <div class="fieldrow"><input id="f_gpxUrl" type="text" data-pick="href"><button type="button" class="pickbtn" data-pick-target="f_gpxUrl" data-pick-mode="href">🎯</button></div>
+      </div>
+      <div class="field">
+        <label for="f_gpxFile">…lub plik z dysku</label>
+        <input id="f_gpxFile" type="file" accept=".gpx">
+        <p id="gpxFileStatus" class="hint"></p>
+      </div>
+      <div class="field2">
+        <div class="field"><label for="f_distance">Dystans (km)</label><div class="fieldrow"><input id="f_distance" type="number" step="0.1"><button type="button" class="pickbtn" data-pick-target="f_distance">🎯</button></div></div>
+        <div class="field"><label for="f_elevation">Przewyższenie (m)</label><div class="fieldrow"><input id="f_elevation" type="number"><button type="button" class="pickbtn" data-pick-target="f_elevation">🎯</button></div></div>
+      </div>
+      <div class="field">
+        <label for="f_surface">Nawierzchnia</label>
+        <div class="fieldrow"><select id="f_surface"><option value="">— nie wybrano —</option></select><button type="button" class="pickbtn" data-pick-target="f_surface" data-pick-mode="dict:surfaces">🎯</button></div>
+      </div>
+
+      <!-- Warianty trasy — tylko ustawka/wyścig (kreator: step-trasa.php
+           x-if="type==='ustawka' || type==='wyscig'"); dla wielodniówki i
+           pokrec_z_kims chowa je syncTypeVisibility(). -->
+      <div id="variantsBox">
+        <h3>Warianty trasy <small>(opcjonalnie, kilka pętli — tylko ustawka/wyścig)</small></h3>
+        <div id="variantsList"></div>
+        <button type="button" id="btnAddVariant" class="btn btn-ghost btn-sm">+ Dodaj wariant</button>
+      </div>
+    </details>
+
+    <details class="grp" open>
+      <summary>O czym</summary>
+      <div class="field">
+        <label for="f_title">Tytuł</label>
+        <div class="fieldrow"><input id="f_title" type="text" data-pick="text"><button type="button" class="pickbtn" data-pick-target="f_title">🎯</button></div>
+      </div>
+      <div class="field">
+        <label for="f_description">Opis</label>
+        <div class="fieldrow"><textarea id="f_description" rows="4" data-pick="text"></textarea><button type="button" class="pickbtn" data-pick-target="f_description">🎯</button></div>
+      </div>
+      <div class="field">
+        <label for="f_photoUrl">Zdjęcie — link</label>
+        <div class="fieldrow"><input id="f_photoUrl" type="text" data-pick="img"><button type="button" class="pickbtn" data-pick-target="f_photoUrl" data-pick-mode="img">🎯 (kliknij zdjęcie)</button></div>
+      </div>
+      <div class="field">
+        <label for="f_photoFile">…lub plik z dysku</label>
+        <input id="f_photoFile" type="file" accept="image/*">
+      </div>
+      <img id="photoPreview" class="preview" hidden>
+    </details>
+
+    <details class="grp" open>
+      <summary>Dla kogo</summary>
+      <div class="field">
+        <label>Jakie rowery <small>(🎯 dołączy — nie odznacza już zaznaczonych)</small></label>
+        <div class="fieldrow"><div id="f_bikeTypes" class="chipgroup"></div><button type="button" class="pickbtn" data-pick-target="f_bikeTypes" data-pick-mode="dict:bikeTypes">🎯</button></div>
+      </div>
+      <div class="field2">
+        <div class="field"><label for="f_pace">Tempo</label><div class="fieldrow"><select id="f_pace"><option value="">— nie wybrano —</option></select><button type="button" class="pickbtn" data-pick-target="f_pace" data-pick-mode="dict:paces">🎯</button></div></div>
+        <div class="field"><label for="f_difficulty">Trudność</label><div class="fieldrow"><select id="f_difficulty"><option value="">— nie wybrano —</option></select><button type="button" class="pickbtn" data-pick-target="f_difficulty" data-pick-mode="dict:difficulties">🎯</button></div></div>
+      </div>
+      <div class="field">
+        <label>Co zabrać ze sobą <small>(każda pozycja osobno — „obowiązkowy” trafia do kreatora)</small></label>
+        <div id="equipmentList"></div>
+        <button type="button" id="btnAddEquipment" class="btn btn-ghost btn-sm">+ Dodaj pozycję</button>
+      </div>
+      <div class="field2">
+        <div class="field"><label for="f_minParticipants">Min. uczestników <small>(całego eventu)</small></label><input id="f_minParticipants" type="number" min="1"></div>
+        <div class="field"><label for="f_maxParticipants">Maks. uczestników</label><input id="f_maxParticipants" type="number" min="1"></div>
+      </div>
+    </details>
+
+    <!-- Pieniądze i zapisy — nie istnieją dla pokrec_z_kims (kreator:
+         event-form-wizard.php x-if="type!=='pokrec_z_kims'", app wymusza
+         darmowe+internal); chowa je syncTypeVisibility(). -->
+    <details class="grp" open id="moneySection">
+      <summary>Pieniądze i zapisy</summary>
+      <label class="checkrow"><input id="f_isPaid" type="checkbox"> Wydarzenie płatne</label>
+      <div class="field2">
+        <div class="field"><label for="f_priceAmount">Kwota</label><input id="f_priceAmount" type="number" step="0.01"></div>
+        <!-- Zaliczka głównego eventu — kreator (step-pieniadze.php) pokazuje ją
+             tylko bez wariantów; przy wariantach zaliczka idzie per pętla
+             (wiersz wariantu niżej), a ta wartość jest ignorowana
+             (Resources\EventFormInput: $hasVariants ? null : deposit). -->
+        <div class="field"><label for="f_deposit">Zaliczka <small>(ignorowana, gdy warianty)</small></label><input id="f_deposit" type="number" step="0.01"></div>
+      </div>
+      <div class="field2">
+        <div class="field"><label for="f_priceCurrency">Waluta</label><select id="f_priceCurrency"></select></div>
+        <div class="field"><label for="f_priceUnit">Cena za</label><select id="f_priceUnit"></select></div>
+      </div>
+      <div class="field">
+        <label for="f_priceIncluded">Co jest w cenie <small>(jedna pozycja na linię)</small></label>
+        <textarea id="f_priceIncluded" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label for="f_priceExcluded">Czego nie ma w cenie <small>(jedna pozycja na linię)</small></label>
+        <textarea id="f_priceExcluded" rows="2"></textarea>
+      </div>
+      <div class="field2">
+        <div class="field"><label for="f_paymentDeadlineDays">Dopłata do (dni przed)</label><input id="f_paymentDeadlineDays" type="number" min="0"></div>
+        <div class="field"><label for="f_cancellationDeadlineDays">Odwołanie do (dni przed)</label><input id="f_cancellationDeadlineDays" type="number" min="0"></div>
+      </div>
+      <div class="field">
+        <label for="f_cancellationPolicy">Polityka anulowania</label>
+        <textarea id="f_cancellationPolicy" rows="2" data-pick="text"></textarea>
+      </div>
+      <div class="field">
+        <label for="f_regUrl">Link do zapisów</label>
+        <div class="fieldrow"><input id="f_regUrl" type="text" data-pick="href"><button type="button" class="pickbtn" data-pick-target="f_regUrl" data-pick-mode="href">🎯</button></div>
+      </div>
+      <div class="field2">
+        <div class="field"><label for="f_regPhone">Telefon do zapisów</label><div class="fieldrow"><input id="f_regPhone" type="text"><button type="button" class="pickbtn" data-pick-target="f_regPhone">🎯</button></div></div>
+        <div class="field"><label for="f_regEmail">E-mail do zapisów</label><div class="fieldrow"><input id="f_regEmail" type="text"><button type="button" class="pickbtn" data-pick-target="f_regEmail">🎯</button></div></div>
+      </div>
+    </details>
+
+  </form>
+</main>
+
+<footer class="bottombar">
+  <p id="fillStatus" class="hint"></p>
+  <button id="btnFill" class="btn btn-primary btn-block" type="button">🚴 Wypełnij formularz na ridemore.bike</button>
+</footer>
+
+<template id="dateRowTpl">
+  <div class="date-row">
+    <input type="date" class="d-date">
+    <button type="button" class="btn btn-ghost btn-sm d-remove">×</button>
+  </div>
+</template>
+
+<template id="variantRowTpl">
+  <div class="variant-row">
+    <div class="variant-row__main">
+      <input type="text" class="v-name" placeholder="Nazwa wariantu">
+      <input type="number" step="0.1" class="v-dist" placeholder="km">
+      <input type="number" class="v-elev" placeholder="m">
+      <button type="button" class="btn btn-ghost btn-sm v-remove">×</button>
+    </div>
+    <!-- Cena/zaliczka/limit/nawierzchnia per wariant — kreator: variants.php +
+         step-pieniadze.php (własna cena, zaliczka i limit miejsc na pętlę;
+         nawierzchnia jak dla głównego etapu). AI-Engine może je wykryć, ale
+         tu też można wpisać ręcznie przed wypełnieniem. -->
+    <div class="variant-row__meta">
+      <select class="v-surface"><option value="">— nawierzchnia —</option></select>
+      <input type="number" step="0.01" class="v-price" placeholder="Cena (zł)">
+      <input type="number" step="0.01" class="v-deposit" placeholder="Zaliczka (zł)">
+      <input type="number" min="1" class="v-max" placeholder="Limit miejsc">
+    </div>
+    <!-- Osobny plik GPX per wariant (event-form.php: Models\EventRouteVariant)
+         — AI-Engine wykrywa link automatycznie (badge), ale tu jest też
+         RĘCZNE wskazanie 🎯 (ten sam mechanizm co reszta pól: kliknij, potem
+         wskaż link na stronie), na wypadek gdy AI nie znajdzie/pomyli się.
+         Wartość leci dalej do fill.js, które pobiera plik i wgrywa przez
+         /api/gpx/parse, tak jak dla głównego eventu. -->
+    <div class="variant-row__gpx">
+      <button type="button" class="btn btn-ghost btn-sm pickbtn gpx-pick" data-pick-mode="href"
+              title="Wskaż link do pliku GPX tego wariantu na stronie">🎯 Plik GPX wariantu</button>
+      <a href="#" class="gpx-badge" target="_blank" rel="noopener"
+         title="Wykryty plik GPX tego wariantu — kliknij, żeby sprawdzić w nowej karcie" hidden>GPX ✓</a>
+      <button type="button" class="btn btn-ghost btn-sm gpx-clear" title="Usuń GPX tego wariantu" hidden>✕</button>
+      <input type="hidden" class="gpx-url">
+    </div>
+  </div>
+</template>
+
+<!-- Wiersz dnia wielodniówki — odpowiednik krok PLAN (step-plan.php):
+     data/tytuł/start/meta/dystans/przewyższenie/nawierzchnia/nocleg/posiłki/
+     notatki + własny GPX. Dodawany przez addStageRow() w sidepanel.js. -->
+<template id="stageRowTpl">
+  <div class="stage-row">
+    <div class="stage-row__head">
+      <span class="stage-row__n">Dzień</span>
+      <button type="button" class="btn btn-ghost btn-sm s-remove">Usuń dzień</button>
+    </div>
+    <div class="field2">
+      <div class="field"><label>Data</label><input type="date" class="s-date"></div>
+      <div class="field"><label>Tytuł dnia <small>(kreator nie ma na to pola — trafia tylko do stanu)</small></label><input type="text" class="s-title" placeholder="np. Przejazd granią"></div>
+    </div>
+    <div class="field2">
+      <div class="field"><label>Start</label><input type="text" class="s-start" placeholder="np. Cisna"></div>
+      <div class="field"><label>Meta</label><input type="text" class="s-end" placeholder="np. Ustrzyki Górne"></div>
+    </div>
+    <div class="field2">
+      <div class="field"><label>Dystans (km)</label><input type="number" step="0.1" class="s-dist"></div>
+      <div class="field"><label>Przewyższenie (m)</label><input type="number" class="s-elev"></div>
+    </div>
+    <div class="field2">
+      <div class="field"><label>Nawierzchnia</label><select class="s-surface"><option value="">— nie wybrano —</option></select></div>
+      <div class="field"><label>Typ noclegu</label><select class="s-accom-type"><option value="">— brak —</option></select></div>
+    </div>
+    <div class="field"><label>Nocleg — nazwa / adres</label><input type="text" class="s-accom-name" placeholder="np. Schronisko, pokoje 2–4 os."></div>
+    <div class="field"><label>Posiłki w cenie</label><div class="chipgroup s-meals"></div></div>
+    <div class="field"><label>Notatki do dnia</label><input type="text" class="s-notes" placeholder="np. trudny odcinek po deszczu"></div>
+    <div class="variant-row__gpx">
+      <button type="button" class="btn btn-ghost btn-sm pickbtn gpx-pick" data-pick-mode="href"
+              title="Wskaż link do pliku GPX tego dnia na stronie">🎯 Plik GPX dnia</button>
+      <a href="#" class="gpx-badge" target="_blank" rel="noopener"
+         title="Wykryty plik GPX tego dnia — kliknij, żeby sprawdzić w nowej karcie" hidden>GPX ✓</a>
+      <button type="button" class="btn btn-ghost btn-sm gpx-clear" title="Usuń GPX tego dnia" hidden>✕</button>
+      <input type="hidden" class="gpx-url">
+    </div>
+  </div>
+</template>
+
+<!-- Wiersz sprzętu — odpowiednik equipment[i] w kreatorze (step-dlakogo.php:
+     nazwa + checkbox "obowiązkowy"). -->
+<template id="equipmentRowTpl">
+  <div class="equipment-row">
+    <input type="text" class="e-name" placeholder="np. kask, oświetlenie">
+    <label class="checkrow"><input type="checkbox" class="e-mandatory"> obowiązkowy</label>
+    <button type="button" class="btn btn-ghost btn-sm e-remove">×</button>
+  </div>
+</template>
+
+<script src="sidepanel.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Migracje i zrzut schematu — nigdy nie powinny być dostępne przez HTTP.
+#
+# To NIE był przypadek 200-z-zerem-bajtów jak w core/: pliki mają rozszerzenie
+# `.sql`, więc Apache oddawał je jako zwykły tekst. Zmierzone 2026-09-12:
+# `/migration/schema.sql` → 89 703 B, każda migracja po kolei też. Czyli pełna
+# lista tabel, kolumn, kluczy i niezmienników bazy była publicznie do pobrania.
+#
+# Uruchamia je WYŁĄCZNIE `run_migrations.php` z CLI, czytając z dysku — żaden
+# adres w aplikacji tu nie prowadzi.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

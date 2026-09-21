@@ -1,0 +1,24 @@
+# Kod aplikacji — nigdy nie powinien być dostępny przez HTTP.
+#
+# Nic tu nie jest adresem: każde żądanie wchodzi przez /index.php w katalogu
+# głównym, a ten wciąga pliki z DYSKU (`require`), nie przez serwer WWW. Brak
+# tej blokady nie dawał więc żadnej funkcji, a dawał ryzyko.
+#
+# DLACZEGO TO NIE BYŁO WIDAĆ (zmierzone 2026-09-12): `/core/config.php` po HTTP
+# oddawał 200 i ZERO bajtów, bo PHP go WYKONYWAŁ — plik zwraca tablicę i nic nie
+# wypisuje. Wyglądało to na bezpieczne, ale zabezpieczeniem był tam wyłącznie
+# fakt, że interpreter działa. Gdyby obsługa PHP dla tego katalogu kiedykolwiek
+# przestała działać (zmiana handlera, migracja hostingu, zgubiony .htaccess
+# w katalogu głównym), Apache oddałby te pliki jako TEKST — razem z hasłem
+# SMTP, sekretem HMAC wypisu i danymi dostępu do bazy, które `config.php`
+# trzyma jako wartości zapasowe.
+#
+# Blokada w obu składniach Apache (2.4 mod_authz_core i 2.2 mod_access_compat) —
+# ten sam wzorzec co storage/.htaccess i tests/.htaccess.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

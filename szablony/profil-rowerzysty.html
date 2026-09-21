@@ -1,0 +1,924 @@
+<!-- szablony/profil-rowerzysty.html — ridemore.bike
+     PROPOZYCJA redesignu strony /rowerzysta/{slug}. Statyczny prototyp,
+     dane z profilu „Historical" (localhost, 2026-08-22).
+
+     ZASADA: zero nowej palety, zero nowych fontów, zero nowego języka
+     wizualnego. Wszystkie kolory, fonty, promienie i cienie to 1:1 tokeny
+     z assets/css/style.css (paleta „Szlak"). Klasy komponentów mają te same
+     nazwy co w serwisie, żeby dało się porównać stare z nowym bez tłumaczenia.
+
+     CO SIĘ ZMIENIA (i dlaczego):
+       1. HERO — trzy osobne bloki (biała .op-head + biały box „Jedzie na"
+          + czarny .trust-bar) scalone w JEDEN jasny panel z warstwicami.
+          Dziś to trzy prostokąty pod sobą, z których żaden nie jest
+          bohaterem strony. Po zmianie: kto to jest, dokąd jedzie i czym
+          się wykazał czyta się jednym spojrzeniem.
+       2. PASEK KOTWIC (.anchors — komponent już w serwisie) — profil ma
+          teraz 7 sekcji. Bez spisu treści dolna połowa strony nie istnieje.
+       3. DWIE KOLUMNY pod mapą — aktywność/szlaki/wyjazdy w głównej,
+          peleton/regiony/kolekcja w szynie. Dziś wszystko jest pełnej
+          szerokości i strona ma ~4 ekrany monotonnego przewijania.
+       4. Drobiazgi z charakterem: warstwice w hero, znak szlaku jako
+          marker sekcji, paski postępu w kolekcji, mini-słupki w peletonie.
+
+     HERO JEST JASNE (decyzja usera 2026-08-22). Pierwsza wersja miała ciemne
+     tło; ciężar, który dawało, przejmują teraz przesunięty cień 4px (ten sam
+     trik ma .trust-bar w serwisie), pasmo --tint pod liczbami i jedna żółta
+     warstwica. Dzięki temu na stronie nie ma ANI JEDNEJ ciemnej płaszczyzny,
+     której nie byłoby dziś w serwisie.
+
+     CZEGO NIE MA (świadomie): procentów pokrycia kraju, rankingów,
+     prędkości i czasów — tak jak w serwisie.
+-->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Historical — rowerzysta na ridemore.bike (propozycja)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   1. TOKENY — skopiowane z assets/css/style.css :root, bez zmian.
+   ============================================================ */
+:root{
+  --bg:#F4F5F1;--paper:#FFFFFF;--ink:#15201A;--ink-soft:#5E6A62;--ink-mute:#8A948C;
+  --hair:#E2E5DD;--hair-strong:#D3D8CE;
+  --accent:#2C6B4F;--accent-dark:#1E4B38;--accent-soft:#E4EEE8;--accent-text:#FFFFFF;
+  --star:#F0B41E;
+  --radius:10px;
+  --max:1360px;
+  --blaze:#FFC93F;--blaze-dark:#F0B41E;--tint:#EDF1EC;
+  --f-d:'Archivo',sans-serif;--f-b:'Instrument Sans',sans-serif;--f-m:'IBM Plex Mono',monospace;
+  --s-red:#C3382F;--s-blue:#2B57C8;--s-green:#2E7D4F;--s-purple:#6D4AA6;
+  --shadow:0 1px 2px rgba(21,32,26,.04),0 10px 26px -20px rgba(21,32,26,.30);
+  --shadow-up:0 2px 4px rgba(21,32,26,.05),0 22px 40px -26px rgba(21,32,26,.42);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-b);-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0}
+p{margin:0}
+a{color:inherit}
+img{max-width:100%;display:block}
+button{font:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px 60px}
+.display{font-family:'Big Shoulders Display',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.01em}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+
+/* Znak szlaku — ten sam komponent .blaze co w serwisie. */
+.blaze{display:inline-block;vertical-align:-6px;width:15px;height:24px;margin-right:6px;border-radius:2px;
+  background:linear-gradient(#fff 0 33.3%,var(--bz,var(--accent)) 33.3% 66.6%,#fff 66.6% 100%);
+  box-shadow:inset 0 0 0 1px rgba(21,32,26,.12)}
+
+/* ============================================================
+   2. CHROME STRONY — nagłówek, okruszki, stopka (1:1 z serwisu).
+   ============================================================ */
+header{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:18px 0;margin-bottom:8px;background:rgba(244,245,241,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--hair)}
+.logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.logo .mark{display:inline-block;width:13px;height:21px;border-radius:2px;
+  background:linear-gradient(var(--bg) 0 33.3%,var(--blaze) 33.3% 66.6%,var(--bg) 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.15)}
+.logo-text{font-family:var(--f-d);font-weight:800;font-size:20px;letter-spacing:-.01em;color:var(--ink)}
+.logo-text b{font-weight:900;color:var(--accent)}
+header nav{display:flex;align-items:center}
+header nav a{color:var(--ink-soft);text-decoration:none;font-size:14px;font-weight:600;margin-left:22px;padding:4px 0;border-bottom:2px solid transparent}
+header nav a:hover{color:var(--ink);border-color:var(--hair-strong)}
+header nav a.nav-active{color:var(--ink);font-weight:700;border-color:var(--blaze)}
+/* W serwisie nawigacja chowa się pod hamburgera (partials/header.php,
+   details.mobile-nav-toggle). Prototyp odtwarza tylko sam fakt schowania. */
+.hamburger{display:none;border:1px solid var(--hair-strong);background:var(--paper);border-radius:10px;
+  width:42px;height:42px;font-size:17px;color:var(--ink);cursor:pointer}
+@media(max-width:900px){header nav{display:none}.hamburger{display:block}}
+
+.breadcrumbs{font-family:var(--f-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute);margin-top:20px}
+.breadcrumbs a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--hair-strong);text-underline-offset:3px}
+.breadcrumbs a:hover{color:var(--accent-dark);text-decoration-color:currentColor}
+.breadcrumbs-sep{margin:0 6px;color:var(--hair-strong)}
+.breadcrumbs-current{color:var(--ink-mute)}
+
+footer.ft{border-top:1px solid var(--hair);margin-top:52px;padding-top:28px;display:grid;
+  grid-template-columns:1.4fr repeat(3,1fr);gap:26px;font-size:14px;color:var(--ink-soft)}
+footer.ft h4{font-family:var(--f-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute);margin:0 0 10px}
+footer.ft a{display:block;text-decoration:none;padding:3px 0;color:var(--ink-soft)}
+footer.ft a:hover{color:var(--accent-dark)}
+footer.ft p{max-width:34ch;line-height:1.6}
+@media(max-width:820px){footer.ft{grid-template-columns:1fr 1fr}}
+
+/* ============================================================
+   3. PRZYCISKI — .btn / .btn-secondary z serwisu.
+   ============================================================ */
+.btn{display:inline-flex;align-items:center;gap:.5em;text-decoration:none;font-family:var(--f-b);font-weight:700;font-size:15px;
+  background:var(--accent);color:var(--accent-text);border:1px solid var(--accent-dark);padding:13px 24px;border-radius:999px;cursor:pointer;
+  transition:transform .15s ease,background-color .15s ease}
+.btn:hover{background:var(--accent-dark);transform:translateY(-1px)}
+.btn--sm{padding:8px 15px;font-size:13px}
+.btn-secondary{background:var(--paper);border:1px solid var(--hair-strong);color:var(--ink)}
+.btn-secondary:hover{background:var(--paper);border-color:var(--ink)}
+
+/* ============================================================
+   4. HERO — SCALENIE .op-head + „Jedzie na" + .trust-bar.
+   Ciemne tło to kolor, który .trust-bar ma dziś (var(--ink));
+   nowe jest tylko to, że TRZY bloki są jednym obiektem.
+   ============================================================ */
+/* JASNE HERO. Panel jest z tego samego materiału co każde .box w serwisie
+   (paper + hair + promień), tylko większy i z warstwicami. Ciężar, który
+   wcześniej dawało ciemne tło, biorą teraz: przesunięty cień 4px (ten sam
+   trik ma .trust-bar), pasmo --tint pod liczbami i jedna żółta warstwica. */
+.rp-hero{position:relative;margin-top:16px;border-radius:24px;overflow:hidden;background:var(--paper);
+  border:1px solid var(--hair);box-shadow:4px 4px 0 var(--hair-strong)}
+/* Warstwice — jedyny „ozdobnik" na całej stronie. Rysunek mapy, nie gradient
+   znikąd: to ta sama rzecz, o której jest cały profil. */
+.rp-hero__topo{position:absolute;inset:0;pointer-events:none}
+.rp-hero__topo svg{width:100%;height:100%}
+.rp-hero__in{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:28px;padding:30px 32px 26px;align-items:start}
+@media(max-width:900px){.rp-hero__in{grid-template-columns:1fr;padding:24px 20px 20px}}
+
+.rp-id{display:flex;gap:20px;align-items:flex-start}
+.av{width:96px;height:96px;border-radius:50%;background:var(--accent-dark);color:#fff;display:grid;place-items:center;
+  font-family:var(--f-d);font-weight:800;font-size:34px;flex:none;position:relative;
+  box-shadow:0 0 0 4px var(--paper),0 0 0 5px var(--hair)}
+.av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+/* Znak szlaku przy awatarze — mikro-akcent marki w miejscu, w które i tak
+   patrzy się pierwsze. */
+.av .flag{position:absolute;right:-6px;bottom:2px;width:15px;height:24px;border-radius:2px;
+  background:linear-gradient(var(--paper) 0 33.3%,var(--blaze) 33.3% 66.6%,var(--paper) 66.6% 100%);
+  box-shadow:0 0 0 2px var(--paper),inset 0 0 0 1px rgba(21,32,26,.12)}
+.rp-id__c{min-width:0}
+/* .tags/.tag — dokładnie ta wersja, która jest w serwisie (style.css:1304). */
+.tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--tint);border:1px solid var(--hair);color:var(--ink-soft);padding:5px 10px;border-radius:999px}
+.rp-hero h1{font-family:var(--f-d);font-size:clamp(32px,4.4vw,54px);font-variation-settings:"wdth" 116;font-weight:800;
+  letter-spacing:-.02em;line-height:1.02;max-width:16ch;color:var(--ink)}
+/* Zdanie-sygnatura złożone z FAKTÓW, nie z bio — profil nie ma pola „o mnie",
+   a jedno takie zdanie robi z listy liczb osobę. */
+.rp-hero__sig{margin-top:12px;color:var(--ink-soft);font-size:16px;line-height:1.6;max-width:52ch}
+.rp-hero__sig b{color:var(--ink);font-weight:600}
+.rp-hero__act{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+
+/* Karta „Jedzie na" — dziś osobny biały box pod nagłówkiem. Wewnątrz hero
+   stoi tam, gdzie patrzy się po przeczytaniu imienia.
+   Na jasnym panelu musi się ODCIĄĆ od tła, więc dostaje --tint i mocniejszą
+   krawędź — biała karta na białym byłaby niewidoczna. */
+.rp-next{background:var(--tint);border:1px solid var(--hair-strong);border-radius:18px;padding:18px 20px 20px}
+/* Ten sam zabieg co .eyebrow w serwisie: accent-soft + accent-dark. */
+.rp-next__lbl{display:inline-flex;align-items:center;font-family:var(--f-m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-dark);background:var(--accent-soft);border-radius:4px;padding:5px 10px 5px 7px;margin-bottom:12px}
+.rp-next__lbl .blaze{width:11px;height:18px;vertical-align:-4px;margin-right:7px;
+  background:linear-gradient(var(--accent-soft) 0 33.3%,var(--blaze-dark) 33.3% 66.6%,var(--accent-soft) 66.6% 100%)}
+.rp-next h2{font-family:var(--f-d);font-weight:700;font-size:21px;line-height:1.2;color:var(--ink)}
+.rp-next h2 a{text-decoration:none}
+.rp-next h2 a:hover{color:var(--accent-dark);text-decoration:underline;text-underline-offset:3px}
+.rp-next__m{font-family:var(--f-m);font-size:12.5px;color:var(--ink-soft);margin-top:7px}
+.rp-next .btn{margin-top:15px;width:100%;justify-content:center}
+/* Sygnał odliczania — jedyna liczba na stronie, która mówi o PRZYSZŁOŚCI.
+   Profil ma zapraszać, nie podsumowywać. */
+.rp-next__in{margin-top:11px;font-family:var(--f-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute)}
+
+/* Pasek liczb — dawny .trust-bar, teraz na paśmie --tint w stopce hero.
+   To samo pasmo, którym w serwisie odcinają się naprzemienne sekcje, więc
+   liczby nadal są osobnym obiektem, mimo że nie są już czarne. Typografia
+   bez zmian: Big Shoulders na wartościach, IBM Plex Mono na notkach. */
+.rp-nums{position:relative;display:grid;grid-template-columns:repeat(5,1fr);
+  border-top:1px solid var(--hair);background:var(--tint)}
+.rp-num{padding:16px 20px 18px;border-right:1px solid var(--hair)}
+.rp-num:last-child{border-right:none}
+.rp-num__l{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-mute);font-weight:700;margin-bottom:5px}
+.rp-num__v{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:32px;line-height:1;color:var(--ink)}
+.rp-num__v small{font-family:var(--f-m);font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:5px}
+.rp-num__n{margin-top:5px;font-family:var(--f-m);font-size:11px;color:var(--ink-mute)}
+@media(max-width:900px){.rp-nums{grid-template-columns:repeat(2,1fr)}
+  .rp-num:nth-child(2n){border-right:none}
+  .rp-num{border-top:1px solid var(--hair)}}
+
+/* ============================================================
+   5. KOTWICE — .anchors, komponent już obecny w serwisie.
+   ============================================================ */
+.anchors{position:sticky;top:64px;z-index:50;background:rgba(244,245,241,.94);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--hair);margin-top:26px}
+.anchors__in{display:flex;gap:5px;overflow-x:auto;padding-block:10px;scrollbar-width:none}
+.anchors__in::-webkit-scrollbar{display:none}
+.anchors a{font-size:14px;text-decoration:none;padding:7px 14px;border-radius:999px;color:var(--ink-soft);white-space:nowrap}
+.anchors a:hover{background:var(--tint);color:var(--ink)}
+.anchors a[aria-current]{background:var(--ink);color:#fff}
+.anchors__c{margin-left:auto;display:flex;align-items:center;font-family:var(--f-m);font-size:11px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-mute);white-space:nowrap;padding-left:14px}
+
+/* ============================================================
+   6. SEKCJE, PUDEŁKA, NAGŁÓWKI — .sec / .box / .sec-head z serwisu.
+   ============================================================ */
+.sec{scroll-margin-top:120px;margin-bottom:34px}
+.box{background:var(--paper);border:1px solid var(--hair);border-radius:20px;padding:21px 22px;box-shadow:var(--shadow)}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin:34px 0 14px;flex-wrap:wrap}
+.sec-head h2{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:24px;text-transform:uppercase;letter-spacing:.01em;margin:0}
+.sec-head span{font-family:var(--f-m);font-size:12px;color:var(--ink-mute);letter-spacing:.02em}
+.sec-head .more{margin-left:auto;font-family:var(--f-m);font-size:12px;color:var(--accent-dark);text-decoration:none;letter-spacing:.02em}
+.sec-head .more:hover{text-decoration:underline;text-underline-offset:3px}
+.box > h2{font-family:var(--f-d);font-size:20px;font-weight:700;margin:0 0 4px}
+.box__sub{font-size:14px;color:var(--ink-soft);line-height:1.55;margin-bottom:14px}
+.roster__lbl{font-family:var(--f-m);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);margin:0 0 9px}
+.desc{font-size:15px;line-height:1.65;color:var(--ink-soft)}
+
+/* ============================================================
+   7. MAPA — .rp-mapwrap / .rp-map / .rp-side / .rp-rides z serwisu.
+      Mapa jest tu narysowana CSS-em (statyczny prototyp).
+   ============================================================ */
+.rp-mapwrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:14px;align-items:start}
+@media(max-width:900px){.rp-mapwrap{grid-template-columns:1fr}}
+.rp-map__box{position:relative}
+.rp-map{height:520px;border-radius:14px;overflow:hidden;position:relative;border:1px solid var(--hair);
+  background:linear-gradient(rgba(237,241,236,.7),rgba(237,241,236,.7)),
+    repeating-linear-gradient(28deg,transparent 0 78px,rgba(125,145,130,.16) 79px 80px),
+    repeating-linear-gradient(152deg,transparent 0 112px,rgba(125,145,130,.1) 113px 114px),
+    #D8DED7}
+.rp-map__fog{position:absolute;inset:0}
+.hexc{position:absolute;width:58px;height:50px;clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%);
+  background:rgba(146,155,149,.42);border:1px solid rgba(255,255,255,.4)}
+.hexc.on{background:rgba(44,107,79,.44);border-color:rgba(255,255,255,.55)}
+.hexc.hot{background:rgba(44,107,79,.66)}
+.rp-map__track{position:absolute;height:4px;border-radius:6px;background:var(--accent-dark);transform-origin:left center;
+  box-shadow:0 0 0 2px rgba(255,255,255,.6)}
+.rp-map__track.plan{background:none;height:0;border-top:4px dashed var(--ink-mute);box-shadow:none}
+.rp-map__lbl{position:absolute;font-family:var(--f-m);font-size:11.5px;color:#41504a;text-shadow:0 1px #fff;letter-spacing:.04em}
+.rp-map__zoom{position:absolute;left:12px;top:12px;z-index:3;display:flex;flex-direction:column;
+  background:var(--paper);border:1px solid var(--hair);border-radius:8px;overflow:hidden}
+.rp-map__zoom button{width:30px;height:30px;border:0;background:none;color:var(--ink-soft);cursor:pointer;font-size:16px}
+.rp-map__zoom button+button{border-top:1px solid var(--hair)}
+.map-layers{position:absolute;left:12px;top:84px;z-index:3;width:222px;background:var(--paper);border:1px solid var(--hair);
+  border-radius:12px;padding:11px 13px 8px;box-shadow:var(--shadow)}
+.map-layers__hd{margin:0 0 8px;font-family:var(--f-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute)}
+.map-layers label{display:flex;align-items:flex-start;gap:9px;padding:6px 0;cursor:pointer;border-top:1px solid var(--hair)}
+.map-layers label:first-of-type{border-top:none}
+.map-layers label span{display:flex;flex-direction:column;gap:1px;font-size:13px;color:var(--ink);line-height:1.25}
+.map-layers label small{font-size:11px;color:var(--ink-mute);font-family:var(--f-m)}
+.map-layers input{margin:2px 0 0;accent-color:var(--accent);flex:none}
+.hex-legend--onmap{position:absolute;left:14px;bottom:14px;z-index:3;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;
+  background:rgba(255,255,255,.94);border:1px solid var(--hair);border-radius:10px;padding:8px 12px}
+.hex-legend__ttl{font-family:var(--f-m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute)}
+.hex-legend__item{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft)}
+.hex-legend i{width:22px;height:12px;border-radius:2px;display:block}
+
+.rp-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* .stat-tiles — wspólny partial serwisu, wariant compact. */
+.stat-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);
+  border-radius:12px;overflow:hidden}
+.stat-tile{background:var(--paper);padding:11px 13px;display:flex;flex-direction:column;gap:3px}
+.stat-tile__lbl{font-family:var(--f-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute)}
+.stat-tile__val{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:22px;line-height:1;color:var(--ink)}
+.stat-tile__val small{font-family:var(--f-m);font-size:12px;font-weight:600;color:var(--ink-mute);margin-left:5px}
+.stat-tile__val.is-done{color:var(--accent-dark)}
+/* Kafel „Odkryte pola" dostaje wagę — dziś wszystkie sześć wygląda tak samo,
+   więc żaden nie jest odpowiedzią na pytanie „ile tego jest". */
+.stat-tile--lead{grid-column:1/-1;background:var(--accent-soft)}
+.stat-tile--lead .stat-tile__val{font-size:34px;color:var(--accent-dark)}
+.stat-tile--lead .stat-tile__lbl{color:var(--accent-dark);opacity:.8}
+.hexn{display:inline-flex;align-items:center;gap:.34em;white-space:nowrap}
+
+.rp-rides{border:1px solid var(--hair);border-radius:12px;overflow:hidden;background:var(--paper)}
+.rp-rides__hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;padding:10px 13px;
+  border-bottom:1px solid var(--hair);font-family:var(--f-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute)}
+.rp-rides__hd span{font-weight:600;color:var(--ink)}
+.rp-ride{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--hair);
+  padding:10px 13px;cursor:pointer;transition:background-color .15s}
+.rp-ride:last-of-type{border-bottom:0}
+.rp-ride:hover{background:var(--tint)}
+.rp-ride.is-on{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.rp-ride b{display:block;font-size:13.5px;font-weight:650;line-height:1.3}
+.rp-ride span{display:block;margin-top:3px;font-family:var(--f-m);font-size:11.5px;color:var(--ink-mute)}
+.rp-rides__nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-top:1px solid var(--hair);background:var(--bg)}
+.rp-rides__btn{border:1px solid var(--hair-strong);background:var(--paper);border-radius:8px;width:28px;height:28px;cursor:pointer;color:var(--ink-soft)}
+.rp-rides__pos{font-family:var(--f-m);font-size:11px;color:var(--ink-mute)}
+
+/* ============================================================
+   8. UKŁAD DWUKOLUMNOWY — główna treść + szyna.
+      To jest druga (po hero) realna zmiana układu strony.
+   ============================================================ */
+.rp-cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:26px;align-items:start;margin-top:6px}
+@media(max-width:1080px){.rp-cols{grid-template-columns:1fr}}
+/* Szyna NIE jest przyklejona. Ma ok. 960 px wysokości, czyli więcej niż okno
+   po odjęciu nagłówka i paska kotwic — przy position:sticky ostatnia karta
+   (Kolekcja) zawisłaby poza ekranem i nie dałoby się do niej doscrollować.
+   W normalnym przepływie kolumny kończą się prawie równo. */
+.rp-rail{display:flex;flex-direction:column;gap:16px}
+
+/* ============================================================
+   9. AKTYWNOŚĆ — .rf-list / .rf-item z serwisu.
+   ============================================================ */
+.rf-list{display:flex;flex-direction:column;border:1px solid var(--hair);border-radius:14px;background:var(--paper);overflow:hidden;box-shadow:var(--shadow)}
+.rf-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 15px;
+  border-bottom:1px solid var(--hair);text-decoration:none;color:inherit;transition:background-color .15s}
+.rf-item:last-child{border-bottom:none}
+.rf-item:hover{background:var(--tint)}
+.rf-item__ico{display:flex;width:30px;height:30px;align-items:center;justify-content:center;border-radius:9px;
+  background:var(--tint);color:var(--accent-dark);font-size:14px}
+/* Kolor ikony niesie TYP wpisu — dziś wszystkie są jednakowo szare, więc lista
+   18 pozycji czyta się jak jeden blok tekstu. */
+.rf-item__ico.is-map{background:var(--accent-soft);color:var(--accent-dark)}
+.rf-item__ico.is-pic{background:#FDF1D6;color:#8A6A12}
+.rf-item__ico.is-talk{background:#E7ECF7;color:#2B4A86}
+.rf-item__hd{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.rf-item__hd b{font-size:13.5px;font-weight:650;color:var(--ink)}
+.rf-item__ev{font-family:var(--f-m);font-size:11.5px;color:var(--ink-mute)}
+.rf-item__tx{display:block;margin-top:3px;font-size:13.5px;line-height:1.45;color:var(--ink-soft)}
+.rf-item__at{font-family:var(--f-m);font-size:11.5px;color:var(--ink-mute);white-space:nowrap;padding-top:2px}
+.rf-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.rf-nav__btn{display:inline-flex;align-items:center;padding:7px 13px;border:1px solid var(--hair-strong);border-radius:999px;
+  background:var(--paper);text-decoration:none;font-size:13px;color:var(--ink)}
+.rf-nav__btn:hover{background:var(--tint)}
+.rf-nav__btn.is-off{opacity:.35}
+.rf-nav__pos{font-family:var(--f-m);font-size:12px;color:var(--ink-mute)}
+
+/* ============================================================
+   10. SZLAKI — .disc-trails / .disc-trail z serwisu (te same karty co /odkrycia).
+   ============================================================ */
+.disc-trails{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.disc-trail{background:var(--paper);border:1px solid var(--hair);border-radius:15px;overflow:hidden;text-decoration:none;
+  color:inherit;box-shadow:var(--shadow);transition:.2s ease;display:block}
+.disc-trail:hover{transform:translateY(-3px);box-shadow:var(--shadow-up)}
+.disc-trail__ph{height:96px;background:var(--tint) center/cover;border-bottom:1px solid var(--hair);position:relative}
+.disc-trail__b{padding:12px 13px 14px;display:flex;flex-direction:column;gap:4px}
+.disc-trail__name{font-family:var(--f-d);font-weight:700;font-size:14px;line-height:1.25;display:flex;align-items:baseline;gap:7px}
+.trail-dot{width:9px;height:9px;border-radius:50%;flex:none;position:relative;top:-1px}
+.disc-trail__meta{font-family:var(--f-m);font-size:11px;color:var(--ink-mute)}
+.disc-trail__foot{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-family:var(--f-m);font-size:11px;color:var(--ink-soft)}
+.disc-trail__foot .is-done{color:var(--accent-dark);letter-spacing:.06em;font-weight:600}
+.trail__bar{height:6px;border-radius:999px;background:var(--tint);overflow:hidden;margin-top:8px}
+.trail__bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+
+/* ============================================================
+   11. WYJAZDY — .op-grid / .op-card z serwisu.
+   ============================================================ */
+.op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.op-card{background:var(--paper);border:1px solid var(--hair);border-radius:20px;overflow:hidden;text-decoration:none;
+  display:flex;flex-direction:column;box-shadow:var(--shadow);transition:.2s ease;color:inherit}
+.op-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-up)}
+.op-card__v{position:relative;height:132px;border-bottom:1px solid var(--hair);background:var(--tint) center/cover}
+.op-card__d{position:absolute;top:11px;right:11px;font-family:var(--f-m);font-size:12px;background:var(--paper);
+  border:1px solid var(--hair);padding:4px 8px;border-radius:999px;color:var(--ink-soft)}
+.op-card__b{padding:14px 16px 16px;display:flex;flex-direction:column;gap:7px;flex:1}
+.op-card__t{font-family:var(--f-d);font-weight:700;font-size:16px;line-height:1.22}
+.op-card__m{font-family:var(--f-m);font-size:12px;color:var(--ink-soft)}
+.op-card__ft{margin-top:auto;padding-top:11px;border-top:1px solid var(--hair);display:flex;justify-content:space-between;
+  gap:11px;font-family:var(--f-m);font-size:12px;color:var(--ink-soft)}
+.op-card__ft b{color:var(--accent-dark)}
+
+/* ============================================================
+   12. SZYNA — peleton, regiony, kolekcja.
+   ============================================================ */
+.roster{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--hair)}
+.roster:first-of-type{border-top:none}
+.avs span{width:34px;height:34px;border-radius:50%;background:var(--accent-dark);color:#fff;font-family:var(--f-m);font-size:11px;
+  display:grid;place-items:center;border:2px solid var(--paper);flex:none}
+.roster__names{font-size:14px;color:var(--ink-soft);line-height:1.45;min-width:0}
+.roster__names b{display:block;color:var(--ink);font-weight:600;font-size:14.5px}
+.roster__names span{font-family:var(--f-m);font-size:11.5px;color:var(--ink-mute)}
+/* Mini-słupek wspólnych pól — relacja z liczbą obok jest faktem, relacja
+   z paskiem jest porównaniem. Kosztuje 6 px wysokości. */
+.roster__bar{height:4px;border-radius:999px;background:var(--tint);overflow:hidden;margin-top:6px;max-width:190px}
+.roster__bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+
+.trust-chips{display:flex;flex-wrap:wrap;gap:10px}
+.trust-chip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;background:var(--accent-soft);
+  color:var(--accent-dark);border:1px solid var(--accent);border-radius:20px;padding:7px 14px}
+.trust-chip small{font-family:var(--f-m);font-weight:600;color:var(--accent);opacity:.85}
+
+/* Kolekcja — chip z paskiem, bo „3 z 8" jest zaproszeniem dopiero wtedy,
+   gdy widać, ile brakuje. */
+.coll{display:flex;flex-direction:column;gap:10px}
+.coll__row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center}
+.coll__ic{width:26px;height:26px;border-radius:8px;background:var(--tint);display:grid;place-items:center;font-size:13px}
+.coll__n{font-size:13.5px;font-weight:600}
+.coll__b{height:5px;border-radius:999px;background:var(--tint);overflow:hidden;margin-top:5px}
+.coll__b i{display:block;height:100%;background:var(--s-purple);border-radius:999px}
+.coll__v{font-family:var(--f-m);font-size:11.5px;color:var(--ink-mute);white-space:nowrap}
+
+/* Notka prototypu */
+.proto{margin-top:14px;border:1px dashed var(--hair-strong);border-radius:14px;padding:14px 16px;background:var(--paper);
+  font-size:13px;color:var(--ink-soft);line-height:1.6}
+.proto b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="logo" href="#"><span class="mark" aria-hidden="true"></span><span class="logo-text">ride<b>more</b>.bike</span></a>
+  <nav>
+    <a href="#">Wydarzenia</a>
+    <a href="#">Puls</a>
+    <a href="#">Odkrycia</a>
+    <a href="#">Organizatorzy</a>
+    <a href="#">Zgłoś wydarzenie</a>
+    <a href="#">Zaloguj się</a>
+  </nav>
+  <button class="hamburger" aria-label="Menu">☰</button>
+</header>
+
+<nav class="breadcrumbs">
+  <a href="#">Strona główna</a><span class="breadcrumbs-sep">/</span>
+  <a href="#">Rowerzyści</a><span class="breadcrumbs-sep">/</span>
+  <span class="breadcrumbs-current">Historical</span>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="rp-hero">
+  <div class="rp-hero__topo" aria-hidden="true">
+    <svg viewBox="0 0 1200 420" preserveAspectRatio="none" fill="none">
+      <g stroke="#15201A" stroke-opacity=".07" stroke-width="1.5">
+        <path d="M-40 330C120 300 210 214 350 218s214 96 352 62 250-120 400-96 190 66 190 66"/>
+        <path d="M-40 292C130 258 214 174 356 178s206 92 344 58 258-112 408-88 172 58 172 58"/>
+        <path d="M-40 254C140 216 218 134 362 138s198 88 336 54 266-104 416-80 158 50 158 50"/>
+        <path d="M-40 216C150 174 222 94 368 98s190 84 328 50 274-96 424-72 150 42 150 42"/>
+        <path d="M-40 178C160 132 226 54 374 58s182 80 320 46 282-88 432-64 142 34 142 34"/>
+        <path d="M-40 388C110 366 205 300 344 304s222 100 360 66 242-128 392-104 198 74 198 74"/>
+      </g>
+      <g stroke="#F0B41E" stroke-opacity=".55" stroke-width="2.5">
+        <path d="M-40 254C140 216 218 134 362 138s198 88 336 54 266-104 416-80 158 50 158 50"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="rp-hero__in">
+    <div class="rp-id">
+      <span class="av">HI<span class="flag" aria-hidden="true"></span></span>
+      <div class="rp-id__c">
+        <div class="tags">
+          <span class="tag">Wielodniówki</span>
+          <span class="tag">Tatry</span>
+        </div>
+        <h1>Historical</h1>
+        <!-- Sygnatura z faktów: wszystkie liczby w tym zdaniu już są na stronie,
+             tylko po raz pierwszy są zdaniem, a nie tabelą. -->
+        <p class="rp-hero__sig">
+          <b>3 wspólne wyjazdy</b> w trzech regionach, <b>770,8 km</b> przejechane z ludźmi
+          i <b>441 pól</b> zdjętych z mgły. Najczęściej wraca w <b>Tatry</b>.
+        </p>
+        <div class="rp-hero__act">
+          <a class="btn btn-secondary" href="#">Napisz wiadomość</a>
+          <a class="btn btn-secondary" href="#mapa">Zobacz mapę odkryć</a>
+        </div>
+      </div>
+    </div>
+
+    <aside class="rp-next">
+      <p class="rp-next__lbl"><span class="blaze" aria-hidden="true"></span>Jedzie na</p>
+      <h2><a href="#">Mazury, 27–13 sie</a></h2>
+      <p class="rp-next__m">27 sie · Mazury · wielodniówka</p>
+      <a class="btn" href="#">Dołącz do tego wyjazdu</a>
+      <p class="rp-next__in">Zostało 5 dni na zapisy</p>
+    </aside>
+  </div>
+
+  <!-- Pasek liczb (dawny .trust-bar) jako stopka hero. -->
+  <div class="rp-nums">
+    <div class="rp-num">
+      <div class="rp-num__l">Regionów</div>
+      <div class="rp-num__v">3<small>z 5</small></div>
+      <div class="rp-num__n">Tatry · Bieszczady · Beskidy</div>
+    </div>
+    <div class="rp-num">
+      <div class="rp-num__l">Wspólnych wyjazdów</div>
+      <div class="rp-num__v">3</div>
+      <div class="rp-num__n">2 ze śladem</div>
+    </div>
+    <div class="rp-num">
+      <div class="rp-num__l">W peletonie</div>
+      <div class="rp-num__v">4<small>osoby</small></div>
+      <div class="rp-num__n">z potwierdzonej obecności</div>
+    </div>
+    <div class="rp-num">
+      <div class="rp-num__l">Kilometrów z ludźmi</div>
+      <div class="rp-num__v">770,8<small>km</small></div>
+      <div class="rp-num__n">nie licząc jazdy solo</div>
+    </div>
+    <div class="rp-num">
+      <div class="rp-num__l">Wraca w te same strony</div>
+      <div class="rp-num__v">1<small>region</small></div>
+      <div class="rp-num__n">Tatry, 2×</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ KOTWICE ============ -->
+<nav class="anchors">
+  <div class="anchors__in">
+    <a href="#mapa" aria-current="true">Mapa</a>
+    <a href="#aktywnosc">Aktywność</a>
+    <a href="#trasy">Szlaki</a>
+    <a href="#wyjazdy">Wyjazdy</a>
+    <a href="#peleton" data-jump>Peleton</a>
+    <a href="#gdzie" data-jump>Gdzie jeździ</a>
+    <a href="#kolekcja" data-jump>Kolekcja</a>
+    <span class="anchors__c">Profil publiczny · od lipca 2026</span>
+  </div>
+</nav>
+
+<!-- ============ MAPA ============ -->
+<section class="sec" id="mapa">
+  <div class="box">
+    <h2>Mapa wyjazdów i odkryć</h2>
+    <p class="box__sub">Linia ciągła to ślad z odbytego wyjazdu — pod nim mgła jest zdjęta.
+      Linia przerywana to trasa zapowiadana, z której nikt nie wgrał śladu.</p>
+
+    <div class="rp-mapwrap">
+      <div class="rp-map__box">
+        <div class="rp-map">
+          <div class="rp-map__fog" id="fog"></div>
+          <div class="rp-map__track" style="left:14%;top:62%;width:52%;transform:rotate(-17deg)"></div>
+          <div class="rp-map__track plan" style="left:48%;top:38%;width:34%;transform:rotate(28deg)"></div>
+          <div class="rp-map__lbl" style="left:10%;top:70%">Zakopane</div>
+          <div class="rp-map__lbl" style="left:39%;top:54%">Nowy Targ</div>
+          <div class="rp-map__lbl" style="left:66%;top:33%">Kraków</div>
+          <div class="rp-map__lbl" style="left:74%;top:66%">Sanok</div>
+
+          <div class="rp-map__zoom"><button aria-label="Przybliż">+</button><button aria-label="Oddal">−</button></div>
+
+          <div class="map-layers">
+            <p class="map-layers__hd">Warstwy</p>
+            <label><input type="checkbox" checked><span>Odkrycia<small>gdzie już był</small></span></label>
+            <label><input type="checkbox"><span>Heatmapa<small>jak często tędy jeździ</small></span></label>
+            <label><input type="checkbox" checked><span>Znane trasy<small>przebiegi szlaków</small></span></label>
+            <label><input type="checkbox" checked><span>Skarby<small>znalezione przez tę osobę</small></span></label>
+          </div>
+
+          <div class="hex-legend--onmap">
+            <span class="hex-legend__ttl">Poziom odkrycia pól</span>
+            <span class="hex-legend__item"><i style="background:rgba(146,155,149,.55)"></i>Nieodkryte</span>
+            <span class="hex-legend__item"><i style="background:rgba(44,107,79,.6)"></i>Przejechane</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="rp-side">
+        <div class="stat-tiles">
+          <div class="stat-tile stat-tile--lead">
+            <div class="stat-tile__lbl">Odkryte pola</div>
+            <div class="stat-tile__val">441</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile__lbl">Punkty</div>
+            <div class="stat-tile__val">5 872</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile__lbl">Znane trasy</div>
+            <div class="stat-tile__val is-done">1<small>z 2</small></div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile__lbl">Nowy teren</div>
+            <div class="stat-tile__val">13</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile__lbl">Przejazdy ze śladem</div>
+            <div class="stat-tile__val">2<small>z 3</small></div>
+          </div>
+        </div>
+
+        <div class="rp-rides">
+          <p class="rp-rides__hd">Przejazdy ze śladem <span>2</span></p>
+          <button type="button" class="rp-ride is-on">
+            <b>Weekend szosowy w Beskidach</b>
+            <span>2 sie · 159,8 km · Szlak Testowy</span>
+          </button>
+          <button type="button" class="rp-ride">
+            <b>Wycieczka rowerowa po Tatrach</b>
+            <span>5 wrz · 180,3 km · Tatry</span>
+          </button>
+          <div class="rp-rides__nav">
+            <button type="button" class="rp-rides__btn" aria-label="Poprzednie">‹</button>
+            <span class="rp-rides__pos">1–2 z 2</span>
+            <button type="button" class="rp-rides__btn" aria-label="Następne">›</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <p class="roster__lbl" style="margin-top:14px;margin-bottom:0">
+      <b>1 ślad</b> z odbytych wyjazdów · 441 odkrytych pól — reszta mapy pozostaje zamglona<br>
+      Kliknij przejazd na liście obok, żeby podświetlić go na mapie.
+    </p>
+  </div>
+</section>
+
+<!-- ============ DWIE KOLUMNY ============ -->
+<div class="rp-cols">
+
+  <!-- ---- KOLUMNA GŁÓWNA ---- -->
+  <div>
+
+    <section class="sec" id="aktywnosc">
+      <div class="sec-head">
+        <h2>Aktywność</h2>
+        <span>18 wpisów</span>
+        <a class="more" href="#">Cała aktywność →</a>
+      </div>
+      <div class="rf-list">
+        <a class="rf-item" href="#">
+          <span class="rf-item__ico is-pic">◫</span>
+          <span class="rf-item__b">
+            <span class="rf-item__hd"><b>Zdjęcia</b><span class="rf-item__ev">Weekend szosowy w Beskidach</span></span>
+            <span class="rf-item__tx">5 zdjęć z wyjazdu</span>
+          </span>
+          <time class="rf-item__at">14 sie</time>
+        </a>
+        <a class="rf-item" href="#">
+          <span class="rf-item__ico">✎</span>
+          <span class="rf-item__b">
+            <span class="rf-item__hd"><b>Wpis w kronice</b><span class="rf-item__ev">Weekend szosowy w Beskidach</span></span>
+            <span class="rf-item__tx">Trzy dni pod chmurami, ale ani jednej kapiącej. Podjazd na Przełęcz zjedzony w tempie rozmowy.</span>
+          </span>
+          <time class="rf-item__at">14 sie</time>
+        </a>
+        <a class="rf-item" href="#mapa">
+          <span class="rf-item__ico is-map">↗</span>
+          <span class="rf-item__b">
+            <span class="rf-item__hd"><b>Wgrany ślad</b><span class="rf-item__ev">Weekend szosowy w Beskidach</span></span>
+            <span class="rf-item__tx">159,8 km · Szlak Testowy</span>
+          </span>
+          <time class="rf-item__at">13 sie</time>
+        </a>
+        <a class="rf-item" href="#">
+          <span class="rf-item__ico is-talk">☰</span>
+          <span class="rf-item__b">
+            <span class="rf-item__hd"><b>Odpowiedź organizatora</b><span class="rf-item__ev">Beskidy, 1–30 lis</span></span>
+            <span class="rf-item__tx">Nocleg mamy zarezerwowany na 12 osób, do końca tygodnia można dopisać jeszcze cztery.</span>
+          </span>
+          <time class="rf-item__at">1 sie</time>
+        </a>
+        <a class="rf-item" href="#">
+          <span class="rf-item__ico is-talk">☰</span>
+          <span class="rf-item__b">
+            <span class="rf-item__hd"><b>Komentarz</b><span class="rf-item__ev">Wycieczka rowerowa po Tatrach</span></span>
+            <span class="rf-item__tx">Jadę od piątku, mam miejsce w aucie dla jednej osoby z rowerem.</span>
+          </span>
+          <time class="rf-item__at">23 lip</time>
+        </a>
+      </div>
+      <div class="rf-nav">
+        <span class="rf-nav__btn is-off">‹ Nowsze</span>
+        <span class="rf-nav__pos">1–5 z 18</span>
+        <a class="rf-nav__btn" href="#aktywnosc">Starsze ›</a>
+      </div>
+    </section>
+
+    <section class="sec" id="trasy">
+      <div class="sec-head">
+        <h2>Zaliczone szlaki</h2>
+        <span>1 ukończony</span>
+        <a class="more" href="#">Katalog szlaków →</a>
+      </div>
+      <div class="disc-trails">
+        <a class="disc-trail" href="#">
+          <div class="disc-trail__ph" style="background-image:linear-gradient(160deg,#2C6B4F,#15201A)"></div>
+          <div class="disc-trail__b">
+            <span class="disc-trail__name"><i class="trail-dot" style="background:#2B57C8"></i><span>Szlak Testowy</span></span>
+            <span class="disc-trail__meta">159,8 km · Beskidy</span>
+            <div class="disc-trail__foot"><span class="is-done">UKOŃCZONA</span><span class="hexn">⬡ 373 / 373</span></div>
+            <div class="trail__bar"><i style="width:100%"></i></div>
+          </div>
+        </a>
+        <a class="disc-trail" href="#">
+          <div class="disc-trail__ph" style="background-image:linear-gradient(160deg,#5E6A62,#15201A)"></div>
+          <div class="disc-trail__b">
+            <span class="disc-trail__name"><i class="trail-dot" style="background:#C3382F"></i><span>Pętla Tatrzańska</span></span>
+            <span class="disc-trail__meta">92 km · Tatry</span>
+            <div class="disc-trail__foot"><span>41%</span><span class="hexn">⬡ 68 / 166</span></div>
+            <div class="trail__bar"><i style="width:41%"></i></div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="sec" id="wyjazdy">
+      <div class="sec-head">
+        <h2>Wspólne wyjazdy</h2>
+        <span>3 wyjazdy</span>
+      </div>
+      <div class="op-grid">
+        <a class="op-card" href="#">
+          <div class="op-card__v" style="background-image:linear-gradient(140deg,#2C6B4F,#15201A)">
+            <span class="op-card__d">3 dni</span>
+          </div>
+          <div class="op-card__b">
+            <h3 class="op-card__t">Wycieczka rowerowa po Tatrach — 3 dni</h3>
+            <p class="op-card__m">5 wrz · Tatry · 180,3 km</p>
+          </div>
+        </a>
+        <a class="op-card" href="#">
+          <div class="op-card__v" style="background-image:linear-gradient(140deg,#5E6A62,#15201A)"></div>
+          <div class="op-card__b">
+            <h3 class="op-card__t">werwerwe</h3>
+            <p class="op-card__m">14 sie · Bieszczady</p>
+          </div>
+        </a>
+        <a class="op-card" href="#">
+          <div class="op-card__v" style="background-image:linear-gradient(140deg,#1E4B38,#15201A)">
+            <span class="op-card__d">2 dni</span>
+          </div>
+          <div class="op-card__b">
+            <h3 class="op-card__t">Weekend szosowy w Beskidach</h3>
+            <p class="op-card__m">2 sie · Beskidy · 192,7 km</p>
+            <div class="op-card__ft"><span><b>373</b> nowe pola</span><span>+5 432</span></div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ---- SZYNA ---- -->
+  <aside class="rp-rail">
+
+    <section class="sec" id="peleton" style="margin-bottom:0">
+      <div class="box">
+        <h2>Peleton</h2>
+        <p class="box__sub">Ludzie, z którymi jeździ naprawdę — relacja powstaje wyłącznie
+          z potwierdzonej wspólnej obecności na wyjeździe.</p>
+        <div class="roster">
+          <span class="avs"><span>MA</span></span>
+          <span class="roster__names">
+            <b>Marek K.</b>
+            <span>1 wspólny wyjazd · 192,7 km · 373 wspólne pola</span>
+            <span class="roster__bar"><i style="width:100%"></i></span>
+          </span>
+        </div>
+        <div class="roster">
+          <span class="avs"><span>OL</span></span>
+          <span class="roster__names">
+            <b>Ola N.</b>
+            <span>1 wspólny wyjazd · 192,7 km · 373 wspólne pola</span>
+            <span class="roster__bar"><i style="width:100%"></i></span>
+          </span>
+        </div>
+        <div class="roster">
+          <span class="avs"><span>PI</span></span>
+          <span class="roster__names">
+            <b>Piotr Z.</b>
+            <span>1 wspólny wyjazd · 192,7 km · 373 wspólne pola</span>
+            <span class="roster__bar"><i style="width:100%"></i></span>
+          </span>
+        </div>
+        <div class="roster">
+          <span class="avs"><span>TE</span></span>
+          <span class="roster__names">
+            <b>Test R.</b>
+            <span>1 wspólny wyjazd · 192,7 km · 69 wspólnych pól</span>
+            <span class="roster__bar"><i style="width:19%"></i></span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" id="gdzie" style="margin-bottom:0">
+      <div class="box">
+        <h2>Gdzie jeździ</h2>
+        <p class="box__sub" style="margin-bottom:12px">Region liczy się od pierwszego potwierdzonego wyjazdu.</p>
+        <div class="trust-chips">
+          <span class="trust-chip">Tatry <small>2×</small></span>
+          <span class="trust-chip">Bieszczady</span>
+          <span class="trust-chip">Beskidy</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" id="kolekcja" style="margin-bottom:0">
+      <div class="box">
+        <h2>Kolekcja</h2>
+        <p class="box__sub" style="margin-bottom:14px">Skarby znalezione na trasie, w podziale na kategorie.</p>
+        <div class="coll">
+          <div class="coll__row">
+            <span class="coll__ic">⛰</span>
+            <span>
+              <span class="coll__n">Punkty widokowe</span>
+              <span class="coll__b"><i style="width:24%"></i></span>
+            </span>
+            <span class="coll__v">3 z 12</span>
+          </div>
+          <div class="coll__row">
+            <span class="coll__ic">⛲</span>
+            <span>
+              <span class="coll__n">Źródełka</span>
+              <span class="coll__b"><i style="width:12%"></i></span>
+            </span>
+            <span class="coll__v">1 z 8</span>
+          </div>
+          <div class="coll__row">
+            <span class="coll__ic">⛪</span>
+            <span>
+              <span class="coll__n">Zabytki przy szlaku</span>
+              <span class="coll__b"><i style="width:0%"></i></span>
+            </span>
+            <span class="coll__v">0 z 14</span>
+          </div>
+        </div>
+        <p class="desc" style="margin-top:14px;font-size:13.5px">
+          30 skarbów czeka w kategoriach, które już zbiera.
+          <a href="#" style="color:var(--accent-dark)">Zobacz na mapie</a>
+        </p>
+      </div>
+    </section>
+
+  </aside>
+</div>
+
+<div class="proto">
+  <b>Prototyp statyczny.</b> Kod produkcyjny jest nietknięty — to jest wyłącznie propozycja
+  wyglądu dla <code>views/web/pages/rider-profile.php</code>. Mapa jest narysowana CSS-em
+  (w serwisie to <code>ridemoreDiscoveryMap</code> + <code>partials/map-layers.php</code>),
+  zdjęcia kart zastąpiono gradientami. Wszystkie tokeny, komponenty i nazwy klas pochodzą
+  z <code>assets/css/style.css</code>; jedyne nowe reguły to <code>.rp-hero*</code>,
+  <code>.rp-nums</code>, <code>.rp-cols</code>, <code>.stat-tile--lead</code>,
+  <code>.roster__bar</code> i <code>.coll*</code>.
+</div>
+
+<footer class="ft">
+  <div>
+    <div class="logo" style="margin-bottom:10px"><span class="mark" aria-hidden="true"></span><span class="logo-text">ride<b>more</b>.bike</span></div>
+    <p>Zbierz się. Spotkaj. Pogadaj. Przejedź.<br>Kalendarz wyjazdów rowerowych w Polsce.</p>
+  </div>
+  <div>
+    <h4>Wyjazdy</h4>
+    <a href="#">Wspólne jazdy</a><a href="#">Wyścigi</a><a href="#">Wycieczki wielodniowe</a>
+    <a href="#">Wyjazdy gravelowe</a><a href="#">Pokręcę z kimś</a>
+  </div>
+  <div>
+    <h4>Organizatorzy</h4>
+    <a href="#">Wszyscy organizatorzy</a><a href="#">Dla organizatorów</a><a href="#">Dodaj wyjazd</a>
+  </div>
+  <div>
+    <h4>Serwis</h4>
+    <a href="#">Jak to działa</a><a href="#">Puls</a><a href="#">Kroniki wyjazdów</a>
+    <a href="#">Regulamin</a><a href="#">Prywatność</a>
+  </div>
+</footer>
+
+</div>
+
+<script>
+// Mgła na prototypowej mapie — siatka pól, część odkryta wzdłuż śladu.
+// W serwisie robi to warstwa kafli, tutaj chodzi wyłącznie o obraz.
+(function () {
+  var fog = document.getElementById('fog');
+  if (!fog) { return; }
+  var html = '';
+  for (var row = 0; row < 15; row++) {
+    for (var col = 0; col < 24; col++) {
+      var x = col * 44 + (row % 2 ? 22 : 0);
+      var y = row * 38;
+      // Pas odkryty biegnie wzdłuż narysowanego śladu: linia od ok. (120,330)
+      // w prawo i w górę, nachylenie -0,3. Odległość od niej decyduje o tym,
+      // czy pole jest zdjęte z mgły, i jak mocno.
+      var d = Math.abs((y + 25) - (330 - 0.30 * (x - 120)));
+      var cls = 'hexc';
+      if (d < 90) { cls = 'hexc on'; }
+      if (d < 42) { cls = 'hexc hot'; }
+      html += '<i class="' + cls + '" style="left:' + x + 'px;top:' + y + 'px"></i>';
+    }
+  }
+  fog.innerHTML = html;
+  // <i> nie ma domyślnie układu bloku — nadaje mu go klasa .hexc (position:absolute).
+})();
+
+// Podświetlenie wybranego przejazdu (jak w serwisie: klik zaznacza, ponowny odznacza).
+document.querySelectorAll('.rp-ride').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var on = b.classList.contains('is-on');
+    document.querySelectorAll('.rp-ride').forEach(function (x) { x.classList.remove('is-on'); });
+    if (!on) { b.classList.add('is-on'); }
+  });
+});
+
+// Kotwice — podświetlenie aktywnej sekcji przy przewijaniu.
+(function () {
+  var links = [].slice.call(document.querySelectorAll('.anchors a'));
+  var secs = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  // Śledzone są WYŁĄCZNIE sekcje kolumny głównej. Sekcje z szyny (peleton,
+  // regiony, kolekcja) leżą RÓWNOLEGLE do nich, nie pod nimi — każda reguła
+  // „która sekcja jest teraz" dawała dla nich sprzeczny wynik: raz wygrywała
+  // szyna, bo zaczyna się niżej, raz krótkie pudełko, bo trafiło w środek okna.
+  // Ich pozycje w spisie zostają zwykłymi skokami (data-jump).
+  window.addEventListener('scroll', function () {
+    var best = -1;
+    secs.forEach(function (s, i) {
+      if (!s || links[i].hasAttribute('data-jump')) { return; }
+      if (s.getBoundingClientRect().top < 180) { best = i; }
+    });
+    if (best < 0) { best = 0; }
+    // Na samym dole strony ostatnia sekcja nigdy nie przekroczy progu — okno
+    // nie ma już dokąd zjechać. Bez tego „Wyjazdy" nie zapalają się nigdy.
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) {
+      for (var j = links.length - 1; j >= 0; j--) {
+        if (!links[j].hasAttribute('data-jump')) { best = j; break; }
+      }
+    }
+    links.forEach(function (a, i) {
+      if (i === best) { a.setAttribute('aria-current', 'true'); } else { a.removeAttribute('aria-current'); }
+    });
+  }, { passive: true });
+})();
+</script>
+</body>
+</html>

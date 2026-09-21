@@ -1,0 +1,644 @@
+/* ============================================================================
+   app.css — STYLE WYŁĄCZNIE APLIKACJI MOBILNEJ (Capacitor)
+   ----------------------------------------------------------------------------
+   Ładowany TYLKO przez `views/web/layout-app.php` (przez wspólne
+   `partials/head.php`, bo tylko ono pisze do <head>), zawsze PO `style.css`.
+   Kontrakt: tasks/active/apka-mobilna-skorupa.md, Faza 3.
+
+   DLACZEGO OSOBNY PLIK: te ~370 linii nie ma prawa wykonać się w przeglądarce,
+   a jechały w 285-kilobajtowym `style.css` do każdego odwiedzającego serwis.
+   Teraz web ich nie pobiera, a praca nad apką ma jedno oczywiste miejsce.
+
+   TO NIE JEST ZAMIENNIK `style.css` — apka ładuje OBA. Wszystkie wspólne
+   komponenty (`.disc-panel`, `.mbar`, `.filters`, `.messenger`, `.btn`,
+   siatka, typografia, zmienne CSS) zostają tam, gdzie były. Tutaj są
+   WYŁĄCZNIE rzeczy istniejące tylko w apce oraz NADPISANIA komponentów
+   wspólnych. Reguła przy dokładaniu czegokolwiek: jeśli selektor mógłby
+   trafić w cokolwiek na www — jego miejsce jest w `style.css`, nie tu.
+
+   PREFIKS `body.is-app` ZOSTAJE, choć w tym pliku jest formalnie zbędny.
+   Kontrakt zakładał jego zdjęcie; przy wykonaniu okazało się to pułapką,
+   nie uproszczeniem. Część tych reguł NADPISUJE komponenty ze `style.css`
+   i robi to SPECYFICZNOŚCIĄ, nie kolejnością:
+     `body.is-app.has-mbar` (0,2,0) bije `body.has-mbar` (0,1,1);
+     po skróceniu do `.has-mbar` (0,1,0) PRZEGRAŁOBY — dół strony schowałby
+     się pod paskiem, i to tylko na telefonie, którego wciąż nie ma do
+     sprawdzenia. Ten sam problem dotyczy `body.is-app.map-page` i
+     `body.is-app:has(.filters.is-open)::after`. Zysk z krótszych selektorów
+     jest zerowy, ryzyko realne — zostawiamy jak jest.
+   ============================================================================ */
+
+/* EKRAN WYNIKU JAZDY (apka, §11 audytu UX 2026-08-28) — WYŁĄCZNIE dla
+   APP_IS_APP, ride-summary-app.php. Ta sama sylwetka co .ts (liczba jako
+   bohater, jedna sekcja treści, jedna akcja), świadomie osobny prefiks: inny
+   właściciel danych, nie inny język. */
+.rs{max-width:520px;margin:0 auto;padding:28px 20px 40px;text-align:center;}
+.rs__eyebrow{font-family:var(--f-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-mute);margin:0;}
+.rs--win .rs__eyebrow{color:var(--accent);}
+.rs__points{font-family:'Big Shoulders Display',sans-serif;font-weight:800;
+  font-size:clamp(56px,18vw,110px);line-height:.9;margin:6px 0 0;color:var(--accent);}
+.rs__unit{font-family:var(--f-m);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-mute);margin:2px 0 22px;}
+.rs__name{font-family:var(--f-d);font-size:clamp(24px,6vw,34px);font-weight:800;margin:0 0 4px;}
+.rs__meta{font-family:var(--f-m);font-size:12.5px;color:var(--ink-mute);margin:0 0 18px;}
+.rs__list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:10px;
+  text-align:left;}
+.rs__list li{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;
+  background:var(--tint);font-size:14.5px;line-height:1.4;}
+.rs__list .icon{width:18px;height:18px;flex:0 0 auto;color:var(--accent);}
+/* „ZOSTAŁO N PÓL" na ekranie wyniku jazdy (Etap 1a programu zachęt,
+   2026-09-11). Osobna, cichsza linia pod nazwą trasy — to jest ZACHĘTA, a nie
+   fakt o przejeździe, więc nie ma prawa krzyczeć głośniej niż rzeczy, które
+   się właśnie wydarzyły. */
+.rs__gap{display:block;font-size:12.5px;color:var(--ink-mute);margin-top:2px;}
+.rs__act{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px;}
+.rs__desc{font-size:15px;line-height:1.55;color:var(--ink-soft);margin:0 0 18px;}
+/* ============================================================
+   TRYB APLIKACJI MOBILNEJ (Capacitor) — body.is-app
+   Klasę nadaje views/web/layout-app.php (od 2026-08-29; wcześniej warunek
+   w layout.php). Tryb rozpoznaje core/bootstrap.php po User-Agencie.
+   Zwykła przeglądarka nie dostaje nawet tego pliku, więc te reguły nie
+   wchodzi, więc te reguły nie mogą zepsuć serwisu — mogą go tylko zmienić
+   tam, gdzie apka ma inne potrzeby niż strona.
+   Kontrakt: tasks/active/apka-mobilna.md, Etap 1.
+   ============================================================ */
+
+/* Wysokość dolnego paska jako zmienna, bo odwołują się do niej TRZY rzeczy:
+   zapas na dole strony, przesunięcie istniejących pasków (.k-nav, .mbar)
+   i sam pasek. Rozjazd między nimi = treść pod paskiem albo dziura. */
+body.is-app{--app-nav-h:58px;}
+
+/* Zapas na dole KAŻDEJ strony — inaczej ostatni przycisk chowa się pod paskiem.
+   env() dokłada pasek gestów iPhone'a; fallback 0px dla Androida bez wycięcia. */
+body.is-app{padding-bottom:calc(var(--app-nav-h) + env(safe-area-inset-bottom,0px));}
+
+/* `body.is-app footer{display:none}` STAŁO TU DO 2026-08-29. Stopka renderowała
+   się do HTML-a (45 linii mapy serwisu) na każdym ekranie apki i była chowana
+   tą regułą. Od rozdzielenia skorup (`layout-app.php`) po prostu nie wchodzi
+   do dokumentu — nie ma czego ukrywać. `<footer>` występuje w widokach
+   WYŁĄCZNIE w `partials/footer.php`, więc reguła nie chroniła niczego innego.
+
+   GÓRNA BELKA APKI — ten sam element `<header>` co na web, więc bierze
+   z arkusza sticky, rozmycie tła, kreskę i rozkład na boki. Klasa dokłada
+   tylko to, co w apce inne: ciaśniejsze odstępy i zapas na wycięcie ekranu. */
+/* BELKA WYGLĄDA TAK SAMO NA KAŻDYM EKRANIE APKI — łącznie z kreską pod nią
+   (zgłoszenie usera z telefonu 2026-08-29: „header (…) są różne i nie są
+   spójne"). Sama treść to było pół problemu; drugie pół to KRESKA: `<header>`
+   siedzi w `.wrap`, więc na zwykłym ekranie kończyła się 24 px przed krawędzią,
+   a na mapie — gdzie `.wrap` traci wcięcie, żeby mapa była pełnoekranowa —
+   szła od brzegu do brzegu.
+   Jedna zmienna zdejmuje obie różnice: belka wychodzi ujemnym marginesem
+   dokładnie o tyle, ile wcięcia ma w tym miejscu `.wrap`, i sama dokłada
+   sobie 24 px w środku. Efekt jest identyczny w obu przypadkach — kreska pełną
+   szerokością, treść 24 px od brzegu — a przy zmianie wcięcia `.wrap` wystarczy
+   poprawić `--app-wrap-pad`, nie polować na drugie miejsce. */
+body.is-app{--app-wrap-pad:24px;}
+body.is-app.map-page{--app-wrap-pad:0px;}
+.app-header{padding:calc(10px + env(safe-area-inset-top,0px)) 24px 10px;margin-bottom:6px;
+  margin-left:calc(-1 * var(--app-wrap-pad,0px));margin-right:calc(-1 * var(--app-wrap-pad,0px));}
+
+/* IKONA WIADOMOŚCI ZOSTAJE IKONĄ. Bez tych trzech reguł łapie ją
+   `@media(max-width:800px)` (L143) — a tamta reguła jest pisana pod POZYCJĘ
+   W ROZWINIĘTYM HAMBURGERZE: rozciąga do pełnej szerokości, dokleja `::after`
+   z napisem „Wiadomości" i kreskę pod spodem. W apce hamburgera nie ma,
+   a belka jest zawsze wąska, więc bez nadpisania ikona zjadłaby całą belkę. */
+.app-header .msg-icon{width:auto;margin-left:0;padding:6px;justify-content:center;
+  border-bottom:none !important;}
+.app-header .msg-icon::after{content:none;}
+.app-header .msg-icon-dot{position:absolute;top:3px;right:3px;margin-left:0;border-color:var(--bg);}
+
+/* KONTO NA EKRANIE „PROFIL" (2026-08-29) — pozycje przeniesione z rozwijanego
+   menu górnej belki, której apka już nie ma. Lista pełnej szerokości
+   z celami 44 px: to jedyne wejście do ustawień i wylogowania w apce, więc
+   trafialność palcem jest tu wymogiem, nie ozdobą. */
+.rp-account{margin:22px 0 8px;}
+.rp-account h2{font-family:var(--f-d);font-size:22px;margin:0 0 8px;}
+.rp-account>a,
+.rp-account__more>a{display:block;min-height:44px;line-height:44px;
+  text-decoration:none;color:var(--ink);font-family:var(--f-b);font-size:15px;
+  border-bottom:1px solid var(--hair);}
+.rp-account>a:active,
+.rp-account__more>a:active{color:var(--accent-dark);}
+.rp-account__g{display:block;margin:16px 0 2px;font-family:var(--f-m);font-size:11.5px;
+  font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-mute);}
+.rp-account__more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;
+  font-family:var(--f-m);font-size:11.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-mute);}
+.rp-account__out{margin-top:18px;}
+.rp-account__out .link-button{font-family:var(--f-b);font-size:15px;color:var(--s-red);}
+
+/* Paski dolne konkretnych ekranów (kreator wydarzenia, strona wydarzenia)
+   muszą stanąć NAD nawigacją, nie pod nią — obie rzeczy są `fixed; bottom:0`. */
+body.is-app .k-nav,
+body.is-app .mbar{bottom:calc(var(--app-nav-h) + env(safe-area-inset-bottom,0px));}
+
+/* KONTROLKI MAPY, KTÓRYCH NA TELEFONIE NIE MA PO CO POKAZYWAĆ (zgłoszenie
+   usera 2026-08-29, kontrakt tasks/active/mapa-apka-bez-zoomu.md):
+   - zoom (+/−): uszczypnięcie dwoma palcami robi to samo, a przyciski zajmują
+     róg pełnoekranowej mapy, gdzie liczy się każdy kawałek obrazu;
+   - pełny ekran (`.map-fs__ctrl`, dokładany przez ridemoreAddFullscreenControl
+     do KAŻDEJ mapy w serwisie): apka JEST pełnym ekranem, więc przycisk albo
+     nie robi nic, albo dubluje to, co user już ma.
+
+   CSS, a nie parametr `zoomControl:false` w ridemoreCreateMap() — przez tę
+   fabrykę przechodzi każda mapa w serwisie (web też), a JS nic nie wie
+   o APP_IS_APP. Jedna reguła tutaj obejmuje też mapy, które dopiero powstaną,
+   dokładnie tak jak reszta bloku `body.is-app`.
+
+   CHOWAMY SAMĄ KONTROLKĘ, nie mechanizm: `.map-fs`/`is-map-fs` i obsługa
+   Escape zostają wspólne z web — bez przycisku po prostu nikt ich nie woła.
+
+   NIE RUSZAMY za to `.leaflet-bar a{width:40px}` z @media(pointer:coarse)
+   (L2323) — jego bramką jest sposób obsługi, nie tryb apki, więc obowiązuje
+   w przeglądarce mobilnej i dotyczy też przełącznika warstw, który zostaje. */
+body.is-app .leaflet-control-zoom,
+body.is-app .map-fs__ctrl{display:none;}
+
+/* „TU JESTEM" ZOSTAJE — I W APCE JEST WAŻNIEJSZY NIŻ GDZIEKOLWIEK (2026-09-10).
+   Reguła wyżej chowa zoom i pełny ekran, bo oba są w apce zbędne (szczypanie
+   zastępuje zoom, mapa i tak jest pełnoekranowa). Kontrolka lokalizacji jest
+   dokładnie odwrotnym przypadkiem: na telefonie w terenie to jedyny sposób,
+   żeby wrócić do siebie po odjechaniu mapy palcem. Ta nota istnieje po to,
+   żeby przy następnym porządkowaniu kontrolek nikt nie dopisał jej do listy
+   chowanych „dla spójności".
+
+   PRAWY DOLNY RÓG NALEŻY DO PŁYWAJĄCEGO PASKA (`.app-nav`), więc na
+   pełnoekranowej mapie cały rząd dolnych kontrolek Leafletu — łącznie
+   z atrybucją — podnosi się ponad niego. Bez tego przycisk siedziałby pod
+   paskiem i nie dałby się dotknąć. */
+body.is-app.map-page .leaflet-bottom{
+  bottom:calc(var(--app-nav-h) + env(safe-area-inset-bottom,0px));}
+
+/* EKRAN Z SZUFLADĄ MA NAD PASKIEM JESZCZE JEDEN PASEK. `treasure-propose-app.php`
+   stawia `.disc-panels` na dolnej krawędzi mapy, a zwinięta szuflada to 46 px
+   uchwytu (style.css, `@media(max-width:680px)`) — przycisk lokalizacji
+   wylądowałby dokładnie pod nim. `:has()` zamiast klasy na body, bo warunkiem
+   jest OBECNOŚĆ szuflady, a nie tożsamość ekranu: następny ekran z tym samym
+   komponentem dostanie odstęp bez dopisywania czegokolwiek. Otwartej szuflady
+   nie obsługujemy osobno — wtedy mapy i tak prawie nie widać, a jej zamknięcie
+   jest jednym dotknięciem. */
+body.is-app.map-page:has(.disc-panels) .leaflet-bottom{
+  bottom:calc(var(--app-nav-h) + env(safe-area-inset-bottom,0px) + 52px);}
+
+/* ---------------------------------------------------------------------
+   PEŁNOEKRANOWA MAPA (Etap 1 przebudowy apki, 2026-08-28) — `.app-map-page`
+   to jedyna treść ekranu `discovery-app.php` (`$content` w layout.php).
+   Nagłówek ZOSTAJE (decyzja usera), więc `.wrap` staje się kolumną: nagłówek
+   dostaje swoją naturalną wysokość, `.app-map-page` bierze CAŁĄ resztę —
+   bez liczenia wysokości nagłówka na sztywno (zmieniłaby się przy każdej
+   zmianie jego treści). Pasek dolny ma PŁYWAĆ NAD mapą (decyzja usera), więc
+   zapas na dole (`padding-bottom` z reguły wyżej) jest tu zerowy — inaczej
+   mapa kończyłaby się NAD paskiem, zamiast sięgać pod niego.
+   --------------------------------------------------------------------- */
+body.is-app.map-page{padding-bottom:0;}
+/* `100dvh` OBOK `100vh` — PROFILAKTYKA, NIE POTWIERDZONA NAPRAWA (2026-08-29).
+   Szukałem tu przyczyny zgłoszenia „pod formularzem widać mapę, bo znika pasek
+   footer" i w podglądzie zobaczyłem 231 px szczeliny — ale to był ARTEFAKT
+   EMULACJI: `vh`, `dvh`, `svh` i `visualViewport` dawały zgodnie 800 px,
+   a tylko `innerHeight` zwracał 1090 (panel podglądu raportuje nieskalowaną
+   wysokość okna i do niej kotwiczy `position:fixed`). Na urządzeniu tej
+   rozbieżności nie ma i ta zmiana zgłoszonego objawu NIE tłumaczy.
+   `dvh` zostaje, bo dla powłoki WebView jest jednostką właściwszą: apka celuje
+   w `targetSdk 36`, czyli tryb edge-to-edge, gdzie `vh` obejmuje też obszar pod
+   paskami systemowymi. `100vh` linijkę wyżej to zapas dla silnika bez `dvh`. */
+body.is-app.map-page .wrap{display:flex;flex-direction:column;
+  min-height:100vh;
+  min-height:100dvh;
+  padding-left:0;padding-right:0;padding-bottom:0;}
+
+/* (Wcięcie belki na mapie załatwia `--app-wrap-pad` przy `.app-header` wyżej —
+   tu nie ma już czego nadpisywać.) */
+body.is-app.map-page .app-map-page{position:relative;flex:1 1 auto;min-height:0;}
+.app-map{position:absolute;inset:0;}
+
+/* JEDEN ODSTĘP OD KRAWĘDZI MAPY DLA WSZYSTKICH NAKŁADEK (zgłoszenie usera
+   z telefonu 2026-08-29: „przycisk warstw oraz punktacji nie jest na tym samym
+   poziomie (…) powinny być znacznie wyżej przy samej górnej części mapy
+   z max marginesem kilku px").
+   Dwie przyczyny rozjazdu, obie usunięte tą jedną zmienną:
+     1. chip liczył `12px + env(safe-area-inset-top)` — a wcięcie na wycięcie
+        ekranu bierze na siebie NAGŁÓWEK, który stoi nad mapą, więc dokładanie
+        go drugi raz spychało chip o wysokość paska stanu w dół;
+     2. `.map-layers` ma w arkuszu wspólnym `top:84px` (78 px na wąskich
+        ekranach) — to odstęp pod pasek narzędzi NAD mapą na stronie webowej,
+        którego w apce nie ma w ogóle.
+   Wartość jest JEDNA i wspólna, więc obie nakładki nie mają jak się rozjechać
+   przy następnej zmianie. */
+body.is-app.map-page{--app-map-pad:10px;}
+body.is-app.map-page .map-layers{top:var(--app-map-pad);left:var(--app-map-pad);}
+
+/* KOMUNIKAT PO AKCJI — WŁASNY KOMPONENT, NIE CHIP STATYSTYK (2026-08-29).
+   Ekran zgłoszenia pożyczał sobie `.app-map__stats` i nadpisywał mu pozycję
+   stylem inline. Zmierzone po wyrównaniu nakładek: pastylka ma `white-space:
+   nowrap`, bo jest zaprojektowana pod „133 · 0/104" — a zdanie „Zgłoszenie
+   przyjęte. Pokaże się na mapie jako punkt do potwierdzenia." rozpychało ją
+   do 533 px na ekranie 393 px, czyli poza obie krawędzie, i przykrywała
+   przycisk „Warstwy".
+   Stoi POD rzędem nakładek (`--app-map-pad` + wysokość przycisku warstw), na
+   całej szerokości i ZAWIJA SIĘ. z-index 4, czyli nad mapą i nad nakładkami:
+   to komunikat o tym, co się przed chwilą stało, i ma być przeczytany. */
+.app-map__msg{position:absolute;z-index:4;
+  top:calc(var(--app-map-pad, 10px) + 46px);
+  left:var(--app-map-pad, 10px);right:var(--app-map-pad, 10px);
+  background:var(--paper);border:1px solid var(--hair-strong);border-radius:12px;
+  padding:9px 12px;box-shadow:0 6px 18px -10px rgba(21,32,26,.4);
+  font-family:var(--f-m);font-size:12px;line-height:1.45;color:var(--ink);}
+
+/* CHIP STATYSTYK — mały, prawy górny róg (uwaga usera: „statystyka powinna
+   być małym elementem", nie kafle na całą szerokość jak na /odkrycia).
+   z-index 3, jak inne nakładki NA mapie (skala u góry pliku) —
+   `.leaflet-container` ma `isolation:isolate`, więc nie trzeba bić się z
+   panelami Leafletu o wyższe liczby. */
+.app-map__stats{position:absolute;top:var(--app-map-pad);right:var(--app-map-pad);z-index:3;
+  display:flex;gap:8px;background:var(--paper);border:1px solid var(--hair-strong);
+  border-radius:999px;padding:7px 12px;box-shadow:0 6px 18px -10px rgba(21,32,26,.4);}
+.app-map__stat{display:flex;align-items:center;gap:5px;font-family:var(--f-m);
+  font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;}
+.app-map__stat .icon{width:14px;height:14px;color:var(--accent-dark);}
+
+/* WŁĄCZNIK NAGRYWANIA W TYM SAMYM CHIPIE (2026-08-29) — user chciał go
+   „koło punktów", więc dosłownie tam siedzi, odcięty włoskową kreską zamiast
+   własnego pudełka. Kropka mówi stan tym samym językiem co pastylka niżej
+   (`.rm-bg-pill__dot`) i ta sama animacja `rmPulseDot` — jeden wizualny znak
+   na „coś się dzieje w tle", nie dwa.
+   `[hidden]` MUSI mieć własną regułę: `display:flex` z `.app-map__stat` bije
+   `display:none` z arkusza przeglądarki, więc bez tego przycisk byłby widoczny
+   także tam, gdzie most natywny go nie potwierdził. */
+.app-map__rec{border:0;border-left:1px solid var(--hair);background:none;
+  margin-left:2px;padding:4px 0 4px 10px;cursor:pointer;color:var(--ink-mute);}
+.app-map__rec[hidden]{display:none;}
+.app-map__rec-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-mute);flex:none;}
+/* CZERWONA KROPKA, NIE ZIELONA (poprawka 2026-08-29). Zielona jest w tym
+   serwisie kolorem AKCENTU — czyli tego samego, co przyciski i aktywne
+   zakładki; nie znaczyła „trwa nagranie". Czerwona pulsująca kropka to znak,
+   którego nikt nie musi się uczyć. */
+.app-map__rec.is-on{color:var(--ink);}
+.app-map__rec.is-on .app-map__rec-dot{background:var(--danger);
+  animation:rmPulseDot 1.6s ease-in-out infinite;}
+.app-map__rec.is-error{color:var(--danger-dark);}
+.app-map__rec.is-error .app-map__rec-dot{background:var(--danger);}
+
+/* Pasek nawigacji PŁYWA NAD mapą na tym ekranie (decyzja usera) —
+   półprzezroczyste, rozmyte tło zamiast pełnego `var(--paper)`, żeby czytać
+   się jako nakładka, nie kolejny kawałek strony. Sam rgb (244,245,241) to
+   `--bg`, ten sam trik co przy tle nagłówka (header{} wyżej w pliku) — bez
+   `@supports` przeglądarka bez `backdrop-filter` dostaje zwykłe tło `.app-nav`. */
+@supports (backdrop-filter: blur(1px)) {
+  body.is-app.map-page .app-nav{background:rgba(244,245,241,.86);backdrop-filter:blur(14px);}
+}
+
+/* --- sam pasek --- */
+/* z-index 80: skala z góry pliku, przedział 70-90 to dolne paski mobilne.
+   Nad .k-nav (70), pod .mbar (90) — pasek akcji konkretnego ekranu wygrywa,
+   bo dotyczy tego, co user właśnie robi. */
+.app-nav{position:fixed;left:0;right:0;bottom:0;z-index:80;
+  display:flex;align-items:stretch;justify-content:space-around;
+  background:var(--paper);border-top:1px solid var(--hair-strong);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  box-shadow:0 -8px 24px -20px rgba(21,32,26,.55);}
+
+.app-nav__i{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;min-height:var(--app-nav-h);text-decoration:none;
+  font-family:var(--f-m);font-size:10px;font-weight:600;letter-spacing:.02em;
+  color:var(--ink-soft);}
+.app-nav__i.is-on{color:var(--accent-dark);}
+.app-nav__ico{font-size:19px;line-height:1;}
+/* Skanowanie zostaje jedynym `<button>` w pasku (reszta to linki) — reset
+   domyślnych stylów przeglądarki, żeby wyglądał jak każdy inny slot.
+   BEZ `font:inherit` (usunięte 2026-08-29, zgłoszenie „podpisy są różne").
+   Ten skrót ustawiał font-family/size/weight na wartość ODZIEDZICZONĄ z `.app-nav`,
+   a że stoi w arkuszu PO `.app-nav__i` i ma tę samą wagę selektora, wygrywał
+   z nią — „Skanuj" jechało krojem tekstowym w rozmiarze bazowym, gdy sąsiednie
+   podpisy szły `--f-m` po 10 px. Reset domyślnych stylów guzika załatwiają
+   trzy pozostałe deklaracje, a typografię ma nadawać `.app-nav__i`, jak
+   wszystkim slotom. */
+.app-nav__i--btn{background:none;border:0;padding:0;cursor:pointer;}
+
+/* MAPA WYSTAJE PONAD PASEK — od Etapu 1 przebudowy apki (2026-08-28) to ona,
+   nie skanowanie, jest środkiem apki: to na niej dzieje się odkrywanie w
+   terenie, więc ma być trafialna bez patrzenia. Kółko 56 px to minimum
+   Apple/Material dla celu dotykowego. */
+.app-nav__hero{gap:2px;}
+/* Okrąg zszedł z samego linku na `.app-nav__ring` (2026-08-29), żeby slot mapy
+   mógł mieć podpis jak każdy inny — link jest teraz zwykłą kolumną
+   `.app-nav__i`, a wyniesienie robi ujemny margines pierścienia. Kolor tekstu
+   podpisu dziedziczy się z `.app-nav__i`, więc typografia jest wspólna
+   z resztą paska i nie ma jej gdzie rozjechać. */
+.app-nav__ring{width:44px;height:44px;margin-top:-20px;
+  border:3px solid var(--paper);border-radius:50%;
+  background:var(--accent);color:#fff;font-size:21px;line-height:1;
+  display:flex;align-items:center;justify-content:center;flex:none;
+  box-shadow:0 6px 18px -6px rgba(21,32,26,.5);}
+.app-nav__hero:active .app-nav__ring{transform:translateY(1px);}
+/* Slot mapy JEST aktywny wizualnie przez pierścień, więc `is-on` nie może mu
+   przemalować podpisu na ten sam akcent co pierścień — zostaje kolor tekstu
+   jak w pozostałych slotach. */
+.app-nav__hero.is-on .app-nav__ring{background:var(--accent-dark);}
+
+/* ---------------------------------------------------------------------
+   NAGRYWANIE W TLE + ALERTY O SKARBACH (Etap 5b, 2026-08-28)
+   Baner zgody i pastylka nagrywania dokłada JS (assets/js/app-tracking.js),
+   niezależnie od tego, który ekran apki jest akurat otwarty — dlatego stoją
+   tu, w bloku is-app ogólnym, a nie przy konkretnej podstronie.
+   --------------------------------------------------------------------- */
+
+/* BANER ZGODY — karta u dołu, NAD paskiem nawigacji (ten sam z-index 80 co
+   .app-nav, ale steruje kolejność w DOM: baner dokłada się PO pasku). Jeden
+   ekran, dwa przyciski — świadomie bez systemowego confirm(), żeby dało się
+   to ostylować i żeby nie blokowało reszty UI tak, jak blokuje natywny
+   dialog. */
+.rm-bg-consent{position:fixed;left:12px;right:12px;
+  bottom:calc(var(--app-nav-h) + 12px + env(safe-area-inset-bottom,0px));
+  z-index:81;background:var(--paper);border:1px solid var(--hair-strong);
+  border-radius:16px;padding:16px;box-shadow:0 10px 30px -12px rgba(21,32,26,.35);}
+.rm-bg-consent p{margin:0 0 12px;font-size:13.5px;line-height:1.5;color:var(--ink);}
+.rm-bg-consent__act{display:flex;gap:8px;}
+.rm-bg-consent__act button{flex:1 1 0;border-radius:10px;padding:10px;
+  font-family:var(--f-m);font-size:13px;font-weight:700;cursor:pointer;}
+.rm-bg-consent__act button[data-rm-bg="tak"]{background:var(--accent);color:#fff;border:0;}
+.rm-bg-consent__act button[data-rm-bg="nie"]{background:none;border:1px solid var(--hair-strong);color:var(--ink-soft);}
+
+/* PASTYLKA NAGRYWANIA — pływa NAD dolnym paskiem, tym samym trikiem co
+   .app-nav w trybie map-page (rgb 244,245,241 = --bg, ten sam odcień co
+   tło nagłówka). Kropka pulsuje tą samą animacją co znacznik zbliżania na
+   mapie niżej — jeden wizualny język na „coś się dzieje w tle". */
+.rm-bg-pill{position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(var(--app-nav-h) + 10px + env(safe-area-inset-bottom,0px));
+  z-index:81;display:flex;align-items:center;gap:8px;
+  background:rgba(244,245,241,.94);border:1px solid var(--hair-strong);
+  border-radius:999px;padding:7px 8px 7px 12px;
+  box-shadow:0 6px 18px -10px rgba(21,32,26,.4);}
+.rm-bg-pill__dot{width:8px;height:8px;border-radius:50%;background:var(--accent);
+  animation:rmPulseDot 1.6s ease-in-out infinite;flex:none;}
+.rm-bg-pill__t{font-family:var(--f-m);font-size:11.5px;font-weight:600;color:var(--ink);white-space:nowrap;}
+.rm-bg-pill [data-rm-bg-stop]{font-family:var(--f-m);font-size:11px;font-weight:700;
+  background:var(--accent);color:#fff;border:0;border-radius:999px;padding:6px 10px;cursor:pointer;}
+.rm-bg-pill__off{font-family:var(--f-m);font-size:10.5px;color:var(--ink-mute);
+  background:none;border:0;text-decoration:underline;cursor:pointer;padding:4px 2px;}
+@keyframes rmPulseDot{0%,100%{opacity:1;} 50%{opacity:.35;}}
+
+/* ZNACZNIK „ZBLIŻASZ SIĘ" NA MAPIE (Yanosik-style) — rysuje go inline skrypt
+   w discovery-app.php po zdarzeniu `rm:treasure-near`, jako L.divIcon z tą
+   klasą; sam pierścień to czysty CSS, bez dokładania obrazków. */
+.rm-near-marker{width:26px;height:26px;border-radius:50%;
+  background:rgba(44,107,79,.18);border:2px solid var(--accent);
+  animation:rmPulseRing 1.6s ease-out infinite;}
+@keyframes rmPulseRing{0%{transform:scale(.6);opacity:1;} 100%{transform:scale(1.6);opacity:0;}}
+
+/* ---------------------------------------------------------------------
+   MESSENGER W APCE (przebudowa UX reszty ekranów, Faza 1, 2026-08-29)
+   Ten sam markup i CSS bazowy co web — WŁĄCZNIE z przełącznikiem
+   jednopanelowym z @media(max-width:680px) wyżej (L.1068+): apka jest
+   zawsze wąska, więc dostaje go za darmo. Dwie doprecyzowania pod pływający
+   `.app-nav`, którego web-mobile nie ma:
+   --------------------------------------------------------------------- */
+/* Wysokość wątku liczyła się względem STAŁEGO „220px" (nagłówek + okruszki +
+   marginesy web-mobile). W apce: okruszki zniknęły (patrz messages.php,
+   ok. -30px), za to doszedł pływający dolny pasek (`--app-nav-h` +
+   `safe-area-inset-bottom`) — inaczej dolna część wątku i pole odpowiedzi
+   chowałyby się pod paskiem. „190px" to skorygowana stała (220 minus
+   okruszki), a `--app-nav-h`/`safe-area` dochodzą osobno, bo są dynamiczne.
+   Ten sam duch co istniejąca reguła, tylko bogatsza o dwa składniki — nie
+   przepisujemy całego layoutu na flex-column (jak `map-page`), bo tu
+   wystarcza poprawka istniejącej stałej. */
+@media(max-width:680px){
+  body.is-app .messenger.has-active .messenger-thread{
+    height:calc(100vh - 190px - var(--app-nav-h) - env(safe-area-inset-bottom,0px));
+  }
+}
+
+/* ---------------------------------------------------------------------
+   FILTRY WYJAZDÓW JAKO DOLNY ARKUSZ W APCE (Faza 2, 2026-08-29)
+   Web-mobile ma już `.filters.is-open` (panel POKAZANY INLINE, wpycha resztę
+   strony w dół — `data-role="mobile-filter-toggle"`, JS w events-list.php).
+   W apce TA SAMA klasa i TEN SAM JS dostają inny WYGLĄD: pełnoekranowy dolny
+   arkusz zamiast wepchnięcia panelu w przepływ strony — wzorem
+   MysteryHike/map konsumenckich. Zero zmiany logiki filtrowania — to
+   wyłącznie inna prezentacja tego samego stanu `.is-open`.
+   --------------------------------------------------------------------- */
+body.is-app .filters.is-open{
+  position:fixed;inset:auto 0 0 0;z-index:101;
+  max-height:82vh;overflow-y:auto;
+  border-radius:20px 20px 0 0;border:1px solid var(--hair-strong);border-bottom:0;
+  box-shadow:0 -16px 40px -20px rgba(21,32,26,.45);
+  padding-bottom:calc(22px + var(--app-nav-h) + env(safe-area-inset-bottom,0px));
+  animation:rmSheetUp .22s ease-out;
+}
+/* Uchwyt — czysto wizualny sygnał „to jest arkusz", jak `.disc-panel__handle`
+   na mapie; samo przeciąganie nie jest tu potrzebne. Arkusz zasłania też
+   przycisk „Filtry", którym się go otworzyło (z-index wyżej niż reszta
+   strony) — dlatego zamknięcie MUSI mieć własny przycisk wewnątrz arkusza,
+   `.filters__close`, a nie polegać na powtórnym dotknięciu tego, co już
+   zniknęło pod spodem. */
+body.is-app .filters.is-open::before{
+  content:"";display:block;width:36px;height:4px;border-radius:999px;
+  background:var(--hair-strong);margin:0 auto 14px;
+}
+body.is-app .filters__close{display:flex;}
+@keyframes rmSheetUp{from{transform:translateY(24px);opacity:.4;} to{transform:translateY(0);opacity:1;}}
+/* Półprzezroczyste tło ZA arkuszem, bez nowego elementu w DOM — `:has()` już
+   jest w tym arkuszu stylów (patrz `map-layers.php`/`label:has()`), więc to
+   nie jest nowa technika. Zamknięcie zostaje na krzyżyku/przycisku „Filtry",
+   nie na dotknięciu tła — jeden, przewidywalny sposób zamiast dwóch. */
+body.is-app:has(.filters.is-open)::after{
+  content:"";position:fixed;inset:0;z-index:100;background:rgba(21,32,26,.35);
+}
+
+/* ---------------------------------------------------------------------
+   ZGŁOŚ SKARB — MAPA PEŁNOEKRANOWA W APCE (Faza 3, 2026-08-29)
+   treasure-propose-app.php stawia formularz w `.disc-panel` — TYM SAMYM
+   generycznym komponencie szuflady co lista skarbów na /odkrycia (zero
+   nowego kodu, patrz Faza 0). W odróżnieniu od arkusza filtrów (Faza 2
+   wyżej) TO NIE JEST modal: mapa z pinezką ma zostać widoczna pod
+   formularzem (user porównuje opis z tym, co wskazał), więc bez `:has()`
+   tła i bez z-index 100+ — `.disc-panel` zostaje na swoim zwykłym z-index 3
+   (skala nakładek mapy z góry pliku), tylko dostaje zapas na pływający
+   `.app-nav`, którego web/discovery-app.php dotąd nie łączyły z tym
+   komponentem. --------------------------------------------------------- */
+body.is-app.map-page .disc-panels{
+  padding-bottom:calc(var(--app-nav-h) + env(safe-area-inset-bottom,0px));
+}
+/* `.tr-found` (podpowiedzi wyszukiwarki) jest `position:absolute` i anchoruje
+   się do NAJBLIŻSZEGO pozycjonowanego przodka. Na desktopie to przypadkiem
+   działa, bo tym przodkiem jest cała sticky kolumna formularza (`.tr-work__side`),
+   a nad wyszukiwarką nic tam nie stoi. W szufladzie NAD wyszukiwarką jest już
+   nagłówek arkusza (`<h3>`) i podpis miejsca — bez własnego kontekstu
+   pozycjonowania podpowiedzi wyskoczyłyby przy górnej krawędzi całej kolumny
+   `.disc-panels`, nie pod polem. */
+/* `.disc-panel .tp-search{position:relative}` STAŁO TU DO 2026-08-29 i zostało
+   usunięte razem z wyszukiwarką miejsc z ekranu terenowego (kontrakt
+   tasks/active/zglos-skarb-w-terenie.md). Reguła istniała WYŁĄCZNIE dla tej
+   jednej szuflady — `.tp-search` na web (treasure-propose.php) nie stoi
+   w `.disc-panel`, więc nic innego jej nie potrzebowało. */
+
+/* ZDJĘCIE W ZGŁOSZENIU (2026-08-29). Przycisk aparatu i wybór pliku w jednej
+   linii, miniatura pod spodem — potwierdzenie, że aparat faktycznie coś oddał. */
+.disc-panel .tp-photo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;}
+.disc-panel .tp-photo input[type=file]{flex:1 1 140px;min-width:0;font-family:var(--f-m);font-size:12px;}
+.disc-panel .tp-photo__thumb{flex-basis:100%;max-width:120px;height:auto;
+  border-radius:10px;border:1px solid var(--hair-strong);}
+
+/* „WIĘCEJ SZCZEGÓŁÓW" — pola z domyślnymi wartościami schodzą pod zwinięcie,
+   żeby ekran terenowy miał trzy ruchy i przycisk. `summary` dostaje rozmiar
+   celu dotykowego, bo domyślny trójkącik jest za mały na palec. */
+.disc-panel .tp-more{margin:2px 0 10px;}
+.disc-panel .tp-more>summary{cursor:pointer;min-height:40px;display:flex;align-items:center;
+  font-family:var(--f-m);font-size:13px;font-weight:600;color:var(--accent-dark);}
+/* LABELKI WCHODZIŁY NA POLA (naprawa 2026-08-29, zgłoszenie z telefonu:
+   „labelki wchodzą na inputy, textarea za mała").
+   `.form-field-label` ma w arkuszu wspólnym `margin:-4px 0 -6px` — ujemny
+   margines dobrany pod formularze, w których pole samo odsuwa się od góry
+   (`.rec-form`/`.tr-form` dokładają sobie `margin-top:12px` na labelce właśnie
+   po to). `.tp-form` jest kolumną flex z `gap:2px`, a w kolumnie flex marginesy
+   SIĘ NIE ZNOSZĄ: −6 px ciągnie następne pole w górę, gap oddaje 2 px, netto
+   pole wjeżdża 4 px na własną etykietę. Ten formularz nigdy nie dostał
+   kompensacji, którą dwa pozostałe mają od początku.
+   Pole opisu: `.search-input` jest stylem POLA JEDNOLINIJKOWEGO (padding,
+   font), bez `min-height` i bez `resize` — `rows="3"` w szufladzie o wysokości
+   liczonej flexem daje pasek, w który nie da się nic sensownie wpisać. */
+.disc-panel .tp-form .form-field-label{margin:12px 0 4px;}
+.disc-panel .tp-form .form-field-label:first-of-type{margin-top:0;}
+.disc-panel .tp-form textarea.search-input{min-height:96px;resize:vertical;line-height:1.45;}
+
+/* `.tr-form`/`.tp-form` ma własny padding (18-20px, wzorzec panelu admina) —
+   `.disc-panel` doklada swój (14-15px). Bez tej reguły pola formularza w
+   szufladzie miałyby podwójny odstęp od krawędzi. */
+.disc-panel .tp-form{padding:0;}
+
+/* ---------------------------------------------------------------------
+   PRZYPIĘTA AKCJA PROFILU (Faza 4, 2026-08-29) — `.mbar`, TEN SAM komponent
+   co przycisk zapisu na stronie wydarzenia (event-page.php), tylko w apce
+   (bodyClass `has-mbar`, ten sam wzorzec co tam). `body.is-app` rezerwuje
+   miejsce na `.app-nav`, `body.has-mbar` osobno rezerwuje miejsce na
+   `.mbar` (76px, patrz reguła bazowa wyżej w pliku) — połączone na jednym
+   `<body>`, przy równej specyficzności (0,1,0 każda) wygrywa reguła NIŻEJ
+   w pliku, czyli `is-app`. Bez tej reguły dół strony chowałby się pod
+   `.mbar`, który w apce stoi NAD `.app-nav`, nie w jego miejscu (patrz
+   `body.is-app .mbar{bottom:...}` wyżej) — obie rezerwy muszą się zsumować.
+   --------------------------------------------------------------------- */
+@media(max-width:980px){
+  body.is-app.has-mbar{
+    /* 70px zmierzone na żywo (Claude-in-chrome, `.mbar` z jedną linią
+       tekstu + przyciskiem) — nie zaokrąglone w dół do 60px, żeby ostatni
+       fragment treści nie kończył się dosłownie pod krawędzią paska. */
+    padding-bottom:calc(var(--app-nav-h) + 70px + env(safe-area-inset-bottom,0px));
+  }
+}
+
+/* --- SKANER KODU QR (Etap 4 apki mobilnej) -----------------------------------
+   Podgląd z aparatu rysuje natywny plugin POD WebView, więc na czas skanowania
+   strona musi zniknąć: przezroczyste tło i schowany `.wrap`. Bez tego user
+   patrzy na swoją stronę zamiast na obraz z kamery i wygląda to jak zawieszenie
+   aplikacji. Klasę zdejmuje `native.js` w jednym miejscu (funkcja `koniec`),
+   niezależnie od tego, czy skan się udał, czy został anulowany. */
+/* `!important` I TO JEST WŁAŚCIWE NARZĘDZIE, NIE LENISTWO (naprawa 2026-08-29,
+   zgłoszenie usera: „klikam skanuj, a strona zostaje w tle").
+   `html.rm-scan-on .wrap` to dwie klasy i element; `body.is-app.map-page .wrap
+   {display:flex}` (wyżej w tym pliku) to TRZY klasy — więc na każdym ekranie
+   z mapą reguła gasząca stronę przegrywała wagą i skaner uruchamiał się
+   z całym interfejsem na wierzchu, zamiast z obrazem z aparatu.
+   Odtworzone pomiarem: `getComputedStyle(.wrap).display === 'flex'` przy
+   włączonej klasie `rm-scan-on`.
+   To jest stan typu „wyłącznik awaryjny" — na czas kadru NIC ze strony nie ma
+   prawa się malować, niezależnie od tego, co ustawi którakolwiek reguła
+   ekranu. Podbijanie specyficzności przez dopisywanie klas do selektora
+   naprawiłoby dzisiejszy przypadek i pękło przy pierwszym nowym `bodyClass`. */
+html.rm-scan-on,
+html.rm-scan-on body{background:transparent !important;}
+html.rm-scan-on .wrap,
+html.rm-scan-on .app-nav,
+/* Pastylka nagrywania i baner zgody wiszą na <body>, nie w `.wrap`, więc bez
+   wymienienia ich z nazwy zostawały nad żywym obrazem z aparatu — a przycisk
+   „Zatrzymaj" dawał się wtedy dotknąć przez przezroczystą nakładkę skanera
+   (`.rm-scan` ma `pointer-events:none`), czyli nawigację w środku skanowania,
+   z włączonym aparatem. Nagrywanie w tle IDZIE DALEJ — chowamy wskaźnik na
+   czas kadru, nie sesję (2026-08-29). */
+html.rm-scan-on .rm-bg-pill,
+html.rm-scan-on .rm-bg-consent{display:none !important;}
+
+/* z-index 200: NAD modalami (100+), bo to jedyny stan, w którym pod stroną
+   jest żywy obraz z aparatu — cokolwiek zostałoby wyżej, zasłaniałoby kadr. */
+.rm-scan{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;
+  padding:calc(20px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+  pointer-events:none;}
+/* Ramka celownika — jedyna wskazówka, gdzie trzymać kod. Bez tła: wszystko poza
+   krawędziami musi pozostać przezroczyste, żeby było widać, co łapie aparat. */
+.rm-scan__ramka{width:min(66vw,260px);aspect-ratio:1;border:3px solid rgba(255,255,255,.9);
+  border-radius:20px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45);}
+.rm-scan__hint{margin:0;color:#fff;font-family:var(--f-m);font-size:13px;text-align:center;
+  text-shadow:0 1px 3px rgba(0,0,0,.6);}
+/* Anulowanie MUSI łapać dotyk, choć warstwa go nie łapie — inaczej nie dałoby
+   się wyjść ze skanera inaczej niż przyciskiem systemowym. */
+.rm-scan__anuluj{pointer-events:auto;min-height:48px;padding:0 30px;border:0;border-radius:999px;
+  background:rgba(255,255,255,.95);color:var(--ink);font-family:var(--f-b);font-weight:700;
+  font-size:15px;cursor:pointer;}
+
+/* ----------------------------------------------------------------------------
+   WSKAŹNIK BRAKU ZASIĘGU (tasks/active/apka-offline.md, Etap 1)
+   Zastąpił ekran-blokadę z `server.errorPath`. Ma być ZNACZNIKIEM STANU,
+   nie ostrzeżeniem: jazda bez zasięgu to normalny tryb pracy tej apki, więc
+   pasek nie krzyczy, nie zasłania treści i nie prosi o żadną reakcję.
+   ---------------------------------------------------------------------------- */
+.app-offline{display:flex;align-items:center;gap:8px;
+  padding:7px 12px;margin:0 0 10px;border-radius:999px;
+  background:var(--paper);border:1px solid var(--hair-strong);
+  font-family:var(--f-m);font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+.app-offline[hidden]{display:none;}
+/* Szara, nie czerwona — czerwień w tym serwisie znaczy błąd wymagający
+   działania (patrz --s-red przy wylogowaniu i ostrzeżeniach). Brak zasięgu
+   na szlaku nie jest błędem użytkownika ani awarią serwisu. */
+.app-offline__dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;
+  background:var(--ink-mute);}
+
+/* Na mapie pełnoekranowej pasek PŁYWA, tak samo jak chip statystyk i dolna
+   nawigacja — wepchnięty w przepływ zjadłby wysokość mapy, czyli dokładnie to,
+   po co ten ekran istnieje. Lewa strona, pod chipem statystyk (ten siedzi
+   w prawym górnym rogu).
+
+   NAPRAWA 2026-09-11: w tym miejscu stał ZAMYKAJĄCY znacznik komentarza,
+   a cztery linie niżej drugi — więc akapit poniżej był dla przeglądarki
+   zwykłym tekstem w arkuszu, nie komentarzem. CSS nie przerywa na tym
+   parsowania, tylko POŁYKA to, co idzie dalej, aż odzyska się na kolejnym
+   bloku: razem ze śmieciem znikała reguła `body.is-app.map-page .app-offline`
+   pod spodem. Zmierzone w przeglądarce PRZED naprawą: `document.styleSheets`
+   dla `app.css` kończył się na `.app-offline__dot`, a selektora
+   `body.is-app.map-page .app-offline` NIE BYŁO w ogóle. Skutek dla człowieka:
+   wskaźnik „brak zasięgu" na pełnoekranowej mapie nie był pływający, tylko
+   wchodził w przepływ `.wrap` — czyli spychał mapę, zamiast leżeć na niej.
+
+   `fixed`, nie `absolute`: pasek jest RODZEŃSTWEM `.app-map-page`, nie jego
+   dzieckiem, a `.wrap` nie ma własnego kontekstu pozycjonowania — `absolute`
+   anchorowałby się więc do bloku początkowego, co akurat wygląda podobnie,
+   ale przestaje działać przy pierwszej zmianie układu skorupy. */
+body.is-app.map-page .app-offline{position:fixed;z-index:4;
+  top:calc(64px + env(safe-area-inset-top,0px));left:12px;margin:0;
+  max-width:calc(100% - 24px);}
+
+/* ---------------------------------------------------------------------
+   PASEK AKCJI POD NAGŁÓWKIEM (`.op-head__act`) — RÓWNE PRZYCISKI W APCE
+   (2026-09-11, audyt ekranów przy prawdziwych 375 px).
+
+   Komponent jest wspólny dla czternastu stron (trasa, profil organizatora,
+   profil rowerzysty, przejazd, kronika, panele admina). Na desktopie to rząd
+   przycisków dobranych do treści — i tak ma zostać. Na telefonie `flex-wrap`
+   układa je jeden pod drugim, ale każdy zachowuje szerokość SWOJEGO napisu:
+   zmierzone na `/trasy/{slug}` w apce — 231, 220 i 225 px przy tej samej
+   lewej krawędzi, czyli trzy różne prawe krawędzie jedna pod drugą.
+   Wygląda to jak niedokończony układ, a nie jak lista działań.
+
+   Dlatego w apce kolumna jest jawna, a przyciski rozciągają się na pełną
+   szerokość — wtedy są też większym celem dla kciuka. Reguła stoi TUTAJ,
+   a nie w `style.css` pod media query, bo dotyczy wyłącznie apki: na www
+   ten sam ekran ogląda się też na desktopie i tam rząd jest poprawny.
+   --------------------------------------------------------------------- */
+body.is-app .op-head__act{flex-direction:column;align-items:stretch;}
+/* `justify-content` bo `.btn` jest `inline-flex` — samo `text-align` nie
+   wyśrodkowałoby napisu po rozciągnięciu przycisku. */
+body.is-app .op-head__act > *{width:100%;justify-content:center;text-align:center;}
+
+/* RODZAJE POWIADOMIEŃ W KONCIE — style przeniesione do style.css
+   w Etapie 1c (2026-09-11). Powód: kanał mailowy dał tej liście drugie
+   miejsce występowania, tym razem na www, gdzie app.css się nie ładuje
+   (patrz partials/head.php) — komponent przestał być wyłącznie apkowy. */

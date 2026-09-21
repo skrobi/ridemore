@@ -1,0 +1,515 @@
+<!-- /wydarzenia/index.html — ridemore.bike — lista wyjazdów z filtrowaniem (design system "Szlak / jasny") -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wyjazdy rowerowe — kalendarz wspólnych jazd i wycieczek | ridemore.bike</title>
+<meta name="description" content="Przeglądaj nadchodzące wyjazdy rowerowe w Polsce: wspólne jazdy gravelowe i MTB, wielodniowe wycieczki z noclegiem i ogłoszenia „Pokręć z kimś”. Filtruj po terminie, odległości, trudności i cenie.">
+<link rel="canonical" href="https://ridemore.bike/wydarzenia">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ 1. TOKENY (wspólne z /assets/css/tokens.css) ============ */
+:root{
+  --paper:#F4F5F1; --card:#FFFFFF; --tint:#EDF1EC; --line:#E2E5DD; --line-2:#D3D8CE;
+  --ink:#15201A; --tx-2:#5E6A62; --tx-3:#8A948C;
+  --pine:#1E4B38; --pine-2:#2C6B4F;
+  --blaze:#FFC93F; --blaze-2:#F0B41E;
+  --s-red:#C3382F; --s-blue:#2B57C8; --s-green:#2E7D4F;
+  --f-d:"Archivo",system-ui,sans-serif; --f-b:"Instrument Sans",system-ui,sans-serif; --f-m:"IBM Plex Mono",monospace;
+  --gut:clamp(1.1rem,4vw,3.5rem); --max:1360px; --r:14px; --r-l:20px;
+  --e:cubic-bezier(.22,.61,.36,1);
+  --sh:0 1px 2px rgba(21,32,26,.04),0 10px 26px -20px rgba(21,32,26,.30);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-b);font-size:1.0625rem;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--f-d);font-weight:700;margin:0;line-height:1.06;font-variation-settings:"wdth" 112;letter-spacing:-.025em}
+p{margin:0} a{color:inherit} img{max-width:100%;display:block}
+:focus-visible{outline:3px solid var(--pine);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--max);margin:0 auto;padding-inline:var(--gut)}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.blaze{width:15px;height:24px;flex:none;border-radius:2px;background:linear-gradient(#fff 0 33.3%,var(--bz,var(--s-red)) 33.3% 66.6%,#fff 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.12)}
+.eyebrow{display:flex;align-items:center;gap:.65rem;font-family:var(--f-m);font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-2);margin-bottom:.9rem}
+.btn{display:inline-flex;align-items:center;gap:.5rem;font-weight:600;font-size:.95rem;padding:.75rem 1.3rem;border-radius:999px;border:1px solid transparent;text-decoration:none;cursor:pointer;transition:.18s var(--e)}
+.btn:hover{transform:translateY(-1px)}
+.btn--pine{background:var(--pine);color:#fff}.btn--pine:hover{background:var(--pine-2)}
+.btn--ghost{border-color:var(--line-2);background:var(--card)}.btn--ghost:hover{border-color:var(--ink)}
+.btn--sm{padding:.5rem 1rem;font-size:.875rem}
+
+/* Header */
+.hdr{position:sticky;top:0;z-index:70;background:rgba(244,245,241,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hdr__in{display:flex;align-items:center;gap:2rem;height:66px}
+.logo{font-family:var(--f-d);font-weight:800;font-variation-settings:"wdth" 100;font-size:1.1rem;letter-spacing:-.03em;text-decoration:none;display:flex;align-items:center;gap:.5rem}
+.logo b{color:var(--pine)}
+.logo .mark{width:13px;height:21px;border-radius:2px;background:linear-gradient(var(--paper) 0 33.3%,var(--blaze) 33.3% 66.6%,var(--paper) 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.15)}
+.nav{display:flex;gap:1.5rem;margin-left:auto;font-size:.925rem}
+.nav a{text-decoration:none;color:var(--tx-2);padding:.35rem 0;border-bottom:2px solid transparent}
+.nav a:hover,.nav a[aria-current]{color:var(--ink);border-color:var(--blaze)}
+.hdr .btn{padding:.55rem 1.1rem}
+
+/* Nagłówek listy */
+.top{padding-block:1.6rem 1.2rem}
+.crumb{font-family:var(--f-m);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-3);margin-bottom:.9rem}
+.crumb a{text-decoration:none}.crumb a:hover{color:var(--pine)}
+.top h1{font-size:clamp(1.9rem,4vw,3rem);font-variation-settings:"wdth" 116;max-width:20ch}
+.top p{margin-top:.7rem;color:var(--tx-2);max-width:62ch;font-size:.98rem}
+
+/* Pasek wyszukiwania + szybkie chipsy */
+.searchbar{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.3rem}
+.searchbar__f{flex:1 1 340px;display:flex;align-items:center;gap:.7rem;background:var(--card);border:1px solid var(--line-2);border-radius:999px;padding:.28rem .28rem .28rem 1.1rem;box-shadow:var(--sh)}
+.searchbar__f:focus-within{border-color:var(--pine)}
+.searchbar input{flex:1;background:none;border:0;font:inherit;font-size:1rem;padding:.65rem 0;min-width:0;color:var(--ink)}
+.searchbar input::placeholder{color:var(--tx-3)}
+.quick{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+.chip{font-size:.875rem;padding:.45rem .9rem;border-radius:999px;border:1px solid var(--line-2);background:var(--card);text-decoration:none;white-space:nowrap;transition:.18s var(--e);cursor:pointer}
+.chip:hover{border-color:var(--pine);color:var(--pine)}
+.chip[aria-pressed="true"]{background:var(--pine);color:#fff;border-color:var(--pine)}
+
+/* Układ: filtry + wyniki */
+.layout{display:grid;grid-template-columns:264px 1fr;gap:clamp(1.2rem,3vw,2.5rem);align-items:start;padding-bottom:4rem}
+@media(max-width:940px){.layout{grid-template-columns:1fr}}
+
+/* Panel filtrów */
+.filters{position:sticky;top:82px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);padding:1.1rem 1.2rem 1.4rem;box-shadow:var(--sh)}
+@media(max-width:940px){.filters{position:static;display:none}.filters.is-open{display:block;margin-bottom:1.2rem}}
+.filters__hd{display:flex;align-items:center;justify-content:space-between;padding-bottom:.9rem;border-bottom:1px solid var(--line);margin-bottom:.4rem}
+.filters__hd b{font-family:var(--f-d);font-size:1rem;font-variation-settings:"wdth" 105}
+.filters__hd a{font-size:.8rem;color:var(--tx-2);text-decoration:none}
+.filters__hd a:hover{color:var(--s-red)}
+.fg{padding-block:1rem;border-bottom:1px solid var(--line)}
+.fg:last-of-type{border-bottom:0}
+.fg > h3{font-family:var(--f-m);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-3);font-weight:500;margin-bottom:.7rem}
+.opt{display:flex;align-items:center;gap:.6rem;padding:.28rem 0;font-size:.92rem;cursor:pointer}
+.opt input{width:17px;height:17px;accent-color:var(--pine);flex:none;margin:0}
+.opt .cnt{margin-left:auto;font-family:var(--f-m);font-size:.75rem;color:var(--tx-3)}
+.opt .bz{width:10px;height:16px;border-radius:1px;flex:none;background:linear-gradient(#fff 0 33.3%,var(--bz) 33.3% 66.6%,#fff 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.15)}
+.rng{width:100%;accent-color:var(--pine);margin:.4rem 0 .2rem}
+.rng__lbl{display:flex;justify-content:space-between;font-family:var(--f-m);font-size:.72rem;color:var(--tx-3)}
+.dates{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.dates input{font:inherit;font-size:.85rem;padding:.45rem .55rem;border:1px solid var(--line-2);border-radius:9px;background:var(--paper);color:var(--ink);width:100%}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:.6rem;font-size:.92rem;padding:.3rem 0}
+
+/* Toolbar wyników */
+.toolbar{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.toolbar__n{font-family:var(--f-m);font-size:.85rem;color:var(--tx-2)}
+.toolbar__n b{color:var(--ink)}
+.views{display:flex;gap:.25rem;background:var(--card);border:1px solid var(--line-2);border-radius:999px;padding:.2rem}
+.views button{border:0;background:none;font:inherit;font-size:.85rem;padding:.35rem .85rem;border-radius:999px;cursor:pointer;color:var(--tx-2)}
+.views button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.sort{margin-left:auto;display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:var(--tx-2)}
+.sort select{font:inherit;font-size:.875rem;padding:.5rem .8rem;border:1px solid var(--line-2);border-radius:999px;background:var(--card);color:var(--ink)}
+.mobfilt{display:none}
+@media(max-width:940px){.mobfilt{display:inline-flex}}
+
+/* Aktywne filtry */
+.active{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.1rem}
+.tagf{display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;background:var(--tint);border:1px solid var(--line-2);padding:.3rem .5rem .3rem .7rem;border-radius:999px}
+.tagf button{border:0;background:none;cursor:pointer;font-size:1rem;line-height:1;color:var(--tx-2);padding:0 .1rem}
+.tagf button:hover{color:var(--s-red)}
+
+/* Karty */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.15rem}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;text-decoration:none;display:flex;flex-direction:column;transition:.22s var(--e);box-shadow:var(--sh)}
+.card:hover{transform:translateY(-3px);border-color:var(--line-2);box-shadow:0 2px 4px rgba(21,32,26,.05),0 22px 40px -26px rgba(21,32,26,.42)}
+.card__v{position:relative;background:var(--tint);height:158px;overflow:hidden;border-bottom:1px solid var(--line)}
+.card__v svg{position:absolute;inset:0;width:100%;height:100%}
+.ph{position:absolute;inset:0;background-size:cover;background-position:center}
+.ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,32,26,.30) 0%,rgba(21,32,26,0) 48%)}
+.ph--a{background-image:linear-gradient(180deg,#A9C1CB 0%,#C6D2CB 34%,#7C9A78 36%,#41603F 66%,#27402F 100%)}
+.ph--b{background-image:linear-gradient(180deg,#C8D4D8 0%,#E0DCC9 30%,#8FA07A 33%,#4E6642 62%,#2C3F30 100%)}
+.ph--c{background-image:linear-gradient(180deg,#F0D9A8 0%,#E8B87C 26%,#9C8F6A 30%,#4A5A47 64%,#28372D 100%)}
+.ph--d{background-image:linear-gradient(180deg,#B4C7CE 0%,#D6DCD2 32%,#86976F 35%,#47603C 68%,#2A3B2C 100%)}
+.ph--e{background-image:linear-gradient(180deg,#D9E2E6 0%,#CBD3C4 28%,#9AA97F 32%,#586B45 64%,#303F2C 100%)}
+.ph--f{background-image:linear-gradient(180deg,#EFE3C8 0%,#D8C79C 27%,#A3A175 31%,#556349 63%,#2E3B2E 100%)}
+.card__f{position:absolute;top:.8rem;left:.8rem;z-index:2;display:inline-flex;align-items:center;gap:.4rem;font-family:var(--f-m);font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;background:var(--card);border:1px solid var(--line);color:var(--ink);padding:.3rem .6rem .3rem .35rem;border-radius:999px}
+.card__f i{width:9px;height:15px;border-radius:1px;display:block;background:linear-gradient(#fff 0 33.3%,var(--bz) 33.3% 66.6%,#fff 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.15)}
+.card__d{position:absolute;top:.8rem;right:.8rem;z-index:2;font-family:var(--f-m);font-size:.75rem;background:var(--card);border:1px solid var(--line);padding:.3rem .55rem;border-radius:999px;color:var(--tx-2)}
+.card__b{padding:1rem 1.1rem 1.15rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
+.card__t{font-family:var(--f-d);font-weight:700;font-size:1.05rem;font-variation-settings:"wdth" 105;letter-spacing:-.02em;line-height:1.2}
+.card__data{font-family:var(--f-m);font-size:.8rem;color:var(--tx-2);display:flex;gap:.45rem;flex-wrap:wrap}
+.incl{display:flex;gap:.3rem;flex-wrap:wrap}
+.incl span{font-size:.73rem;background:var(--tint);border:1px solid var(--line);color:var(--tx-2);padding:.12rem .48rem;border-radius:999px}
+.card__ft{margin-top:auto;padding-top:.8rem;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:.8rem;font-size:.85rem}
+.org{display:flex;align-items:center;gap:.45rem;color:var(--tx-2);min-width:0}
+.av{width:24px;height:24px;border-radius:50%;background:var(--pine);color:#fff;font-size:.62rem;display:grid;place-items:center;font-family:var(--f-m);flex:none}
+.ver{color:var(--s-green);font-family:var(--f-m);font-size:.7rem;white-space:nowrap}
+.price{font-family:var(--f-m);font-size:.82rem;font-weight:500;text-align:right;white-space:nowrap;line-height:1.35}
+.price--free{color:var(--s-green)}
+.low{color:var(--s-red)}
+
+/* Separator miesiąca — kalendarzowy rytm listy */
+.month{grid-column:1/-1;display:flex;align-items:center;gap:.9rem;margin-top:.8rem}
+.month:first-child{margin-top:0}
+.month b{font-family:var(--f-m);font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-3);font-weight:500}
+.month hr{flex:1;border:0;border-top:1px solid var(--line)}
+
+.more{display:flex;justify-content:center;margin-top:2rem}
+
+/* Blok SEO */
+.seo{border-top:1px solid var(--line);padding-block:2.5rem;color:var(--tx-2);font-size:.95rem}
+.seo h2{font-size:1.3rem;color:var(--ink);margin-bottom:.7rem}
+.seo p{margin-bottom:.8rem;max-width:80ch}
+.seo .links{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:1rem}
+
+/* Stopka */
+.ftr{background:var(--card);border-top:1px solid var(--line);padding-block:2.5rem 1.4rem;font-size:.9rem;color:var(--tx-2)}
+.ftr__b{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-family:var(--f-m);font-size:.72rem;color:var(--tx-3)}
+@media(max-width:700px){.nav{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hdr"><div class="wrap hdr__in">
+  <a class="logo" href="/"><span class="mark" aria-hidden="true"></span>ride<b>more</b>.bike</a>
+  <nav class="nav" aria-label="Główna">
+    <a href="/wydarzenia" aria-current="page">Wyjazdy</a>
+    <a href="/regiony">Regiony</a>
+    <a href="/organizatorzy">Organizatorzy</a>
+    <a href="/jak-to-dziala">Jak to działa</a>
+  </nav>
+  <a class="btn btn--pine" href="/dodaj">Dodaj wyjazd</a>
+</div></header>
+
+<div class="wrap top">
+  <nav class="crumb" aria-label="Ścieżka"><a href="/">Start</a> / <span>Wyjazdy</span></nav>
+  <h1>Wyjazdy rowerowe w Polsce</h1>
+  <p>Wspólne jazdy na jeden dzień, wielodniowe wycieczki z noclegiem i ogłoszenia „Pokręć z kimś”.
+    Bezpłatne i płatne — filtruj po tym, co dla Ciebie ważne.</p>
+
+  <form class="searchbar" role="search" action="/wydarzenia" method="get">
+    <label class="sr" for="q">Szukaj</label>
+    <div class="searchbar__f">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" name="q" type="search" placeholder="Region, miasto albo nazwa wyjazdu">
+      <button class="btn btn--pine btn--sm" type="submit">Szukaj</button>
+    </div>
+    <button class="btn btn--ghost" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-6.4 7-11a7 7 0 1 0-14 0c0 4.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>Blisko mnie</button>
+  </form>
+
+  <div class="quick" role="group" aria-label="Szybkie filtry">
+    <button class="chip" aria-pressed="true">Ten weekend</button>
+    <button class="chip">Sierpień</button>
+    <button class="chip">Do 50 km ode mnie</button>
+    <button class="chip">Z noclegiem</button>
+    <button class="chip">Gravel</button>
+    <button class="chip">MTB</button>
+    <button class="chip">Spokojne tempo</button>
+    <button class="chip">Dla początkujących</button>
+  </div>
+</div>
+
+<div class="wrap layout">
+
+  <!-- ============ FILTRY ============ -->
+  <aside class="filters is-open" id="filters" aria-label="Filtry">
+    <div class="filters__hd"><b>Filtry</b><a href="/wydarzenia">Wyczyść</a></div>
+
+    <div class="fg">
+      <h3>Format</h3>
+      <label class="opt" style="--bz:var(--s-red)"><input type="checkbox" checked><span class="bz"></span>Wspólna jazda<span class="cnt">18</span></label>
+      <label class="opt" style="--bz:var(--s-blue)"><input type="checkbox" checked><span class="bz"></span>Wielodniówka<span class="cnt">7</span></label>
+      <label class="opt" style="--bz:var(--s-green)"><input type="checkbox"><span class="bz"></span>Pokręć z kimś<span class="cnt">4</span></label>
+    </div>
+
+    <div class="fg">
+      <h3>Termin</h3>
+      <div class="dates">
+        <label class="sr" for="d1">Od</label><input id="d1" type="date" value="2026-08-01">
+        <label class="sr" for="d2">Do</label><input id="d2" type="date" value="2026-09-30">
+      </div>
+    </div>
+
+    <div class="fg">
+      <h3>Odległość od Rzeszowa</h3>
+      <input class="rng" type="range" min="10" max="300" value="120" aria-label="Promień w km">
+      <div class="rng__lbl"><span>10 km</span><span>120 km</span><span>300 km</span></div>
+    </div>
+
+    <div class="fg">
+      <h3>Długość wyjazdu</h3>
+      <label class="opt"><input type="checkbox">1 dzień<span class="cnt">22</span></label>
+      <label class="opt"><input type="checkbox">2–3 dni<span class="cnt">5</span></label>
+      <label class="opt"><input type="checkbox">4 dni i więcej<span class="cnt">2</span></label>
+    </div>
+
+    <div class="fg">
+      <h3>Dystans trasy</h3>
+      <input class="rng" type="range" min="10" max="250" value="250" aria-label="Maksymalny dystans w km">
+      <div class="rng__lbl"><span>10 km</span><span>bez limitu</span></div>
+    </div>
+
+    <div class="fg">
+      <h3>Rower</h3>
+      <label class="opt"><input type="checkbox" checked>Gravel<span class="cnt">19</span></label>
+      <label class="opt"><input type="checkbox">MTB<span class="cnt">14</span></label>
+      <label class="opt"><input type="checkbox">Szosowy<span class="cnt">6</span></label>
+      <label class="opt"><input type="checkbox">Trekingowy<span class="cnt">9</span></label>
+      <label class="opt"><input type="checkbox">E-bike<span class="cnt">11</span></label>
+    </div>
+
+    <div class="fg">
+      <h3>Trudność i tempo</h3>
+      <label class="opt"><input type="checkbox">Łatwa<span class="cnt">10</span></label>
+      <label class="opt"><input type="checkbox">Średnia<span class="cnt">13</span></label>
+      <label class="opt"><input type="checkbox">Trudna<span class="cnt">6</span></label>
+      <label class="opt"><input type="checkbox">Wolne tempo (&lt;20 km/h)<span class="cnt">8</span></label>
+      <label class="opt"><input type="checkbox">Średnie (22–26 km/h)<span class="cnt">15</span></label>
+      <label class="opt"><input type="checkbox">Szybkie (&gt;28 km/h)<span class="cnt">3</span></label>
+    </div>
+
+    <div class="fg">
+      <h3>Region</h3>
+      <label class="opt"><input type="checkbox">Bieszczady<span class="cnt">8</span></label>
+      <label class="opt"><input type="checkbox">Podkarpacie<span class="cnt">6</span></label>
+      <label class="opt"><input type="checkbox">Beskidy<span class="cnt">5</span></label>
+      <label class="opt"><input type="checkbox">Roztocze<span class="cnt">3</span></label>
+      <label class="opt"><input type="checkbox">Mazury<span class="cnt">4</span></label>
+    </div>
+
+    <!-- Cena celowo nisko: decyzja panelu — najpierw wartość, potem koszt -->
+    <div class="fg">
+      <h3>Budżet</h3>
+      <input class="rng" type="range" min="0" max="2000" value="2000" aria-label="Maksymalna cena">
+      <div class="rng__lbl"><span>0 zł</span><span>bez limitu</span></div>
+      <label class="sw"><span>Tylko bezpłatne</span><input type="checkbox"></label>
+      <label class="sw"><span>Z noclegiem w cenie</span><input type="checkbox"></label>
+      <label class="sw"><span>Z przewodnikiem</span><input type="checkbox"></label>
+    </div>
+
+    <div class="fg">
+      <h3>Organizator</h3>
+      <label class="opt"><input type="checkbox">Tylko zweryfikowani<span class="cnt">9</span></label>
+      <label class="opt"><input type="checkbox">Są wolne miejsca<span class="cnt">24</span></label>
+    </div>
+  </aside>
+
+  <!-- ============ WYNIKI ============ -->
+  <main>
+    <div class="toolbar">
+      <button class="btn btn--ghost btn--sm mobfilt" type="button" aria-expanded="true" aria-controls="filters">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>Filtry (3)</button>
+      <span class="toolbar__n"><b>29</b> nadchodzących wyjazdów</span>
+      <div class="views" role="group" aria-label="Widok">
+        <button aria-pressed="true">Karty</button><button>Mapa</button><button>Kalendarz</button>
+      </div>
+      <label class="sort">Sortuj
+        <select><option>Najbliżej w czasie</option><option>Najbliżej mnie</option><option>Najkrótszy dystans</option><option>Najdłuższy dystans</option><option>Cena rosnąco</option><option>Ostatnio dodane</option></select>
+      </label>
+    </div>
+
+    <div class="active" aria-label="Aktywne filtry">
+      <span class="tagf">Wspólna jazda <button aria-label="Usuń filtr">×</button></span>
+      <span class="tagf">Wielodniówka <button aria-label="Usuń filtr">×</button></span>
+      <span class="tagf">Gravel <button aria-label="Usuń filtr">×</button></span>
+      <span class="tagf">do 120 km ode mnie <button aria-label="Usuń filtr">×</button></span>
+    </div>
+
+    <div class="grid">
+      <div class="month"><b>Sierpień 2026</b><hr></div>
+
+      <a class="card" href="/wydarzenia/niedzielna-jazda-gravel-wislok">
+        <div class="card__v">
+          <div class="ph ph--e" role="img" aria-label="Szuter nad Wisłokiem"></div>
+          <span class="card__f" style="--bz:var(--s-red)"><i></i>Wspólna jazda</span>
+          <span class="card__d mono">18 km stąd</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">Niedzielna jazda gravelowa nad Wisłok</h3>
+          <p class="card__data mono"><span>2 sie, 08:00</span><span>·</span><span>45,3 km</span><span>·</span><span>310 m</span><span>·</span><span>Średnie tempo</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">EV</span> Elo Velo <span class="ver">· 12 wyjazdów</span></span>
+            <span class="price price--free">Bezpłatnie<br><span class="low">3/12 miejsc</span></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="/wydarzenia/poranna-szosa-do-glogowa">
+        <div class="card__v">
+          <svg viewBox="0 0 400 158" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 128 Q50 122 100 126 T200 116 T300 124 T400 114 L400 158 L0 158Z" fill="#1E4B38" fill-opacity=".10"/>
+            <path d="M0 128 Q50 122 100 126 T200 116 T300 124 T400 114" fill="none" stroke="#1E4B38" stroke-width="2"/>
+          </svg>
+          <span class="card__f" style="--bz:var(--s-red)"><i></i>Wspólna jazda</span>
+          <span class="card__d mono">6 km stąd</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">Poranna szosa do Głogowa i z powrotem</h3>
+          <p class="card__data mono"><span>8 sie, 06:30</span><span>·</span><span>62 km</span><span>·</span><span>180 m</span><span>·</span><span>Szybkie tempo</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">MK</span> Marek K. <span class="ver">· 5 wyjazdów</span></span>
+            <span class="price price--free">Bezpłatnie<br>9/20 miejsc</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="/wydarzenia/rajd-na-wschod-slonca">
+        <div class="card__v">
+          <div class="ph ph--c" role="img" aria-label="Wschód słońca nad zalewem"></div>
+          <span class="card__f" style="--bz:var(--s-red)"><i></i>Wspólna jazda</span>
+          <span class="card__d mono">42 km stąd</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">Rajd „Na wschód słońca” nad zalew w Otałęży</h3>
+          <p class="card__data mono"><span>16 sie, 03:30</span><span>·</span><span>40 km</span><span>·</span><span>Łatwa</span><span>·</span><span>Wolne tempo</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">TR</span> Trasy Rowerowe Mielec</span>
+            <span class="price price--free">Bezpłatnie<br>31/50 miejsc</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="/wydarzenia/roztocze-weekend">
+        <div class="card__v">
+          <div class="ph ph--b" role="img" aria-label="Leśna droga na Roztoczu"></div>
+          <span class="card__f" style="--bz:var(--s-blue)"><i></i>Wielodniówka</span>
+          <span class="card__d mono">2 dni · 1 nocleg</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">Roztocze w dwa dni — wolne tempo, dużo postojów</h3>
+          <p class="card__data mono"><span>23–24 sie</span><span>·</span><span>118 km</span><span>·</span><span>1120 m</span><span>·</span><span>Średnia</span></p>
+          <p class="incl"><span>Nocleg</span><span>Śniadanie</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">VV</span> Via Verde <span class="ver">✓ zweryfikowany</span></span>
+            <span class="price">260 zł / os.<br><span style="color:var(--tx-3)">7/14 miejsc</span></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="/wydarzenia/mtb-lasy-janowskie">
+        <div class="card__v">
+          <div class="ph ph--d" role="img" aria-label="Singletrack w Lasach Janowskich"></div>
+          <span class="card__f" style="--bz:var(--s-red)"><i></i>Wspólna jazda</span>
+          <span class="card__d mono">64 km stąd</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">MTB w Lasach Janowskich — single i piach</h3>
+          <p class="card__data mono"><span>29 sie, 09:00</span><span>·</span><span>38 km</span><span>·</span><span>420 m</span><span>·</span><span>Trudna</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">JB</span> Janowska Baza <span class="ver">· 8 wyjazdów</span></span>
+            <span class="price price--free">Bezpłatnie<br><span class="low">2/10 miejsc</span></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="/wydarzenia/pokrec-ze-mna-beskid-niski">
+        <div class="card__v">
+          <svg viewBox="0 0 400 158" preserveAspectRatio="none" aria-hidden="true">
+            <g fill="none" stroke="#15201A" stroke-opacity=".12"><path d="M-20 130 C60 104 120 140 200 112 S340 86 420 104"/><path d="M-20 100 C60 74 120 110 200 82 S340 56 420 74"/><path d="M-20 70 C60 44 120 80 200 52 S340 26 420 44"/></g>
+            <path d="M40 138 L120 92 L210 112 L300 52 L370 72" fill="none" stroke="#2E7D4F" stroke-width="2.5" stroke-dasharray="7 6"/>
+          </svg>
+          <span class="card__f" style="--bz:var(--s-green)"><i></i>Pokręć z kimś</span>
+          <span class="card__d mono">termin otwarty</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">Beskid Niski na gravelu — szukam 2–3 osób</h3>
+          <p class="card__data mono"><span>15–31 sie</span><span>·</span><span>ok. 90 km/dzień</span><span>·</span><span>Gravel</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">DS</span> Dawid S.</span>
+            <span class="price price--free">2 osoby chętne</span>
+          </div>
+        </div>
+      </a>
+
+      <div class="month"><b>Wrzesień 2026</b><hr></div>
+
+      <a class="card" href="/wydarzenia/bieszczady-bikepacking-cisna">
+        <div class="card__v">
+          <div class="ph ph--a" role="img" aria-label="Bieszczadzkie szutry o poranku"></div>
+          <span class="card__f" style="--bz:var(--s-blue)"><i></i>Wielodniówka</span>
+          <span class="card__d mono">3 dni · 2 noclegi</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">Bieszczady od kuchni — bikepacking z bazą w Cisnej</h3>
+          <p class="card__data mono"><span>12–14 wrz</span><span>·</span><span>212 km</span><span>·</span><span>3840 m</span><span>·</span><span>Trudna</span></p>
+          <p class="incl"><span>Nocleg ×2</span><span>Śniadania</span><span>Transport bagażu</span><span>Przewodnik</span><span>Ubezpieczenie</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">RP</span> Rowerzysta Podróżnik <span class="ver">✓ zweryfikowany</span></span>
+            <span class="price">890 zł / os.<br><span style="color:var(--tx-3)">zaliczka 200 zł</span></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="/wydarzenia/mazury-tydzien-jeziora">
+        <div class="card__v">
+          <div class="ph ph--f" role="img" aria-label="Droga wśród mazurskich jezior"></div>
+          <span class="card__f" style="--bz:var(--s-blue)"><i></i>Wielodniówka</span>
+          <span class="card__d mono">6 dni · 5 noclegów</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">Mazury na kołach — sześć dni wzdłuż jezior</h3>
+          <p class="card__data mono"><span>20–25 wrz</span><span>·</span><span>380 km</span><span>·</span><span>1450 m</span><span>·</span><span>Łatwa</span></p>
+          <p class="incl"><span>Nocleg ×5</span><span>Wyżywienie</span><span>Transport bagażu</span><span>Przewodnik</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">WT</span> Wama-Tour <span class="ver">✓ zweryfikowany</span></span>
+            <span class="price">1 940 zł / os.<br><span style="color:var(--tx-3)">zaliczka 400 zł</span></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="/wydarzenia/ustawka-dla-poczatkujacych">
+        <div class="card__v">
+          <svg viewBox="0 0 400 158" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 132 Q60 128 120 130 T240 124 T360 128 T400 126 L400 158 L0 158Z" fill="#1E4B38" fill-opacity=".10"/>
+            <path d="M0 132 Q60 128 120 130 T240 124 T360 128 T400 126" fill="none" stroke="#1E4B38" stroke-width="2"/>
+          </svg>
+          <span class="card__f" style="--bz:var(--s-red)"><i></i>Wspólna jazda</span>
+          <span class="card__d mono">3 km stąd</span>
+        </div>
+        <div class="card__b">
+          <h3 class="card__t">Pierwsza wspólna jazda — dla początkujących</h3>
+          <p class="card__data mono"><span>5 wrz, 10:00</span><span>·</span><span>25 km</span><span>·</span><span>Łatwa</span><span>·</span><span>Wolne tempo</span></p>
+          <div class="card__ft">
+            <span class="org"><span class="av">EV</span> Elo Velo <span class="ver">· 12 wyjazdów</span></span>
+            <span class="price price--free">Bezpłatnie<br>4/15 miejsc</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="more"><button class="btn btn--ghost" type="button">Pokaż kolejne 12 wyjazdów</button></div>
+  </main>
+</div>
+
+<section class="wrap seo">
+  <h2>Wyjazdy rowerowe — jak korzystać z kalendarza</h2>
+  <p>Zbieramy w jednym miejscu wyjazdy rowerowe organizowane w całej Polsce: jednodniowe wspólne jazdy
+    prowadzone przez lokalne ekipy i sklepy, wielodniowe wycieczki rowerowe zweryfikowanych operatorów
+    turystycznych oraz ogłoszenia osób, które szukają towarzystwa na trasę. Nie organizujemy tych wyjazdów —
+    prowadzi je organizator wskazany na karcie wydarzenia i to u niego dokonujesz zapisu.</p>
+  <p>Korzystanie z ridemore.bike jest bezpłatne, a od płatnych wycieczek nie pobieramy prowizji —
+    cała kwota trafia do organizatora. Wielodniowe wyjazdy płatne mogą publikować wyłącznie podmioty
+    z wpisem do rejestru organizatorów turystyki i aktualną gwarancją ubezpieczeniową.</p>
+  <div class="links">
+    <a class="chip" href="/regiony/bieszczady">Wycieczki rowerowe Bieszczady</a>
+    <a class="chip" href="/regiony/beskidy">Beskidy</a>
+    <a class="chip" href="/regiony/mazury">Mazury</a>
+    <a class="chip" href="/regiony/roztocze">Roztocze</a>
+    <a class="chip" href="/wydarzenia?rower=gravel">Wyjazdy gravelowe</a>
+    <a class="chip" href="/wydarzenia?rower=mtb">Wyjazdy MTB</a>
+    <a class="chip" href="/wydarzenia?typ=bikepacking">Bikepacking</a>
+    <a class="chip" href="/organizatorzy">Organizatorzy</a>
+  </div>
+</section>
+
+<footer class="ftr"><div class="wrap ftr__b">
+  <span>© 2026 ridemore.bike</span>
+  <span>Jesteśmy kalendarzem, nie organizatorem. Za wyjazd odpowiada organizator.</span>
+</div></footer>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Start","item":"https://ridemore.bike/"},
+{"@type":"ListItem","position":2,"name":"Wyjazdy","item":"https://ridemore.bike/wydarzenia"}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ItemList","numberOfItems":29,"itemListElement":[
+{"@type":"ListItem","position":1,"item":{"@type":"SportsEvent","name":"Niedzielna jazda gravelowa nad Wisłok","startDate":"2026-08-02T08:00","eventStatus":"https://schema.org/EventScheduled","eventAttendanceMode":"https://schema.org/OfflineEventAttendanceMode","location":{"@type":"Place","name":"Rzeszów","address":{"@type":"PostalAddress","addressLocality":"Rzeszów","addressCountry":"PL"}},"offers":{"@type":"Offer","price":"0","priceCurrency":"PLN","availability":"https://schema.org/InStock"},"organizer":{"@type":"Organization","name":"Elo Velo"}}},
+{"@type":"ListItem","position":2,"item":{"@type":"SportsEvent","name":"Bieszczady od kuchni — bikepacking z bazą w Cisnej","startDate":"2026-09-12","endDate":"2026-09-14","eventStatus":"https://schema.org/EventScheduled","location":{"@type":"Place","name":"Cisna","address":{"@type":"PostalAddress","addressLocality":"Cisna","addressCountry":"PL"}},"offers":{"@type":"Offer","price":"890","priceCurrency":"PLN","availability":"https://schema.org/InStock"},"organizer":{"@type":"Organization","name":"Rowerzysta Podróżnik"}}}
+]}
+</script>
+</body>
+</html>

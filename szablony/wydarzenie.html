@@ -1,0 +1,636 @@
+<!-- /wydarzenia/[slug].html — ridemore.bike — strona wydarzenia (wariant: wielodniówka płatna) -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weekend szosowy w Beskidach — 2 dni, 193 km | ridemore.bike</title>
+<meta name="description" content="Dwa dni szosowej jazdy po beskidzkich przełęczach z noclegiem w schronisku. 192,7 km, 2073 m przewyższenia, start: Dworzec PKP Bielsko-Biała. 620 zł od osoby.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENY (wspólne) ============ */
+:root{
+  --paper:#F4F5F1;--card:#FFFFFF;--tint:#EDF1EC;--line:#E2E5DD;--line-2:#D3D8CE;
+  --ink:#15201A;--tx-2:#5E6A62;--tx-3:#8A948C;
+  --pine:#1E4B38;--pine-2:#2C6B4F;--blaze:#FFC93F;--blaze-2:#F0B41E;
+  --s-red:#C3382F;--s-blue:#2B57C8;--s-green:#2E7D4F;
+  --day1:#C3382F;--day2:#2E7D4F;
+  --f-d:"Archivo",system-ui,sans-serif;--f-b:"Instrument Sans",system-ui,sans-serif;--f-m:"IBM Plex Mono",monospace;
+  --gut:clamp(1.1rem,4vw,3.5rem);--max:1360px;--r:14px;--r-l:20px;
+  --e:cubic-bezier(.22,.61,.36,1);--sh:0 1px 2px rgba(21,32,26,.04),0 10px 26px -20px rgba(21,32,26,.30);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-b);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:0}
+h1,h2,h3,h4{font-family:var(--f-d);font-weight:700;margin:0;line-height:1.08;font-variation-settings:"wdth" 110;letter-spacing:-.025em}
+p{margin:0}a{color:inherit}img{max-width:100%;display:block}
+:focus-visible{outline:3px solid var(--pine);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--max);margin:0 auto;padding-inline:var(--gut)}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.blaze{width:14px;height:22px;flex:none;border-radius:2px;background:linear-gradient(#fff 0 33.3%,var(--bz,var(--s-red)) 33.3% 66.6%,#fff 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:600;font-size:.95rem;padding:.8rem 1.35rem;border-radius:999px;border:1px solid transparent;text-decoration:none;cursor:pointer;transition:.18s var(--e);font-family:var(--f-b)}
+.btn:hover{transform:translateY(-1px)}
+.btn--pine{background:var(--pine);color:#fff}.btn--pine:hover{background:var(--pine-2)}
+.btn--ghost{border-color:var(--line-2);background:var(--card)}.btn--ghost:hover{border-color:var(--ink)}
+.btn--full{width:100%}
+.btn--sm{padding:.5rem 1rem;font-size:.875rem}
+.lnk{background:none;border:0;font:inherit;font-size:.875rem;color:var(--tx-2);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0}
+.lnk:hover{color:var(--s-red)}
+
+/* Header */
+.hdr{position:sticky;top:0;z-index:80;background:rgba(244,245,241,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hdr__in{display:flex;align-items:center;gap:2rem;height:64px}
+.logo{font-family:var(--f-d);font-weight:800;font-variation-settings:"wdth" 100;font-size:1.1rem;letter-spacing:-.03em;text-decoration:none;display:flex;align-items:center;gap:.5rem}
+.logo b{color:var(--pine)}
+.logo .mark{width:13px;height:21px;border-radius:2px;background:linear-gradient(var(--paper) 0 33.3%,var(--blaze) 33.3% 66.6%,var(--paper) 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.15)}
+.nav{display:flex;gap:1.4rem;margin-left:auto;font-size:.92rem}
+.nav a{text-decoration:none;color:var(--tx-2);padding:.3rem 0;border-bottom:2px solid transparent}
+.nav a:hover,.nav a[aria-current]{color:var(--ink);border-color:var(--blaze)}
+.hdr .btn{padding:.5rem 1rem}
+@media(max-width:820px){.nav{display:none}}
+
+/* Nagłówek wydarzenia */
+.crumb{font-family:var(--f-m);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-3);padding-top:1.3rem}
+.crumb a{text-decoration:none}.crumb a:hover{color:var(--pine)}
+.head{padding-top:.9rem}
+.tags{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.9rem}
+.tag{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--f-m);font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;background:var(--card);border:1px solid var(--line);padding:.32rem .65rem .32rem .4rem;border-radius:999px}
+.tag--plain{padding-left:.65rem}
+.tag--paid{background:var(--tint)}
+.head h1{font-size:clamp(1.9rem,4.4vw,3.4rem);font-variation-settings:"wdth" 116;font-weight:800;max-width:20ch}
+.head__sub{margin-top:.8rem;color:var(--tx-2);display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;font-size:1rem}
+.head__sub b{color:var(--ink)}
+
+/* Zdjęcie + pasek statystyk */
+.cover{margin-top:1.4rem;position:relative;border-radius:var(--r-l);overflow:hidden;border:1px solid var(--line);aspect-ratio:16/6.2;min-height:220px;
+  background-image:linear-gradient(180deg,#B9CBD4 0%,#D8DFD5 30%,#8FA377 33%,#4B6540 66%,#2A3B2E 100%)}
+.cover__grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,32,26,.34) 0%,rgba(21,32,26,0) 42%,rgba(21,32,26,.42) 100%)}
+.cover__org{position:absolute;left:1rem;bottom:1rem;right:1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--pine);color:#fff;display:grid;place-items:center;font-family:var(--f-m);font-size:.8rem;border:2px solid rgba(255,255,255,.85);flex:none}
+.cover__org .who{color:#fff;line-height:1.25}
+.cover__org .who b{font-size:.98rem}
+.cover__org .who small{display:block;font-family:var(--f-m);font-size:.72rem;color:rgba(255,255,255,.8)}
+.badge-ver{display:inline-flex;align-items:center;gap:.3rem;background:var(--s-green);color:#fff;font-family:var(--f-m);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .5rem;border-radius:999px;margin-left:.4rem}
+.cover__cta{margin-left:auto}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:1rem}
+.stats div{background:var(--card);padding:.9rem 1rem}
+.stats dt{font-family:var(--f-m);font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--tx-3)}
+.stats dd{margin:.2rem 0 0;font-family:var(--f-d);font-weight:700;font-size:1.3rem;font-variation-settings:"wdth" 112;letter-spacing:-.02em}
+
+/* Sticky nawigacja sekcji (zastępuje taby — treść zostaje w DOM dla SEO) */
+.anchors{position:sticky;top:64px;z-index:60;background:rgba(244,245,241,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-top:1.6rem}
+.anchors__in{display:flex;gap:.3rem;overflow-x:auto;padding-block:.6rem;scrollbar-width:none}
+.anchors__in::-webkit-scrollbar{display:none}
+.anchors a{font-size:.875rem;text-decoration:none;padding:.45rem .9rem;border-radius:999px;color:var(--tx-2);white-space:nowrap}
+.anchors a:hover{background:var(--tint);color:var(--ink)}
+.anchors a[aria-current]{background:var(--ink);color:#fff}
+
+/* Układ dwukolumnowy */
+.layout{display:grid;grid-template-columns:1fr 348px;gap:clamp(1.2rem,3vw,2.6rem);align-items:start;padding-block:2rem 4rem}
+@media(max-width:980px){.layout{grid-template-columns:1fr}}
+.sec{scroll-margin-top:120px;margin-bottom:2.2rem}
+.sec > h2{font-size:clamp(1.25rem,2.2vw,1.7rem);margin-bottom:.9rem}
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);padding:1.3rem 1.4rem;box-shadow:var(--sh)}
+.lead{font-size:1.08rem;line-height:1.62}
+
+/* Fakty trasy */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin-top:1rem}
+.fact{background:var(--tint);border:1px solid var(--line);border-radius:12px;padding:.7rem .85rem}
+.fact dt{font-family:var(--f-m);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-3)}
+.fact dd{margin:.15rem 0 0;font-weight:600;font-size:.95rem}
+
+/* Moduł trasy — zakładki dni, mapa i profil na pełną szerokość (układ zachowany) */
+.route{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);padding:1rem 1.1rem 1.2rem;box-shadow:var(--sh);margin-bottom:1.4rem}
+.dtabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.9rem}
+.dtab{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--f-m);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--card);border:1px solid var(--line-2);color:var(--tx-2);padding:.42rem .85rem;border-radius:999px;cursor:pointer;transition:.16s var(--e)}
+.dtab i{width:8px;height:8px;border-radius:50%;background:var(--dc,var(--tx-3));flex:none}
+.dtab:hover{border-color:var(--ink);color:var(--ink)}
+.dtab[aria-selected="true"]{border-color:var(--dc,var(--ink));color:var(--dc,var(--ink));background:var(--tint)}
+.dpanel[hidden]{display:none}
+.rhead{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.rhead__t{font-family:var(--f-m);font-size:.92rem;color:var(--tx-2)}
+.rhead__t b{color:var(--ink)}
+.rhead__s{font-family:var(--f-m);font-size:.85rem;color:var(--ink)}
+.rsub{font-family:var(--f-m);font-size:.78rem;color:var(--tx-3);margin:.25rem 0 .7rem}
+.rsub b{color:var(--ink)}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-family:var(--f-m);font-size:.75rem;color:var(--tx-2);margin:.5rem 0 .7rem}
+.legend span{display:flex;align-items:center;gap:.4rem}
+.legend i{width:14px;height:3px;border-radius:2px;background:var(--dc);flex:none}
+.mapbox{border:1px solid var(--line);border-radius:12px 12px 0 0;overflow:hidden;background:var(--tint);position:relative;height:clamp(240px,32vw,330px)}
+.mapbox svg{display:block;width:100%;height:100%}
+.profbox{border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;background:var(--card);position:relative;height:152px}
+.profbox svg{display:block;width:100%;height:100%}
+.climbs{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.8rem;align-items:center}
+.climbs > span:first-child{font-family:var(--f-m);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-3)}
+.climb{font-family:var(--f-m);font-size:.75rem;background:var(--card);border:1px solid var(--line-2);border-radius:999px;padding:.22rem .6rem;cursor:pointer}
+.climb:hover{border-color:var(--ink)}
+.climb--cat{border-color:var(--s-blue);color:var(--s-blue)}
+.gpxlink{display:inline-block;margin-top:.9rem;font-family:var(--f-m);font-size:.8rem;color:var(--dc);text-decoration:none;border-bottom:1px solid currentColor}
+
+/* Plan dnia — opis, bez powtarzania mapy */
+.day{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;box-shadow:var(--sh);margin-bottom:.9rem}
+.day__hd{display:flex;align-items:center;gap:.9rem;padding:.95rem 1.15rem;border-bottom:1px solid var(--line);border-left:5px solid var(--dc);flex-wrap:wrap}
+.day__n{font-family:var(--f-m);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:var(--dc);padding:.25rem .55rem;border-radius:999px}
+.day__t{font-family:var(--f-d);font-weight:700;font-size:1.1rem;font-variation-settings:"wdth" 105}
+.day__s{margin-left:auto;font-family:var(--f-m);font-size:.8rem;color:var(--tx-2)}
+.day__body{padding:1rem 1.15rem 1.2rem}
+.day__notes{color:var(--tx-2);font-size:.98rem}
+.day__foot{margin-top:.9rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.stay{display:inline-flex;align-items:center;gap:.45rem;font-size:.88rem;background:var(--tint);border:1px solid var(--line);border-radius:999px;padding:.35rem .75rem;color:var(--tx-2)}
+.seeroute{font-family:var(--f-m);font-size:.78rem;color:var(--dc);background:none;border:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+
+/* Cena — co obejmuje */
+.incl2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+@media(max-width:620px){.incl2{grid-template-columns:1fr}}
+.incl2 h3{font-family:var(--f-m);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-3);font-weight:500;margin-bottom:.6rem}
+.incl2 ul{list-style:none;margin:0;padding:0;display:grid;gap:.45rem;font-size:.95rem}
+.incl2 li{display:flex;gap:.55rem;align-items:flex-start}
+.ic{flex:none;width:19px;height:19px;border-radius:50%;display:grid;place-items:center;margin-top:.15rem}
+.ic--y{background:#E3F0E7;color:var(--s-green)}
+.ic--n{background:#F6E7E6;color:var(--s-red)}
+.excl li{color:var(--tx-2)}
+.terms{margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--line);display:grid;gap:.5rem;font-size:.92rem;color:var(--tx-2)}
+.terms b{color:var(--ink)}
+
+/* Sprzęt */
+.kit{display:flex;gap:.45rem;flex-wrap:wrap}
+.kit span{font-size:.88rem;background:var(--tint);border:1px solid var(--line);border-radius:999px;padding:.35rem .8rem}
+.kit .req{border-color:var(--ink)}
+
+/* Zbiórka */
+.meet{display:grid;grid-template-columns:1fr 1.1fr;gap:.9rem;align-items:stretch}
+@media(max-width:760px){.meet{grid-template-columns:1fr}}
+.meet__info{display:grid;gap:.6rem;align-content:start}
+.meet__info .row{display:flex;gap:.6rem;align-items:flex-start;font-size:.95rem}
+.meet__info svg{flex:none;margin-top:.2rem;color:var(--pine)}
+
+/* Organizator */
+.orgbox{display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap}
+.orgbox .avatar{width:52px;height:52px;font-size:1rem;border:0}
+.orgstats{display:flex;gap:1.4rem;flex-wrap:wrap;margin-top:.7rem;font-family:var(--f-m);font-size:.78rem;color:var(--tx-2)}
+.orgstats b{display:block;font-family:var(--f-d);font-size:1.25rem;color:var(--ink);font-variation-settings:"wdth" 112}
+.legal{margin-top:1rem;padding:.8rem .95rem;background:var(--tint);border:1px solid var(--line);border-radius:12px;font-size:.9rem;color:var(--tx-2)}
+
+/* Dyskusja */
+.qa textarea{width:100%;font:inherit;font-size:.98rem;padding:.8rem .9rem;border:1px solid var(--line-2);border-radius:12px;background:var(--paper);resize:vertical;color:var(--ink)}
+.qa__row{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:.7rem;flex-wrap:wrap}
+.qa__empty{color:var(--tx-3);font-size:.93rem;margin-top:1rem}
+
+/* ===== PANEL ZAPISU (sticky) ===== */
+.book{position:sticky;top:118px;background:var(--card);border:1px solid var(--line-2);border-radius:var(--r-l);padding:1.2rem 1.25rem 1.3rem;box-shadow:0 2px 4px rgba(21,32,26,.05),0 24px 44px -30px rgba(21,32,26,.5)}
+.book__price{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+.book__price b{font-family:var(--f-d);font-weight:800;font-size:2.15rem;font-variation-settings:"wdth" 116;letter-spacing:-.03em;line-height:1}
+.book__price span{font-family:var(--f-m);font-size:.8rem;color:var(--tx-2)}
+.book__dep{font-family:var(--f-m);font-size:.78rem;color:var(--tx-2);margin-top:.35rem}
+/* postęp do progu wykonalności — najsilniejszy sygnał, więc wysoko i graficznie */
+.prog{margin-top:1rem}
+.prog__bar{height:8px;border-radius:99px;background:var(--tint);border:1px solid var(--line);overflow:hidden}
+.prog__bar i{display:block;height:100%;width:60%;background:var(--blaze)}
+.prog__lbl{display:flex;justify-content:space-between;gap:.6rem;margin-top:.45rem;font-family:var(--f-m);font-size:.75rem;color:var(--tx-2)}
+.prog__note{margin-top:.5rem;font-size:.88rem;color:var(--tx-2)}
+.prog__note b{color:var(--ink)}
+.book .btn{margin-top:1rem}
+.book__micro{margin-top:.7rem;font-size:.82rem;color:var(--tx-3);text-align:center}
+.book__list{margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--line);display:grid;gap:.55rem;font-size:.88rem;color:var(--tx-2)}
+.book__list div{display:flex;gap:.55rem;align-items:flex-start}
+.book__list svg{flex:none;margin-top:.15rem;color:var(--tx-3)}
+.book__list b{color:var(--ink);font-weight:600}
+.book__who{margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--line);display:flex;align-items:center;gap:.6rem}
+.avs{display:flex}
+.avs span{width:28px;height:28px;border-radius:50%;background:var(--pine);color:#fff;font-family:var(--f-m);font-size:.62rem;display:grid;place-items:center;border:2px solid var(--card);margin-left:-9px}
+.avs span:first-child{margin-left:0}
+.book__who small{font-size:.85rem;color:var(--tx-2)}
+
+/* Pasek mobilny */
+.mbar{display:none}
+@media(max-width:980px){
+  .book{position:static}
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:90;background:var(--card);border-top:1px solid var(--line-2);
+    padding:.7rem var(--gut);align-items:center;gap:1rem;box-shadow:0 -8px 26px -20px rgba(21,32,26,.6)}
+  .mbar__p b{font-family:var(--f-d);font-weight:800;font-size:1.3rem;font-variation-settings:"wdth" 114;display:block;line-height:1}
+  .mbar__p small{font-family:var(--f-m);font-size:.7rem;color:var(--tx-2)}
+  .mbar .btn{margin-left:auto}
+  body{padding-bottom:76px}
+}
+
+/* Dopasowanie */
+.match{background:var(--pine);border-radius:var(--r-l);padding:1.2rem;color:#fff;margin-bottom:2.2rem}
+.match__hd h2{font-size:1.35rem;color:#fff}
+.match__hd .eyebrow{display:flex;align-items:center;gap:.6rem;font-family:var(--f-m);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:.6rem}
+.match__hd .blaze{box-shadow:none}
+.mc{background:var(--card);color:var(--ink);border-radius:var(--r);padding:1.05rem 1.1rem;display:flex;flex-direction:column;gap:.6rem;margin-top:.9rem}
+.mc__why{font-family:var(--f-m);font-size:.72rem;color:var(--tx-3)}
+.mc__t{font-family:var(--f-d);font-weight:700;font-size:1.35rem;font-variation-settings:"wdth" 108;letter-spacing:-.025em}
+.mc__data{font-family:var(--f-m);font-size:.8rem;color:var(--tx-2)}
+.mc__proof{display:flex;align-items:center;gap:.7rem;padding:.6rem .85rem;background:var(--tint);border:1px solid var(--line);border-radius:12px}
+.mc__proof b{font-family:var(--f-d);font-weight:800;font-size:1.9rem;line-height:1;color:var(--pine);font-variation-settings:"wdth" 118}
+.mc__proof span{font-size:.88rem;color:var(--tx-2)}
+.mc__todo{display:flex;gap:.5rem;align-items:center;font-size:.9rem;background:#FFF8E2;border:1px solid #F3E1A8;border-radius:12px;padding:.6rem .85rem}
+.mc__act{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.mc__act .lnk{margin-left:auto}
+
+.ftr{background:var(--card);border-top:1px solid var(--line);padding-block:2rem 1.3rem;font-size:.88rem;color:var(--tx-2)}
+.ftr__b{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-family:var(--f-m);font-size:.72rem;color:var(--tx-3)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+</head>
+<body>
+
+<header class="hdr"><div class="wrap hdr__in">
+  <a class="logo" href="/"><span class="mark" aria-hidden="true"></span>ride<b>more</b>.bike</a>
+  <nav class="nav" aria-label="Główna">
+    <a href="/wydarzenia" aria-current="page">Wyjazdy</a><a href="/regiony">Regiony</a>
+    <a href="/organizatorzy">Organizatorzy</a><a href="/jak-to-dziala">Jak to działa</a>
+  </nav>
+  <a class="btn btn--ghost btn--sm" href="/wiadomosci">Wiadomości</a>
+  <a class="btn btn--pine btn--sm" href="/dodaj">Dodaj wyjazd</a>
+</div></header>
+
+<div class="wrap">
+  <nav class="crumb" aria-label="Ścieżka"><a href="/">Start</a> / <a href="/wydarzenia">Wyjazdy</a> / <a href="/regiony/beskidy">Beskidy</a> / <span>Weekend szosowy</span></nav>
+
+  <div class="head">
+    <div class="tags">
+      <span class="tag" style="--bz:var(--s-blue)"><span class="blaze"></span>Wycieczka wielodniowa</span>
+      <span class="tag tag--plain tag--paid">Płatna · 620 zł</span>
+      <span class="tag tag--plain">Szosowy</span>
+      <span class="tag tag--plain">Beskidy</span>
+    </div>
+    <h1>Weekend szosowy w Beskidach</h1>
+    <p class="head__sub"><b>2–3 sierpnia 2026</b> · zbiórka <b>08:00</b>, Dworzec PKP Bielsko-Biała · <span class="mono">2 dni</span></p>
+  </div>
+
+  <div class="cover" role="img" aria-label="Beskidzka przełęcz o poranku">
+    <div class="cover__grad"></div>
+    <div class="cover__org">
+      <span class="avatar">TB</span>
+      <span class="who"><b>Tatry Bike Tours</b><span class="badge-ver">✓ Zweryfikowany operator</span><small>Organizator turystyki · wpis nr 1234 · gwarancja ubezpieczeniowa</small></span>
+      <a class="btn btn--ghost btn--sm cover__cta" href="/wiadomosci/z/2">Napisz do organizatora</a>
+    </div>
+  </div>
+
+  <dl class="stats">
+    <div><dt>Dystans</dt><dd>192,7 km</dd></div>
+    <div><dt>Przewyższenie</dt><dd>2 073 m</dd></div>
+    <div><dt>Czas trwania</dt><dd>2 dni</dd></div>
+    <div><dt>Trudność</dt><dd>Średnia</dd></div>
+    <div><dt>Tempo</dt><dd>22–26 km/h</dd></div>
+  </dl>
+</div>
+
+<nav class="anchors" aria-label="Sekcje strony"><div class="wrap anchors__in">
+  <a href="#o-wyjezdzie" aria-current="true">O wyjeździe</a>
+  <a href="#przebieg">Mapa i profil trasy</a>
+  <a href="#cena">Cena i warunki</a>
+  <a href="#sprzet">Sprzęt</a>
+  <a href="#zbiorka">Zbiórka</a>
+  <a href="#organizator">Organizator</a>
+  <a href="#pytania">Pytania (0)</a>
+</div></nav>
+
+<div class="wrap layout">
+  <main>
+
+    <!-- O WYJEŹDZIE -->
+    <section class="sec" id="o-wyjezdzie">
+      <div class="box">
+        <h2>O wyjeździe</h2>
+        <p class="lead">Dwa dni szosowej jazdy po beskidzkich przełęczach z noclegiem w schronisku.
+          Pierwszy dzień to spokojny dojazd i rozjeżdżenie nóg, drugi — pełna pętla przez pięć podjazdów,
+          w tym jeden kategoryzowany. Jedziemy grupą, na szczytach czekamy na siebie.</p>
+        <dl class="facts">
+          <div class="fact"><dt>Nawierzchnia</dt><dd>Asfalt (100%)</dd></div>
+          <div class="fact"><dt>Rower</dt><dd>Szosowy</dd></div>
+          <div class="fact"><dt>Tempo grupy</dt><dd>Średnie, 22–26 km/h</dd></div>
+          <div class="fact"><dt>Zapisy</dt><dd>Bezpośrednio u organizatora</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- PRZEBIEG: moduł mapy i profilu (układ zachowany) + plan opisowy -->
+    <section class="sec" id="przebieg">
+      <h2>Mapa i profil trasy</h2>
+
+      <div class="route">
+        <div class="dtabs" role="tablist" aria-label="Dni wyjazdu">
+          <button class="dtab" role="tab" aria-selected="true" aria-controls="p-all" id="t-all" style="--dc:#8A948C"><i></i>Cały wyjazd</button>
+          <button class="dtab" role="tab" aria-selected="false" aria-controls="p-1" id="t-1" style="--dc:var(--day1)"><i></i>Dzień 1</button>
+          <button class="dtab" role="tab" aria-selected="false" aria-controls="p-2" id="t-2" style="--dc:var(--day2)"><i></i>Dzień 2</button>
+        </div>
+
+        <div class="dpanel" id="p-all" role="tabpanel" aria-labelledby="t-all">
+          <div class="rhead"><span class="rhead__t"><b>Bielsko-Biała → Szczyrk → Bielsko-Biała</b></span>
+            <span class="rhead__s">192,7 km · 2 073 m przewyższenia</span></div>
+          <p class="legend">
+            <span style="--dc:var(--day1)"><i></i>Dzień 1 · Bielsko-Biała → Szczyrk</span>
+            <span style="--dc:var(--day2)"><i></i>Dzień 2 · Szczyrk → Bielsko-Biała</span>
+          </p>
+          <div class="mapbox"><svg viewBox="0 0 900 340" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Mapa całego wyjazdu">
+              <rect width="900" height="340" fill="#E9EDE6"/>
+              <g stroke="#D6DDD2" fill="none"><path d="M0 70 H900M0 150 H900M0 230 H900M0 300 H900M150 0 V340M330 0 V340M520 0 V340M700 0 V340"/></g>
+              <path d="M-20 250 C 180 210 300 260 430 215 S 700 160 920 190" stroke="#CBD7C8" stroke-width="22" fill="none"/>
+              <path d="M80 40 C 260 90 340 40 500 100 S 760 70 920 120" stroke="#DFE6DC" stroke-width="13" fill="none"/>
+              <path d="M170 265 C 250 215 300 240 380 200 S 520 150 610 105" stroke="#C3382F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+              <path d="M610 105 C 540 45 380 60 300 130 S 150 220 210 285 S 500 315 640 250 S 700 165 610 105" stroke="#2E7D4F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+              <circle cx="170" cy="265" r="7" fill="#fff" stroke="#C3382F" stroke-width="3"/>
+              <circle cx="610" cy="105" r="7" fill="#fff" stroke="#2E7D4F" stroke-width="3"/>
+          </svg></div>
+          <div class="profbox"><svg viewBox="0 0 900 160" preserveAspectRatio="none" role="img" aria-label="Profil wysokosciowy: caly wyjazd"><g stroke="#E2E5DD" stroke-width="1"><path d="M50 16 H890M50 80 H890M50 140 H890"/></g><text x="4" y="16" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">760 m</text><text x="4" y="80" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">455 m</text><text x="4" y="140" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">150 m</text><text x="52" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">0,0 km</text><text x="470" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">96 km</text><text x="890" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9" text-anchor="end">193 km</text><g transform="translate(50,0) scale(0.933,1)"><path d="M 0.0 154.0 Q 0.0 154.0 9.9 153.6 Q 19.9 153.1 30.8 150.6 Q 41.6 148.2 51.0 145.1 Q 60.5 141.9 70.7 138.6 Q 80.9 135.2 90.5 130.1 Q 100.1 124.9 109.8 119.3 Q 119.5 113.7 128.1 108.1 Q 136.6 102.5 144.9 97.1 Q 153.3 91.7 159.9 84.8 Q 166.5 78.0 171.8 64.8 Q 177.0 51.7 183.2 50.0 Q 189.3 48.4 201.4 67.2 Q 213.6 85.9 223.8 85.2 Q 234.0 84.4 241.5 76.8 Q 249.0 69.3 255.8 65.7 Q 262.5 62.0 273.8 67.8 Q 285.1 73.5 293.8 70.0 Q 302.5 66.5 310.4 60.9 Q 318.4 55.3 326.0 45.5 Q 333.6 35.7 339.4 20.9 Q 345.1 6.0 351.8 14.4 Q 358.5 22.9 371.2 39.8 Q 384.0 56.8 400.0 72.5 Q 416.0 88.3 425.7 89.7 Q 435.4 91.0 442.8 88.2 Q 450.2 85.3 458.9 80.4 Q 467.5 75.6 475.6 65.0 Q 483.6 54.4 489.3 47.0 Q 495.0 39.6 504.2 40.7 Q 513.4 41.7 523.0 60.8 Q 532.7 79.8 540.7 75.8 Q 548.6 71.7 558.2 73.5 Q 567.7 75.3 581.0 86.0 Q 594.2 96.8 606.8 101.9 Q 619.4 107.1 629.2 111.3 Q 639.1 115.6 648.5 109.8 Q 657.8 104.1 667.5 99.7 Q 677.2 95.3 687.7 104.0 Q 698.2 112.8 707.3 116.9 Q 716.4 121.0 725.8 118.2 Q 735.2 115.3 749.1 128.2 Q 763.0 141.0 772.0 139.8 Q 780.9 138.6 786.5 122.1 Q 792.2 105.6 797.4 88.0 Q 802.6 70.5 810.4 80.5 Q 818.1 90.4 832.2 120.0 Q 846.4 149.5 854.5 151.2 Q 862.7 152.8 872.4 150.4 Q 882.1 147.9 891.0 147.6 T 900.0 147.3 L 900 146 L 0 146 Z" fill="#5E6A62" fill-opacity=".10"/><path d="M 0.0 154.0 Q 0.0 154.0 9.9 153.6 Q 19.9 153.1 30.8 150.6 Q 41.6 148.2 51.0 145.1 Q 60.5 141.9 70.7 138.6 Q 80.9 135.2 90.5 130.1 Q 100.1 124.9 109.8 119.3 Q 119.5 113.7 128.1 108.1 Q 136.6 102.5 144.9 97.1 Q 153.3 91.7 159.9 84.8 Q 166.5 78.0 171.8 64.8 Q 177.0 51.7 183.2 50.0 Q 189.3 48.4 201.4 67.2 Q 213.6 85.9 223.8 85.2 Q 234.0 84.4 241.5 76.8 Q 249.0 69.3 255.8 65.7 Q 262.5 62.0 273.8 67.8 Q 285.1 73.5 293.8 70.0 Q 302.5 66.5 310.4 60.9 Q 318.4 55.3 326.0 45.5 Q 333.6 35.7 339.4 20.9 Q 345.1 6.0 351.8 14.4 Q 358.5 22.9 371.2 39.8 Q 384.0 56.8 400.0 72.5 Q 416.0 88.3 425.7 89.7 Q 435.4 91.0 442.8 88.2 Q 450.2 85.3 458.9 80.4 Q 467.5 75.6 475.6 65.0 Q 483.6 54.4 489.3 47.0 Q 495.0 39.6 504.2 40.7 Q 513.4 41.7 523.0 60.8 Q 532.7 79.8 540.7 75.8 Q 548.6 71.7 558.2 73.5 Q 567.7 75.3 581.0 86.0 Q 594.2 96.8 606.8 101.9 Q 619.4 107.1 629.2 111.3 Q 639.1 115.6 648.5 109.8 Q 657.8 104.1 667.5 99.7 Q 677.2 95.3 687.7 104.0 Q 698.2 112.8 707.3 116.9 Q 716.4 121.0 725.8 118.2 Q 735.2 115.3 749.1 128.2 Q 763.0 141.0 772.0 139.8 Q 780.9 138.6 786.5 122.1 Q 792.2 105.6 797.4 88.0 Q 802.6 70.5 810.4 80.5 Q 818.1 90.4 832.2 120.0 Q 846.4 149.5 854.5 151.2 Q 862.7 152.8 872.4 150.4 Q 882.1 147.9 891.0 147.6 T 900.0 147.3" fill="none" stroke="#5E6A62" stroke-width="2" vector-effect="non-scaling-stroke"/></g></svg></div>
+          <a class="gpxlink" style="--dc:var(--pine)" href="/gpx/caly-wyjazd.gpx" download>Pobierz GPX — cały wyjazd ↓</a>
+        </div>
+
+        <div class="dpanel" id="p-1" role="tabpanel" aria-labelledby="t-1" hidden>
+          <div class="rhead"><span class="rhead__t"><b>Bielsko-Biała → Szczyrk</b></span>
+            <span class="rhead__s">32,9 km · 42 m przewyższenia</span></div>
+          <p class="rsub">Start: <b>177 m n.p.m.</b> · Asfalt · 2 sierpnia</p>
+          <div class="mapbox"><svg viewBox="0 0 900 340" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Mapa trasy dnia 1">
+              <rect width="900" height="340" fill="#E9EDE6"/>
+              <g stroke="#D6DDD2" fill="none"><path d="M0 70 H900M0 150 H900M0 230 H900M0 300 H900M150 0 V340M330 0 V340M520 0 V340M700 0 V340"/></g>
+              <path d="M-20 250 C 180 210 300 260 430 215 S 700 160 920 190" stroke="#CBD7C8" stroke-width="22" fill="none"/>
+              <path d="M80 40 C 260 90 340 40 500 100 S 760 70 920 120" stroke="#DFE6DC" stroke-width="13" fill="none"/>
+              <path d="M170 265 C 250 215 300 240 380 200 S 520 150 610 105" stroke="#C3382F" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <circle cx="170" cy="265" r="7" fill="#fff" stroke="#C3382F" stroke-width="3"/>
+              <circle cx="610" cy="105" r="7" fill="#C3382F"/>
+          </svg></div>
+          <div class="profbox"><svg viewBox="0 0 900 160" preserveAspectRatio="none" role="img" aria-label="Profil wysokosciowy: dzien 1"><g stroke="#E2E5DD" stroke-width="1"><path d="M50 16 H890M50 80 H890M50 140 H890"/></g><text x="4" y="16" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">190 m</text><text x="4" y="80" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">170 m</text><text x="4" y="140" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">150 m</text><text x="52" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">0,0 km</text><text x="470" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">16 km</text><text x="890" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9" text-anchor="end">33 km</text><g transform="translate(50,0) scale(0.933,1)"><path d="M0 118 Q80 112 160 116 T320 128 T480 132 T640 126 T800 108 T900 122 L 900 146 L 0 146 Z" fill="#C3382F" fill-opacity=".10"/><path d="M0 118 Q80 112 160 116 T320 128 T480 132 T640 126 T800 108 T900 122" fill="none" stroke="#C3382F" stroke-width="2" vector-effect="non-scaling-stroke"/></g></svg></div>
+          <a class="gpxlink" style="--dc:var(--day1)" href="/gpx/dzien-1.gpx" download>Pobierz GPX — dzień 1 ↓</a>
+        </div>
+
+        <div class="dpanel" id="p-2" role="tabpanel" aria-labelledby="t-2" hidden>
+          <div class="rhead"><span class="rhead__t"><b>Szczyrk → Bielsko-Biała</b></span>
+            <span class="rhead__s">159,8 km · 2 031 m przewyższenia</span></div>
+          <p class="rsub">Start: <b>264 m n.p.m.</b> · najwyższy punkt <b>753 m</b> · Asfalt · 3 sierpnia</p>
+          <div class="mapbox"><svg viewBox="0 0 900 340" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Mapa trasy dnia 2">
+              <rect width="900" height="340" fill="#E9EDE6"/>
+              <g stroke="#D6DDD2" fill="none"><path d="M0 70 H900M0 150 H900M0 230 H900M0 300 H900M150 0 V340M330 0 V340M520 0 V340M700 0 V340"/></g>
+              <path d="M-20 250 C 180 210 300 260 430 215 S 700 160 920 190" stroke="#CBD7C8" stroke-width="22" fill="none"/>
+              <path d="M80 40 C 260 90 340 40 500 100 S 760 70 920 120" stroke="#DFE6DC" stroke-width="13" fill="none"/>
+              <path d="M610 105 C 540 45 380 60 300 130 S 150 220 210 285 S 500 315 640 250 S 700 165 610 105" stroke="#2E7D4F" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <circle cx="610" cy="105" r="7" fill="#fff" stroke="#2E7D4F" stroke-width="3"/>
+              <circle cx="300" cy="130" r="5.5" fill="#2B57C8"/>
+          </svg></div>
+          <div class="profbox"><svg viewBox="0 0 900 160" preserveAspectRatio="none" role="img" aria-label="Profil wysokosciowy: dzien 2"><g stroke="#E2E5DD" stroke-width="1"><path d="M50 16 H890M50 80 H890M50 140 H890"/></g><text x="4" y="16" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">760 m</text><text x="4" y="80" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">510 m</text><text x="4" y="140" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">260 m</text><text x="52" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9">0,0 km</text><text x="470" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">80 km</text><text x="890" y="156" fill="#8A948C" font-family="IBM Plex Mono" font-size="9" text-anchor="end">160 km</text><g transform="translate(50,0) scale(0.933,1)"><path d="M 0.0 154.0 Q 0.0 154.0 9.9 153.6 Q 19.9 153.1 30.8 150.6 Q 41.6 148.2 51.0 145.1 Q 60.5 141.9 70.7 138.6 Q 80.9 135.2 90.5 130.1 Q 100.1 124.9 109.8 119.3 Q 119.5 113.7 128.1 108.1 Q 136.6 102.5 144.9 97.1 Q 153.3 91.7 159.9 84.8 Q 166.5 78.0 171.8 64.8 Q 177.0 51.7 183.2 50.0 Q 189.3 48.4 201.4 67.2 Q 213.6 85.9 223.8 85.2 Q 234.0 84.4 241.5 76.8 Q 249.0 69.3 255.8 65.7 Q 262.5 62.0 273.8 67.8 Q 285.1 73.5 293.8 70.0 Q 302.5 66.5 310.4 60.9 Q 318.4 55.3 326.0 45.5 Q 333.6 35.7 339.4 20.9 Q 345.1 6.0 351.8 14.4 Q 358.5 22.9 371.2 39.8 Q 384.0 56.8 400.0 72.5 Q 416.0 88.3 425.7 89.7 Q 435.4 91.0 442.8 88.2 Q 450.2 85.3 458.9 80.4 Q 467.5 75.6 475.6 65.0 Q 483.6 54.4 489.3 47.0 Q 495.0 39.6 504.2 40.7 Q 513.4 41.7 523.0 60.8 Q 532.7 79.8 540.7 75.8 Q 548.6 71.7 558.2 73.5 Q 567.7 75.3 581.0 86.0 Q 594.2 96.8 606.8 101.9 Q 619.4 107.1 629.2 111.3 Q 639.1 115.6 648.5 109.8 Q 657.8 104.1 667.5 99.7 Q 677.2 95.3 687.7 104.0 Q 698.2 112.8 707.3 116.9 Q 716.4 121.0 725.8 118.2 Q 735.2 115.3 749.1 128.2 Q 763.0 141.0 772.0 139.8 Q 780.9 138.6 786.5 122.1 Q 792.2 105.6 797.4 88.0 Q 802.6 70.5 810.4 80.5 Q 818.1 90.4 832.2 120.0 Q 846.4 149.5 854.5 151.2 Q 862.7 152.8 872.4 150.4 Q 882.1 147.9 891.0 147.6 T 900.0 147.3 L 900 146 L 0 146 Z" fill="#2E7D4F" fill-opacity=".10"/><path d="M 0.0 154.0 Q 0.0 154.0 9.9 153.6 Q 19.9 153.1 30.8 150.6 Q 41.6 148.2 51.0 145.1 Q 60.5 141.9 70.7 138.6 Q 80.9 135.2 90.5 130.1 Q 100.1 124.9 109.8 119.3 Q 119.5 113.7 128.1 108.1 Q 136.6 102.5 144.9 97.1 Q 153.3 91.7 159.9 84.8 Q 166.5 78.0 171.8 64.8 Q 177.0 51.7 183.2 50.0 Q 189.3 48.4 201.4 67.2 Q 213.6 85.9 223.8 85.2 Q 234.0 84.4 241.5 76.8 Q 249.0 69.3 255.8 65.7 Q 262.5 62.0 273.8 67.8 Q 285.1 73.5 293.8 70.0 Q 302.5 66.5 310.4 60.9 Q 318.4 55.3 326.0 45.5 Q 333.6 35.7 339.4 20.9 Q 345.1 6.0 351.8 14.4 Q 358.5 22.9 371.2 39.8 Q 384.0 56.8 400.0 72.5 Q 416.0 88.3 425.7 89.7 Q 435.4 91.0 442.8 88.2 Q 450.2 85.3 458.9 80.4 Q 467.5 75.6 475.6 65.0 Q 483.6 54.4 489.3 47.0 Q 495.0 39.6 504.2 40.7 Q 513.4 41.7 523.0 60.8 Q 532.7 79.8 540.7 75.8 Q 548.6 71.7 558.2 73.5 Q 567.7 75.3 581.0 86.0 Q 594.2 96.8 606.8 101.9 Q 619.4 107.1 629.2 111.3 Q 639.1 115.6 648.5 109.8 Q 657.8 104.1 667.5 99.7 Q 677.2 95.3 687.7 104.0 Q 698.2 112.8 707.3 116.9 Q 716.4 121.0 725.8 118.2 Q 735.2 115.3 749.1 128.2 Q 763.0 141.0 772.0 139.8 Q 780.9 138.6 786.5 122.1 Q 792.2 105.6 797.4 88.0 Q 802.6 70.5 810.4 80.5 Q 818.1 90.4 832.2 120.0 Q 846.4 149.5 854.5 151.2 Q 862.7 152.8 872.4 150.4 Q 882.1 147.9 891.0 147.6 T 900.0 147.3" fill="none" stroke="#2E7D4F" stroke-width="2" vector-effect="non-scaling-stroke"/><circle cx="345" cy="6" r="4" fill="#2E7D4F"/><circle cx="803" cy="70" r="4" fill="#2B57C8"/></g></svg></div>
+          <div class="climbs">
+            <span>Podjazdy</span>
+            <button class="climb">613 m · 33,6 km · 1,0%</button>
+            <button class="climb">753 m · 10,7 km · 2,1%</button>
+            <button class="climb">642 m · 10,6 km · 1,6%</button>
+            <button class="climb">458 m · 6,8 km · 1,0%</button>
+            <button class="climb climb--cat">540 m · 7,0 km · 3,3% · kat. 3</button>
+          </div>
+          <a class="gpxlink" style="--dc:var(--day2)" href="/gpx/dzien-2.gpx" download>Pobierz GPX — dzień 2 ↓</a>
+        </div>
+      </div>
+
+      <h2 style="margin-top:1.8rem">Plan wyjazdu</h2>
+      <article class="day" style="--dc:var(--day1)">
+        <div class="day__hd"><span class="day__n">Dzień 1</span><span class="day__t">Bielsko-Biała → Szczyrk</span>
+          <span class="day__s">2 sie · 32,9 km · 42 m</span></div>
+        <div class="day__body">
+          <p class="day__notes">Płaski dojazd doliną, po drodze dwa przystanki na kawę. Dzień jest krótki celowo —
+            chodzi o rozjeżdżenie nóg przed sobotnią pętlą i o to, żeby grupa zdążyła się poznać.</p>
+          <div class="day__foot">
+            <span class="stay">Nocleg: schronisko, pokoje 2–4 os.</span>
+            <span class="stay">Kolacja i śniadanie w cenie</span>
+            <button class="seeroute" type="button" data-goto="1">zobacz trasę i profil ↑</button>
+          </div>
+        </div>
+      </article>
+      <article class="day" style="--dc:var(--day2)">
+        <div class="day__hd"><span class="day__n">Dzień 2</span><span class="day__t">Szczyrk → Bielsko-Biała</span>
+          <span class="day__s">3 sie · 159,8 km · 2 031 m</span></div>
+        <div class="day__body">
+          <p class="day__notes">Pełna pętla przez pięć podjazdów. Najtrudniejszy fragment wypada na 142. kilometrze,
+            już po ponad stu kilometrach w nogach — dlatego wyjeżdżamy o 7:00 i planujemy dwa dłuższe postoje.
+            Na każdym szczycie zbiórka grupy przed zjazdem.</p>
+          <div class="day__foot">
+            <span class="stay">Powrót ok. 19:00</span>
+            <button class="seeroute" type="button" data-goto="2">zobacz trasę i profil ↑</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- CENA -->
+    <section class="sec" id="cena">
+      <div class="box">
+        <h2>Cena i warunki</h2>
+        <div class="incl2">
+          <div>
+            <h3>W cenie</h3>
+            <ul>
+              <li><span class="ic ic--y">✓</span>Nocleg w schronisku (1 noc, pokoje 2–4 os.)</li>
+              <li><span class="ic ic--y">✓</span>Kolacja i śniadanie</li>
+              <li><span class="ic ic--y">✓</span>Transport bagażu między noclegami</li>
+              <li><span class="ic ic--y">✓</span>Opieka przewodnika na całej trasie</li>
+              <li><span class="ic ic--y">✓</span>Ubezpieczenie NNW</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Poza ceną</h3>
+            <ul class="excl">
+              <li><span class="ic ic--n">×</span>Dojazd na miejsce zbiórki</li>
+              <li><span class="ic ic--n">×</span>Obiady i napoje na trasie</li>
+              <li><span class="ic ic--n">×</span>Serwis rowerowy</li>
+            </ul>
+          </div>
+        </div>
+        <div class="terms">
+          <p><b>Zaliczka 200 zł</b> przy zapisie, reszta do 14 dni przed startem.</p>
+          <p><b>Bezpłatne anulowanie do 14 dni przed</b> wyjazdem — później zaliczka nie podlega zwrotowi.</p>
+          <p><b>Minimum 10 osób.</b> Jeśli grupa się nie zbierze, organizator odwołuje wyjazd i zwraca całość wpłat.</p>
+          <p style="color:var(--tx-3);font-size:.86rem">Płatność trafia bezpośrednio do organizatora. ridemore.bike nie pośredniczy w płatnościach i nie pobiera prowizji.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPRZĘT -->
+    <section class="sec" id="sprzet">
+      <div class="box">
+        <h2>Co zabrać</h2>
+        <p style="color:var(--tx-2);font-size:.95rem;margin-bottom:.8rem">Pogrubione pozycje są obowiązkowe — bez nich organizator może odmówić startu.</p>
+        <div class="kit">
+          <span class="req"><b>Kask</b></span><span class="req"><b>Zestaw naprawczy</b></span><span class="req"><b>Oświetlenie</b></span>
+          <span>Kurtka przeciwdeszczowa</span><span>Dwa bidony</span><span>Powerbank</span><span>Dokument tożsamości</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ZBIÓRKA -->
+    <section class="sec" id="zbiorka">
+      <div class="box">
+        <h2>Zbiórka</h2>
+        <div class="meet">
+          <div class="meet__info">
+            <p class="row"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.4 7-11a7 7 0 1 0-14 0c0 4.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span><b>Dworzec PKP Bielsko-Biała</b><br>Plac Dworcowy 1, parking rowerowy od strony peronu 1</span></p>
+            <p class="row"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>2 sierpnia, 08:00</b><br>Wyjazd 08:15 — przyjedź 15 minut wcześniej</span></p>
+            <p class="row"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17h16M6 17V9l6-4 6 4v8"/></svg><span>Bezpłatny parking samochodowy na 2 dni po drugiej stronie dworca</span></p>
+            <p style="margin-top:.3rem"><a class="btn btn--ghost btn--sm" href="https://maps.google.com">Nawiguj →</a></p>
+          </div>
+          <div class="mapbox" style="min-height:200px">
+            <svg viewBox="0 0 420 220" preserveAspectRatio="xMidYMid slice" aria-label="Mapa miejsca zbiórki">
+              <rect width="420" height="220" fill="#E6EBE4"/>
+              <g stroke="#CFD8CB" fill="none" stroke-width="1"><path d="M0 50 H420M0 110 H420M0 170 H420M90 0 V220M200 0 V220M310 0 V220"/></g>
+              <path d="M-10 140 H430" stroke="#D6DDD2" stroke-width="16"/>
+              <path d="M200 -10 V230" stroke="#D6DDD2" stroke-width="12"/>
+              <circle cx="210" cy="112" r="20" fill="#1E4B38" fill-opacity=".14"/>
+              <circle cx="210" cy="112" r="8" fill="#1E4B38"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ORGANIZATOR -->
+    <section class="sec" id="organizator">
+      <div class="box">
+        <h2>Kto organizuje</h2>
+        <div class="orgbox">
+          <span class="avatar">TB</span>
+          <div style="flex:1;min-width:240px">
+            <p style="font-family:var(--f-d);font-weight:700;font-size:1.15rem">Tatry Bike Tours
+              <span class="badge-ver">✓ Zweryfikowany operator</span></p>
+            <p style="color:var(--tx-2);font-size:.95rem;margin-top:.35rem">Organizujemy szosowe i gravelowe wyjazdy po Beskidach i Tatrach od 2019 roku. Małe grupy, własny przewodnik, samochód techniczny na trasie.</p>
+            <div class="orgstats">
+              <span><b>34</b>zorganizowane wyjazdy</span>
+              <span><b>4,8</b>średnia ocena (26)</span>
+              <span><b>94%</b>potwierdzonej frekwencji</span>
+            </div>
+            <p style="margin-top:.9rem;display:flex;gap:.5rem;flex-wrap:wrap">
+              <a class="btn btn--ghost btn--sm" href="/organizatorzy/tatry-bike-tours">Profil organizatora</a>
+              <a class="btn btn--ghost btn--sm" href="/wiadomosci/z/2">Napisz wiadomość</a>
+            </p>
+          </div>
+        </div>
+        <p class="legal"><b>Status prawny:</b> organizator turystyki wpisany do rejestru pod nr 1234, z aktualną gwarancją ubezpieczeniową.
+          Umowa o udział w wyjeździe zawierana jest bezpośrednio z organizatorem. ridemore.bike udostępnia wyłącznie ogłoszenie.</p>
+      </div>
+    </section>
+
+    <!-- DOPASOWANIE -->
+    <section class="match" aria-labelledby="mh">
+      <div class="match__hd">
+        <p class="eyebrow"><span class="blaze" style="--bz:var(--blaze)"></span>Pokręć z kimś · dopasowanie</p>
+        <h2 id="mh">Ten sam weekend, ta sama okolica</h2>
+      </div>
+      <div class="mc">
+        <p class="mc__why">Ten sam rejon (Beskidy) · terminy nakładają się w 100% · szosa u obu stron</p>
+        <h3 class="mc__t">Szosówka wokół Żywca — luźna ekipa</h3>
+        <p class="mc__data">2–3 sie · 140 km · bezpłatnie · start Żywiec</p>
+        <div class="mc__proof"><b>4</b><span>osoby już jadą<br><small style="color:var(--tx-3)">wyjazd potwierdzony od 3 osób</small></span></div>
+        <div class="mc__todo"><span>Do uzgodnienia: <b>godzina startu</b> — oni ruszają o 7:30.</span></div>
+        <div class="mc__act">
+          <a class="btn btn--pine btn--sm" href="#">Zobacz wyjazd →</a>
+          <button class="lnk" type="button">Nie teraz</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PYTANIA -->
+    <section class="sec qa" id="pytania">
+      <div class="box">
+        <h2>Pytania do organizatora</h2>
+        <p style="color:var(--tx-2);font-size:.95rem;margin-bottom:.8rem">Odpowiedzi widzą wszyscy — jeśli coś jest niejasne, prawdopodobnie nie tylko dla Ciebie.</p>
+        <label class="sr" for="qbody">Twoje pytanie</label>
+        <textarea id="qbody" rows="3" placeholder="Np. czy da się dojechać pociągiem z rowerem na miejsce zbiórki?"></textarea>
+        <div class="qa__row">
+          <span style="font-size:.82rem;color:var(--tx-3)">Odpowiada zwykle w ciągu 4 godzin</span>
+          <button class="btn btn--pine btn--sm" type="button">Wyślij pytanie</button>
+        </div>
+        <p class="qa__empty">Nie ma jeszcze pytań. Twoje będzie pierwsze.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== PANEL ZAPISU ===== -->
+  <aside>
+    <div class="book">
+      <p class="book__price"><b>620 zł</b><span>/ osoba</span></p>
+      <p class="book__dep">Zaliczka 200 zł przy zapisie · reszta do 20 lipca</p>
+
+      <div class="prog">
+        <div class="prog__bar"><i></i></div>
+        <p class="prog__lbl"><span>6 z 10 zapisanych</span><span>limit 14 osób</span></p>
+        <p class="prog__note">Brakuje <b>4 osób</b>, żeby wyjazd był potwierdzony. Jeśli grupa się nie zbierze, dostajesz zwrot całości.</p>
+      </div>
+
+      <a class="btn btn--pine btn--full" href="#">Zapisz się na wyjazd</a>
+      <p class="book__micro">Zapisujesz się u organizatora. Nie pobieramy prowizji.</p>
+
+      <div class="book__list">
+        <div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Bezpłatne anulowanie do <b>19 lipca</b></span></div>
+        <div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.4 8.3-8 9-4.6-.7-8-4-8-9V7l8-4Z"/></svg><span>Operator z gwarancją ubezpieczeniową</span></div>
+        <div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="M4 10h16"/></svg><span>Płatność przelewem do organizatora</span></div>
+      </div>
+
+      <div class="book__who">
+        <span class="avs"><span>MK</span><span>AW</span><span>PZ</span><span>+3</span></span>
+        <small>6 osób już jedzie</small>
+      </div>
+    </div>
+
+    <p style="margin-top:.8rem;text-align:center"><button class="lnk" type="button">Zapisz na później</button> · <button class="lnk" type="button">Udostępnij</button></p>
+  </aside>
+</div>
+
+<!-- Pasek mobilny -->
+<div class="mbar">
+  <span class="mbar__p"><b>620 zł</b><small>6/10 zapisanych · zaliczka 200 zł</small></span>
+  <a class="btn btn--pine" href="#">Zapisz się</a>
+</div>
+
+<footer class="ftr"><div class="wrap ftr__b">
+  <span>© 2026 ridemore.bike</span>
+  <span>Jesteśmy kalendarzem, nie organizatorem. Za wyjazd odpowiada organizator.</span>
+</div></footer>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"SportsEvent","name":"Weekend szosowy w Beskidach","description":"Dwa dni szosowej jazdy po beskidzkich przełęczach z noclegiem w schronisku.","startDate":"2026-08-02T08:00","endDate":"2026-08-03","eventStatus":"https://schema.org/EventScheduled","eventAttendanceMode":"https://schema.org/OfflineEventAttendanceMode","location":{"@type":"Place","name":"Dworzec PKP Bielsko-Biała","address":{"@type":"PostalAddress","streetAddress":"Plac Dworcowy 1","addressLocality":"Bielsko-Biała","addressCountry":"PL"}},"organizer":{"@type":"Organization","name":"Tatry Bike Tours","url":"https://ridemore.bike/organizatorzy/tatry-bike-tours"},"offers":{"@type":"Offer","price":"620","priceCurrency":"PLN","availability":"https://schema.org/InStock","url":"https://ridemore.bike/wydarzenia/weekend-szosowy-beskidy"},"maximumAttendeeCapacity":14},
+{"@type":"BreadcrumbList","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Start","item":"https://ridemore.bike/"},
+{"@type":"ListItem","position":2,"name":"Wyjazdy","item":"https://ridemore.bike/wydarzenia"},
+{"@type":"ListItem","position":3,"name":"Beskidy","item":"https://ridemore.bike/regiony/beskidy"},
+{"@type":"ListItem","position":4,"name":"Weekend szosowy w Beskidach","item":"https://ridemore.bike/wydarzenia/weekend-szosowy-beskidy"}]}
+]}
+</script>
+<script>
+/* Scrollspy dla nawigacji sekcji */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.anchors a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);
+  if(!('IntersectionObserver' in window))return;
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting)return;
+      links.forEach(function(l){l.removeAttribute('aria-current')});
+      var m=links.filter(function(l){return l.getAttribute('href')==='#'+e.target.id})[0];
+      if(m)m.setAttribute('aria-current','true');
+    });
+  },{rootMargin:'-130px 0px -70% 0px'});
+  secs.forEach(function(s){io.observe(s)});
+})();
+</script>
+<script>
+/* Zakładki dni w module trasy */
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.dtab'));
+  function show(id){
+    tabs.forEach(function(t){
+      var on=t.getAttribute('aria-controls')==='p-'+id;
+      t.setAttribute('aria-selected',on);
+      document.getElementById(t.getAttribute('aria-controls')).hidden=!on;
+    });
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.id.slice(2))})});
+  [].forEach.call(document.querySelectorAll('.seeroute'),function(b){
+    b.addEventListener('click',function(){show(b.dataset.goto);document.querySelector('.route').scrollIntoView({block:'start'})});
+  });
+})();
+</script>
+</body>
+</html>

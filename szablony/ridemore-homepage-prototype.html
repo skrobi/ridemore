@@ -1,0 +1,218 @@
+<!-- prototypes/homepage.html -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>ridemore.bike — znajdź wyjazd</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F5F1;--paper:#FFFFFF;--ink:#1A1A18;--ink-soft:#6B6A64;--ink-mute:#9C9A92;
+  --hair:#E4E2DA;--hair-strong:#C9C6BB;
+  --accent:#D14E1E;--accent-dark:#A23913;--accent-soft:#F7E3D8;--accent-text:#FBEEE6;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px 60px;}
+.display{font-family:'Big Shoulders Display',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.01em;}
+header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--hair);}
+.logo{font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:22px;text-decoration:none;color:var(--ink);}
+.logo span{color:var(--accent);}
+nav a{color:var(--ink-soft);text-decoration:none;font-size:14px;margin-left:24px;}
+footer{border-top:1px solid var(--hair);padding:20px 0;font-size:13px;color:var(--ink-mute);}
+
+.eyebrow{display:inline-block;background:var(--accent-soft);color:var(--accent-dark);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:4px;margin:24px 0 14px;}
+h1{font-size:44px;line-height:0.98;margin:0 0 10px;max-width:640px;}
+.subline{font-size:16px;color:var(--ink-soft);margin:0 0 20px;}
+.subline b{color:var(--ink);font-weight:600;}
+
+.photo-block{border-radius:14px;overflow:hidden;border:1px solid var(--hair-strong);margin-bottom:24px;}
+.photo-block svg{display:block;width:100%;height:auto;}
+
+.stat-strip{display:flex;flex-wrap:wrap;border:1px solid var(--hair-strong);border-radius:var(--radius);overflow:hidden;margin-bottom:24px;background:var(--paper);}
+.stat{flex:1;min-width:120px;padding:14px 16px;border-right:1px solid var(--hair);}
+.stat:last-child{border-right:none;}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-mute);margin-bottom:4px;}
+.stat-value{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:17px;}
+
+.cta-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:36px;}
+.btn{font-family:'Inter',sans-serif;font-weight:700;font-size:15px;background:var(--accent);color:var(--accent-text);border:1px solid var(--accent-dark);padding:13px 24px;border-radius:var(--radius);cursor:pointer;box-shadow:3px 3px 0 var(--accent-dark);}
+.btn.joined{background:var(--ink);border-color:var(--ink);box-shadow:3px 3px 0 var(--hair-strong);color:#fff;}
+
+.org-bar{display:flex;align-items:center;gap:14px;padding:18px 0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);margin-bottom:32px;}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+.org-name{font-weight:700;font-size:15px;}
+.org-meta{font-size:13px;color:var(--ink-soft);}
+.verified{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--accent-dark);font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin-left:8px;}
+
+.section-title{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;margin:32px 0 16px;}
+.day-card{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--hair);}
+.day-card:last-child{border-bottom:none;}
+.day-num{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;flex-shrink:0;}
+.day-title{font-weight:700;font-size:16px;margin-bottom:4px;}
+.day-stats{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-soft);}
+
+.price-block-full{border:1px solid var(--hair-strong);border-radius:var(--radius);padding:22px;background:var(--paper);margin-bottom:16px;}
+.price-amount{font-family:'Big Shoulders Display',sans-serif;font-size:34px;font-weight:800;}
+.include-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px;}
+.include-heading{font-size:12px;text-transform:uppercase;color:var(--ink-mute);font-family:'JetBrains Mono',monospace;margin-bottom:8px;}
+.include-list{list-style:none;padding:0;margin:0;}
+.include-list li{display:flex;gap:8px;padding:5px 0;font-size:14px;}
+.include-list.included li{color:var(--ink);}
+.include-list.excluded li{color:var(--ink-mute);}
+.include-icon{flex-shrink:0;font-weight:700;width:16px;}
+.included .include-icon{color:var(--accent);}
+
+.desc{font-size:16px;line-height:1.7;color:var(--ink-soft);max-width:680px;}
+
+@media(max-width:680px){ h1{font-size:32px;} .include-grid{grid-template-columns:1fr;} }
+
+/* --- homepage-specific --- */
+.search-hero{padding:32px 0 20px;border-bottom:1px solid var(--hair);}
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.search-input{flex:1;min-width:220px;border:1px solid var(--hair-strong);border-radius:var(--radius);padding:13px 16px;font-family:'Inter',sans-serif;font-size:15px;background:var(--paper);}
+.locate-btn{border:1px solid var(--hair-strong);background:var(--paper);border-radius:var(--radius);padding:13px 18px;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{border:1px solid var(--hair-strong);background:var(--paper);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-soft);}
+.chip.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+
+.layout{display:grid;grid-template-columns:220px 1fr;gap:28px;margin-top:28px;}
+.filters-panel{border-right:1px solid var(--hair);padding-right:20px;}
+.filter-group{margin-bottom:24px;}
+.filter-group h4{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);margin:0 0 10px;}
+.filter-opt{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-soft);padding:4px 0;cursor:pointer;}
+.filter-opt input{accent-color:var(--accent);}
+.range-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-mute);margin-top:4px;}
+
+.results-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.results-count{font-size:14px;color:var(--ink-soft);}
+.sort-select{border:1px solid var(--hair-strong);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--paper);}
+
+.event-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.event-card{border:1px solid var(--hair-strong);border-radius:var(--radius);background:var(--paper);overflow:hidden;}
+.card-photo{height:120px;position:relative;}
+.card-photo svg{width:100%;height:100%;display:block;}
+.card-badges{position:absolute;top:10px;left:10px;display:flex;gap:6px;}
+.badge{font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
+.badge-free{background:var(--accent-soft);color:var(--accent-dark);}
+.badge-paid{background:var(--ink);color:#fff;}
+.badge-distance{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.92);font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;}
+.card-body{padding:14px;}
+.card-title{font-weight:700;font-size:15px;margin-bottom:4px;}
+.card-meta{font-size:13px;color:var(--ink-soft);margin-bottom:10px;}
+.card-foot{display:flex;justify-content:space-between;align-items:center;}
+.mini-avatars{display:flex;}
+.mini-avatar{width:22px;height:22px;border-radius:50%;background:var(--ink-soft);border:2px solid var(--paper);margin-left:-8px;font-size:9px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.mini-avatar:first-child{margin-left:0;}
+.spots-left{font-size:12px;font-weight:700;color:var(--accent-dark);}
+
+@media(max-width:760px){ .layout{grid-template-columns:1fr;} .filters-panel{border-right:none;border-bottom:1px solid var(--hair);padding-right:0;padding-bottom:16px;} .event-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+    <a href="/" class="logo">ride<span>more</span>.bike</a>
+    <nav><a href="/">Wydarzenia</a><a href="/jak-to-dziala">Jak to działa</a></nav>
+</header>
+
+<section class="search-hero">
+    <div class="search-row">
+        <input class="search-input" placeholder="Szukaj: region, miasto, nazwa wydarzenia...">
+        <button class="locate-btn">📍 Blisko mnie</button>
+    </div>
+    <div class="chip-row">
+        <div class="chip active">Wszystkie</div>
+        <div class="chip">Darmowe</div>
+        <div class="chip">Płatne</div>
+        <div class="chip">Ten weekend</div>
+        <div class="chip">Ten miesiąc</div>
+    </div>
+</section>
+
+<div class="layout">
+    <aside class="filters-panel">
+        <div class="filter-group">
+            <h4>Region</h4>
+            <label class="filter-opt"><input type="checkbox">Bieszczady</label>
+            <label class="filter-opt"><input type="checkbox">Tatry</label>
+            <label class="filter-opt"><input type="checkbox">Beskidy</label>
+            <label class="filter-opt"><input type="checkbox">Mazury</label>
+            <label class="filter-opt"><input type="checkbox">Podkarpacie</label>
+        </div>
+        <div class="filter-group">
+            <h4>Odległość</h4>
+            <input type="range" min="5" max="300" value="50" style="width:100%">
+            <div class="range-row"><span>5 km</span><span>50 km</span><span>300 km</span></div>
+        </div>
+        <div class="filter-group">
+            <h4>Typ wydarzenia</h4>
+            <label class="filter-opt"><input type="checkbox" checked>Ustawka</label>
+            <label class="filter-opt"><input type="checkbox" checked>Wycieczka wielodniowa</label>
+        </div>
+        <div class="filter-group">
+            <h4>Typ roweru</h4>
+            <label class="filter-opt"><input type="checkbox">Szosowy</label>
+            <label class="filter-opt"><input type="checkbox">Gravel</label>
+            <label class="filter-opt"><input type="checkbox">MTB</label>
+            <label class="filter-opt"><input type="checkbox">E-bike</label>
+        </div>
+        <div class="filter-group">
+            <h4>Poziom trudności</h4>
+            <label class="filter-opt"><input type="checkbox">Łatwy</label>
+            <label class="filter-opt"><input type="checkbox">Średni</label>
+            <label class="filter-opt"><input type="checkbox">Trudny</label>
+        </div>
+        <div class="filter-group">
+            <h4>Tempo grupy</h4>
+            <label class="filter-opt"><input type="checkbox">A (18-22 km/h)</label>
+            <label class="filter-opt"><input type="checkbox">B (22-26 km/h)</label>
+            <label class="filter-opt"><input type="checkbox">C (26+ km/h)</label>
+        </div>
+    </aside>
+
+    <main>
+        <div class="results-head">
+            <div class="results-count">18 wydarzeń blisko Ciebie</div>
+            <select class="sort-select"><option>Najbliżej w czasie</option><option>Najbliżej odległościowo</option><option>Najwięcej miejsc</option></select>
+        </div>
+
+        <div class="event-grid">
+            <div class="event-card">
+                <div class="card-photo">
+                    <svg viewBox="0 0 400 120" preserveAspectRatio="none"><rect width="400" height="120" fill="#EDECE7"/><polygon points="0,120 0,70 100,40 200,65 300,30 400,55 400,120" fill="#C4C1B6"/></svg>
+                    <div class="card-badges"><span class="badge badge-free">Darmowe</span></div>
+                    <div class="card-badge card-badges" style="left:auto;right:10px;top:10px;position:absolute;"><span class="badge-distance">12 km</span></div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Wielka Pętla Bieszczadzka</div>
+                    <div class="card-meta">Sob. 1 sie · 80 km · Grupa B</div>
+                    <div class="card-foot">
+                        <div class="mini-avatars"><div class="mini-avatar">M</div><div class="mini-avatar">K</div><div class="mini-avatar">T</div></div>
+                        <div class="spots-left">6 miejsc</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="event-card">
+                <div class="card-photo">
+                    <svg viewBox="0 0 400 120" preserveAspectRatio="none"><rect width="400" height="120" fill="#EDECE7"/><polygon points="0,120 0,60 120,30 250,70 400,40 400,120" fill="#C4C1B6"/></svg>
+                    <div class="card-badges"><span class="badge badge-paid">890 zł</span></div>
+                    <div class="card-badges" style="left:auto;right:10px;"><span class="badge-distance">210 km</span></div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">3-dniowa Pętla Tatrzańska</div>
+                    <div class="card-meta">13–16 sie · 215 km · 3 dni</div>
+                    <div class="card-foot">
+                        <div class="mini-avatars"><div class="mini-avatar">O</div><div class="mini-avatar">P</div></div>
+                        <div class="spots-left">2 miejsca</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+    "require": {
+        "league/oauth2-client": "^2.9",
+        "endroid/qr-code": "^5.1",
+        "adriangibbons/php-fit-file-analysis": "^3.2"
+    }
+}

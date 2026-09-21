@@ -1,0 +1,20 @@
+# Katalog testów — nigdy nie powinien być dostępny przez HTTP.
+#
+# Jedyny wyjątek: tests/dashboard.php — DASHBOARD TESTÓW (web UI, uruchamia
+# zestawy przez php tests/run.php). Wpuszczamy TYLKO tę stronę; ona sama
+# odmawia startu poza APP_ENV=dev (403), a run.php i pozostałe pliki pozostają
+# zablokowane. Blokada w obu składniach Apache (2.4 mod_authz_core i 2.2
+# mod_access_compat) — ten sam wzorzec co storage/.htaccess.
+<IfModule mod_authz_core.c>
+  Require all denied
+  <Files "dashboard.php">
+    Require all granted
+  </Files>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+  <Files "dashboard.php">
+    Allow from all
+  </Files>
+</IfModule>

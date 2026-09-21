@@ -1,0 +1,7 @@
+views/web/partials/app-nav.php:29 [U+1F4C5] <span class="app-nav__ico" aria-hidden="true">📅</span>
+views/web/partials/app-nav.php:33 [U+1F4CD] <span class="app-nav__ico" aria-hidden="true">📍</span>
+views/web/partials/app-nav.php:42 [U+1F5FA] <span aria-hidden="true">🗺️</span>
+views/web/partials/app-nav.php:53 [U+1F464] <span class="app-nav__ico" aria-hidden="true">👤</span>
+views/web/pages/event-page.php:377 [U+2713] <?php if ($e['organizer']['isVerified']): ?><span class="badge-ver">✓ Zweryfikowany</span>
+views/web/pages/event-page.php:726 [U+2713] <li><span class="ic ic--y">✓</span><?= htmlspecialchars($item['category']) ?></li>
+views/web/pages/event-page.php:817 [U+2713] <?php if ($e['organizer']['isVerified']): ?><span class="badge-ver">✓ Zweryfikowany</span>

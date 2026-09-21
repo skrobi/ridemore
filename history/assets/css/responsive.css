@@ -1,0 +1,738 @@
+/* ============================================================================
+   PLIK: assets/css/responsive.css
+   Responsive design - breakpoints, mobile-first
+   ROZSZERZONY: obsługa tabów, circular progress, grid na mobile
+   ============================================================================ */
+
+/* ========================================================================
+   TABLET (md: 769-1024px)
+   ======================================================================== */
+
+@media (max-width: 1024px) {
+  .left-panel {
+    width: 350px;
+  }
+  
+  .route-details-panel {
+    width: 350px;
+  }
+  
+  #fab-container {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  /* Achievement grid - 2 columns on tablet */
+  .achievement-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+}
+
+/* ========================================================================
+   MOBILE LANDSCAPE / SMALL TABLET (sm: 481-768px)
+   ======================================================================== */
+
+@media (max-width: 768px) {
+  /* Icon Bar */
+  #icon-bar {
+    width: 60px;
+    padding: 12px 0;
+  }
+  
+  #logo {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 6px;
+  }
+  
+  .icon-btn .badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
+  }
+  
+  /* Panels - full width minus icon bar */
+  .left-panel {
+    left: 60px;
+    width: calc(100vw - 60px);
+  }
+  
+  .route-details-panel {
+    left: 0;
+    width: 100vw;
+  }
+  
+  .panel-header {
+    padding: 16px;
+  }
+  
+  .panel-header h2 {
+    font-size: 16px;
+  }
+  
+  .left-panel > *:not(.panel-header) {
+    padding: 0 16px 16px;
+  }
+  
+  /* Map */
+  #map {
+    left: 60px;
+  }
+  
+  /* Segmented Control - smaller on mobile */
+  .segmented-control button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  /* Circular Progress - smaller */
+  .circular-progress {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .circular-progress-content {
+    font-size: 18px;
+  }
+  
+  /* Challenge Cards */
+  .challenge-card {
+    padding: 12px;
+  }
+  
+  .challenge-header {
+    gap: 12px;
+  }
+  
+  .challenge-name {
+    font-size: 14px;
+  }
+  
+  .challenge-stats {
+    font-size: 12px;
+  }
+  
+  /* Achievement Grid - 2 columns */
+  .achievement-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .achievement-card {
+    padding: 12px;
+  }
+  
+  .achievement-icon {
+    font-size: 32px;
+  }
+  
+  .achievement-name {
+    font-size: 10px;
+  }
+  
+  .achievement-group {
+    font-size: 9px;
+  }
+  
+  /* FAB */
+  #fab-container {
+    bottom: 16px;
+    right: 16px;
+  }
+  
+  #fab-main {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+  
+  .fab-item {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+  
+  .fab-stack {
+    bottom: 60px;
+  }
+  
+  /* Top Overlay */
+  #top-overlay {
+    bottom: 70px;
+    width: calc(100vw - 80px);
+    padding: 12px;
+  }
+  
+  .overlay-header {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  
+  .overlay-item {
+    padding: 8px;
+    font-size: 12px;
+  }
+  
+  /* Cards */
+  .card {
+    padding: 12px;
+    border-radius: 6px;
+  }
+  
+  .card-title {
+    font-size: 14px;
+  }
+  
+  .card-meta {
+    font-size: 12px;
+  }
+  
+  /* Buttons */
+  .btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .btn-sm {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  /* Form inputs */
+  .form-input {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  /* Modal */
+  .modal {
+    max-width: 95%;
+    border-radius: 12px;
+  }
+  
+  .modal-header {
+    padding: 16px;
+  }
+  
+  .modal-header h3 {
+    font-size: 18px;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .modal-footer {
+    padding: 12px 16px 16px;
+  }
+  
+  /* Filters */
+  .filters-section details {
+    font-size: 13px;
+  }
+  
+  .filter-group label {
+    font-size: 11px;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    padding: 30px 15px;
+  }
+  
+  .empty-state-icon {
+    font-size: 40px;
+  }
+  
+  .empty-state-title {
+    font-size: 15px;
+  }
+  
+  .empty-state-description {
+    font-size: 13px;
+  }
+}
+
+/* ========================================================================
+   MOBILE PORTRAIT (xs: 0-480px)
+   ======================================================================== */
+
+@media (max-width: 480px) {
+  /* Icon Bar - Bottom Navigation */
+  #icon-bar {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 60px;
+    flex-direction: row;
+    padding: 0 8px;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  #logo {
+    display: none;
+  }
+  
+  .icon-btn {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  
+  .icon-btn:hover {
+    transform: translateY(-2px);
+  }
+  
+  .icon-btn[style*="margin-top: auto"] {
+    margin-top: 0 !important;
+  }
+  
+  /* Panels - Full screen */
+  .left-panel {
+    left: 0;
+    width: 100vw;
+    bottom: 60px;
+    top: 0;
+  }
+  
+  .route-details-panel {
+    left: 0;
+    bottom: 60px;
+    width: 100vw;
+  }
+  
+  /* Map */
+  #map {
+    left: 0;
+    bottom: 60px;
+  }
+  
+  /* FAB - Above bottom nav */
+  #fab-container {
+    bottom: 76px;
+    right: 12px;
+  }
+  
+  #fab-main {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+  
+  .fab-item {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+  
+  .fab-stack {
+    bottom: 56px;
+  }
+  
+  /* Top Overlay */
+  #top-overlay {
+    bottom: 76px;
+    width: calc(100vw - 24px);
+    left: 12px;
+    transform: translateX(0);
+  }
+  
+  /* Segmented Control - stacked on very small screens */
+  .segmented-control {
+    gap: 2px;
+  }
+  
+  .segmented-control button {
+    padding: 8px 8px;
+    font-size: 11px;
+  }
+  
+  .segmented-control .badge {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+  
+  /* Circular Progress - even smaller */
+  .circular-progress {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .circular-progress svg circle {
+    stroke-width: 5;
+  }
+  
+  .circular-progress-content {
+    font-size: 16px;
+  }
+  
+  /* Challenge Cards - compact */
+  .challenge-card {
+    padding: 10px;
+  }
+  
+  .challenge-header {
+    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .challenge-header .circular-progress {
+    align-self: center;
+  }
+  
+  .challenge-name {
+    font-size: 13px;
+  }
+  
+  .challenge-group {
+    font-size: 11px;
+  }
+  
+  .challenge-stats {
+    font-size: 11px;
+  }
+  
+  /* Achievement Grid - 2 columns, compact */
+  .achievement-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  
+  .achievement-card {
+    padding: 10px;
+  }
+  
+  .achievement-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+  
+  .achievement-name {
+    font-size: 9px;
+  }
+  
+  .achievement-group {
+    font-size: 8px;
+  }
+  
+  /* Accordion - better touch targets */
+  details summary {
+    padding: 12px;
+    font-size: 13px;
+  }
+  
+  details[open] summary {
+    margin-bottom: 8px;
+  }
+  
+  /* Filters */
+  .filters-section details summary {
+    padding: 10px 0;
+    font-size: 13px;
+  }
+  
+  .filter-group {
+    margin-bottom: 10px;
+  }
+  
+  .filter-group input[type="number"] {
+    width: 70px;
+    font-size: 12px;
+  }
+  
+  /* Buttons - larger touch targets */
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+  
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+  
+  /* Form inputs - larger touch targets */
+  .form-input {
+    padding: 10px 12px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  
+  /* Modal - full screen on small mobile */
+  .modal-overlay {
+    padding: 0;
+  }
+  
+  .modal {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  /* Cards - more compact */
+  .card {
+    padding: 10px;
+  }
+  
+  /* Panel header - sticky on mobile */
+  .panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Route cards - better mobile layout */
+  .route-card {
+    font-size: 13px;
+  }
+  
+  .route-card .card-title {
+    font-size: 13px;
+  }
+  
+  .route-card .card-meta {
+    font-size: 11px;
+  }
+}
+
+/* ========================================================================
+   LANDSCAPE ORIENTATION (Mobile)
+   ======================================================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Hide bottom nav on landscape to save space */
+  #icon-bar {
+    height: 50px;
+  }
+  
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  #map {
+    bottom: 50px;
+  }
+  
+  .left-panel {
+    bottom: 50px;
+  }
+  
+  .route-details-panel {
+    bottom: 50px;
+  }
+  
+  #fab-container {
+    bottom: 60px;
+  }
+  
+  /* Compact panels */
+  .panel-header {
+    padding: 10px 12px;
+  }
+  
+  .panel-header h2 {
+    font-size: 14px;
+  }
+  
+  .left-panel > *:not(.panel-header) {
+    padding: 0 12px 12px;
+  }
+}
+
+/* ========================================================================
+   EXTRA LARGE SCREENS (xl: 1441px+)
+   ======================================================================== */
+
+@media (min-width: 1441px) {
+  .left-panel {
+    width: 450px;
+  }
+  
+  .route-details-panel {
+    width: 500px;
+  }
+  
+  /* Achievement Grid - 4 columns on large screens */
+  .achievement-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  /* Larger circular progress */
+  .circular-progress {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .circular-progress-content {
+    font-size: 28px;
+  }
+}
+
+/* ========================================================================
+   TOUCH DEVICES - Better touch targets
+   ======================================================================== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Ensure all interactive elements are at least 44x44px */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  .icon-btn {
+    min-width: 14px;
+    min-height: 14px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .card:hover,
+  .btn:hover,
+  .icon-btn:hover {
+    transform: none;
+  }
+  
+  /* Add active states instead */
+  .btn:active {
+    transform: scale(0.98);
+  }
+  
+  .card:active {
+    transform: translateY(1px);
+  }
+}
+
+/* ========================================================================
+   HIGH DPI SCREENS (Retina)
+   ======================================================================== */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders */
+  .card,
+  .btn,
+  .form-input {
+    border-width: 0.5px;
+  }
+}
+
+
+/* ========================================================================
+   REDUCED MOTION
+   ======================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .left-panel,
+  .fab-item,
+  .icon-btn,
+  .btn,
+  .card,
+  #fab-main {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ========================================================================
+   PRINT
+   ======================================================================== */
+
+@media print {
+  #icon-bar,
+  .left-panel,
+  .route-details-panel,
+  #fab-container,
+  #top-overlay,
+  .panel-header .close-btn {
+    display: none !important;
+  }
+  
+  #map {
+    position: static;
+    width: 100%;
+    height: 600px;
+  }
+}
+
+/* ============================================================================
+   LEAFLET LAYER CONTROLS - Responsive & Consistent Typography
+   ============================================================================ */
+
+.leaflet-control {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: var(--font-normal);
+    color: var(--color-text);
+}
+
+.leaflet-control label {
+    font-size: 13px !important;
+    padding: 6px !important;
+    margin: 6px 0 !important;
+    font-family: var(--font-sans);
+}
+
+.leaflet-control input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 8px !important;
+}
+
+.leaflet-control .toggle-control-btn,
+.leaflet-control .toggle-poi-btn {
+    font-family: var(--font-sans);
+}
+
+/* Layer control headings */
+.leaflet-control > div > div:first-child {
+    font-family: var(--font-sans);
+    font-weight: var(--font-semibold);
+}
+
+/* Category headers */
+.leaflet-control [style*="text-transform: uppercase"] {
+    font-family: var(--font-sans);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.05em;
+}
+
+@media (max-width: 768px) {
+    .leaflet-control {
+        max-width: 200px !important;
+        max-height: 300px !important;
+        padding: 8px !important;
+        font-size: 11px !important;
+    }
+    
+    .leaflet-control label {
+        font-size: 11px !important;
+        padding: 4px !important;
+        margin: 4px 0 !important;
+    }
+    
+    .leaflet-control input[type="checkbox"] {
+        width: 14px !important;
+        height: 14px !important;
+        margin-right: 6px !important;
+    }
+    
+    /* Smaller header on mobile */
+    .leaflet-control > div > div:first-child {
+        font-size: 12px !important;
+    }
+}

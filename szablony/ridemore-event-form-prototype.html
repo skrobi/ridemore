@@ -1,0 +1,472 @@
+<!-- prototypes/event-form.html -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Dodaj wydarzenie — ridemore.bike</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js" defer></script>
+<style>
+:root{
+  --bg:#F6F5F1;--paper:#FFFFFF;--ink:#1A1A18;--ink-soft:#6B6A64;--ink-mute:#9C9A92;
+  --hair:#E4E2DA;--hair-strong:#C9C6BB;
+  --accent:#D14E1E;--accent-dark:#A23913;--accent-soft:#F7E3D8;--accent-text:#FBEEE6;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px 60px;}
+.display{font-family:'Big Shoulders Display',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.01em;}
+header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--hair);}
+.logo{font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:22px;text-decoration:none;color:var(--ink);}
+.logo span{color:var(--accent);}
+nav a{color:var(--ink-soft);text-decoration:none;font-size:14px;margin-left:24px;}
+footer{border-top:1px solid var(--hair);padding:20px 0;font-size:13px;color:var(--ink-mute);}
+
+.eyebrow{display:inline-block;background:var(--accent-soft);color:var(--accent-dark);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:4px;margin:24px 0 14px;}
+h1{font-size:44px;line-height:0.98;margin:0 0 10px;max-width:640px;}
+.subline{font-size:16px;color:var(--ink-soft);margin:0 0 20px;}
+.subline b{color:var(--ink);font-weight:600;}
+
+.photo-block{border-radius:14px;overflow:hidden;border:1px solid var(--hair-strong);margin-bottom:24px;}
+.photo-block svg{display:block;width:100%;height:auto;}
+
+.stat-strip{display:flex;flex-wrap:wrap;border:1px solid var(--hair-strong);border-radius:var(--radius);overflow:hidden;margin-bottom:24px;background:var(--paper);}
+.stat{flex:1;min-width:120px;padding:14px 16px;border-right:1px solid var(--hair);}
+.stat:last-child{border-right:none;}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-mute);margin-bottom:4px;}
+.stat-value{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:17px;}
+
+.cta-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:36px;}
+.btn{font-family:'Inter',sans-serif;font-weight:700;font-size:15px;background:var(--accent);color:var(--accent-text);border:1px solid var(--accent-dark);padding:13px 24px;border-radius:var(--radius);cursor:pointer;box-shadow:3px 3px 0 var(--accent-dark);}
+.btn.joined{background:var(--ink);border-color:var(--ink);box-shadow:3px 3px 0 var(--hair-strong);color:#fff;}
+
+.org-bar{display:flex;align-items:center;gap:14px;padding:18px 0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);margin-bottom:32px;}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+.org-name{font-weight:700;font-size:15px;}
+.org-meta{font-size:13px;color:var(--ink-soft);}
+.verified{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--accent-dark);font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin-left:8px;}
+
+.section-title{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;margin:32px 0 16px;}
+.day-card{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--hair);}
+.day-card:last-child{border-bottom:none;}
+.day-num{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;flex-shrink:0;}
+.day-title{font-weight:700;font-size:16px;margin-bottom:4px;}
+.day-stats{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-soft);}
+
+.price-block-full{border:1px solid var(--hair-strong);border-radius:var(--radius);padding:22px;background:var(--paper);margin-bottom:16px;}
+.price-amount{font-family:'Big Shoulders Display',sans-serif;font-size:34px;font-weight:800;}
+.include-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px;}
+.include-heading{font-size:12px;text-transform:uppercase;color:var(--ink-mute);font-family:'JetBrains Mono',monospace;margin-bottom:8px;}
+.include-list{list-style:none;padding:0;margin:0;}
+.include-list li{display:flex;gap:8px;padding:5px 0;font-size:14px;}
+.include-list.included li{color:var(--ink);}
+.include-list.excluded li{color:var(--ink-mute);}
+.include-icon{flex-shrink:0;font-weight:700;width:16px;}
+.included .include-icon{color:var(--accent);}
+
+.desc{font-size:16px;line-height:1.7;color:var(--ink-soft);max-width:680px;}
+
+@media(max-width:680px){ h1{font-size:32px;} .include-grid{grid-template-columns:1fr;} .type-toggle{flex-direction:column;} }
+
+/* --- form-specific --- */
+.form-section{background:var(--paper);border:1px solid var(--hair-strong);border-radius:var(--radius);padding:22px;margin-bottom:18px;}
+.form-section h3{font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);margin:0 0 16px;}
+.form-row{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;}
+.form-field{flex:1;min-width:180px;}
+.form-field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
+.form-field input[type=text],.form-field input[type=number],.form-field input[type=date],.form-field select,.form-field textarea{
+  width:100%;border:1px solid var(--hair-strong);border-radius:8px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;background:var(--bg);
+}
+.form-field input:disabled{background:var(--hair);color:var(--ink-mute);}
+.form-field textarea{min-height:70px;resize:vertical;}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:none;border-color:var(--accent);}
+.hint{font-size:12px;color:var(--ink-mute);margin-top:4px;}
+
+.type-toggle{display:flex;gap:10px;margin-bottom:8px;}
+.type-option{flex:1;border:1px solid var(--hair-strong);border-radius:var(--radius);padding:14px;cursor:pointer;text-align:center;font-weight:600;font-size:14px;}
+.type-option.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);}
+
+.upload-box{border:1px dashed var(--hair-strong);border-radius:8px;padding:20px;text-align:center;color:var(--ink-mute);font-size:14px;cursor:pointer;}
+.upload-box.filled{border-color:var(--accent);color:var(--accent-dark);background:var(--accent-soft);}
+
+.map-btn{border:1px solid var(--hair-strong);background:var(--paper);border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.map-btn.set{border-color:var(--accent);color:var(--accent-dark);}
+.map-link-small{font-size:12px;color:var(--ink-soft);text-decoration:underline;cursor:pointer;display:inline-block;margin-top:4px;}
+.map-link-small.set{color:var(--accent-dark);font-weight:600;}
+
+.subfield-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-mute);margin-bottom:8px;}
+.switch-wrap{display:flex;align-items:center;gap:10px;cursor:pointer;width:fit-content;}
+.switch{position:relative;width:42px;height:24px;-webkit-appearance:none;appearance:none;background:var(--hair-strong);border-radius:20px;cursor:pointer;transition:background .15s;flex-shrink:0;}
+.switch:checked{background:var(--accent);}
+.switch::before{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.switch:checked::before{left:20px;}
+.switch-label{font-weight:600;font-size:14px;}
+.dependent-note{border-left:2px solid var(--hair-strong);padding-left:16px;margin-top:14px;}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(26,26,24,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+.modal-box{background:var(--paper);border-radius:14px;overflow:hidden;max-width:640px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.modal-box .map-panel-head{padding:14px 18px;border-bottom:1px solid var(--hair);background:var(--paper);}
+.modal-box .leaflet-container{height:380px;}
+.map-panel .leaflet-container{height:260px;}
+.map-panel-head{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);font-size:12px;color:var(--ink-soft);}
+
+.stage-block{border:1px dashed var(--hair-strong);border-radius:8px;padding:16px;margin-bottom:12px;position:relative;}
+.stage-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-bottom:10px;}
+.remove-btn{background:none;border:none;color:var(--ink-mute);cursor:pointer;font-size:13px;position:absolute;top:14px;right:14px;}
+.add-btn{border:1px dashed var(--hair-strong);background:none;border-radius:8px;padding:11px;width:100%;cursor:pointer;font-size:14px;color:var(--ink-soft);font-weight:600;}
+
+.checkbox-grid{display:flex;flex-wrap:wrap;gap:14px;}
+.checkbox-opt{display:flex;align-items:center;gap:6px;font-size:14px;}
+
+.pay-toggle{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-weight:600;}
+.price-item-row{display:flex;gap:10px;align-items:center;margin-bottom:8px;}
+.price-item-row input[type=text]{flex:1;}
+.included-tag{font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;}
+.included-tag.yes{background:var(--accent-soft);color:var(--accent-dark);}
+.included-tag.no{background:var(--hair);color:var(--ink-mute);}
+
+.submit-row{display:flex;gap:12px;justify-content:flex-end;margin-top:8px;}
+.btn-secondary{background:var(--paper);border:1px solid var(--hair-strong);color:var(--ink);box-shadow:none;}
+</style>
+</head>
+<body>
+<div class="wrap" x-data="eventForm()" x-init="init()" style="max-width:760px;">
+<header>
+    <a href="/" class="logo">ride<span>more</span>.bike</a>
+    <nav><a href="/admin">Panel</a></nav>
+</header>
+
+<div class="eyebrow">Nowe wydarzenie</div>
+<h1 class="display" style="font-size:32px;">Dodaj wydarzenie</h1>
+
+<!-- 1. Podstawowe informacje -->
+<div class="form-section">
+    <h3>Podstawowe informacje</h3>
+    <div class="type-toggle">
+        <div class="type-option" :class="type==='ustawka' && 'active'" @click="type='ustawka'">Ustawka jednodniowa</div>
+        <div class="type-option" :class="type==='wycieczka_wielodniowa' && 'active'" @click="type='wycieczka_wielodniowa'">Wycieczka wielodniowa</div>
+    </div>
+    <div class="form-row"><div class="form-field"><label>Tytuł wydarzenia</label><input type="text" placeholder="np. Wielka Pętla Bieszczadzka"></div></div>
+    <div class="form-row"><div class="form-field"><label>Opis</label><textarea placeholder="Dla kogo, jaka atmosfera, co warto wiedzieć..."></textarea></div></div>
+    <div class="form-row"><div class="form-field"><label>Zdjęcie okładki</label><div class="upload-box">📷 Kliknij lub przeciągnij zdjęcie</div></div></div>
+</div>
+
+<!-- 2. Płatność i zapisy -->
+<div class="form-section">
+    <h3>Płatność i zapisy</h3>
+
+    <div class="subfield-label">Cena</div>
+    <label class="switch-wrap">
+        <input type="checkbox" class="switch" x-model="isPaid">
+        <span class="switch-label" x-text="isPaid ? 'Płatne' : 'Darmowe'"></span>
+    </label>
+
+    <div class="subfield-label" style="margin-top:22px;">Gdzie odbywają się zapisy</div>
+    <div class="type-toggle">
+        <div class="type-option" :class="registrationType==='internal' && 'active'" @click="registrationType='internal'">Na ridemore.bike</div>
+        <div class="type-option" :class="registrationType==='external' && 'active'" @click="registrationType='external'">Link zewnętrzny</div>
+    </div>
+
+    <div x-show="registrationType==='external'" class="dependent-note">
+        <div class="form-row">
+            <div class="form-field"><label>Link do zapisów / zakupu</label><input type="text" x-model="externalUrl" placeholder="np. https://evenea.pl/... albo wydarzenie na Facebooku"></div>
+        </div>
+        <div class="hint">Uczestnicy zobaczą przycisk "Zapisz się", który przeniesie ich pod ten adres. Lista uczestników i weryfikacja GPS nie będą dostępne dla tego wydarzenia.</div>
+    </div>
+
+    <div x-show="isPaid && registrationType==='internal' && !billingComplete" class="dependent-note">
+        <div style="border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:14px 16px;">
+            <strong style="color:var(--accent-dark);">Uzupełnij dane rozliczeniowe, zanim opublikujesz płatne wydarzenie.</strong>
+            <div class="hint" style="margin:6px 0 10px;">Potrzebne do wystawienia faktur uczestnikom: nazwa/imię i nazwisko, adres, NIP (jeśli dotyczy), numer konta do wypłat. Płatność idzie przez ridemore.bike, więc te dane są wymagane.</div>
+            <a href="/admin/profil-rozliczeniowy" class="btn btn-secondary" style="display:inline-block;text-decoration:none;">Uzupełnij profil rozliczeniowy →</a>
+            <div class="hint" style="margin-top:10px;">(Demo: <a href="#" @click.prevent="billingComplete=true">symuluj uzupełniony profil</a>)</div>
+        </div>
+    </div>
+    <div x-show="isPaid && registrationType==='external'" class="dependent-note hint">
+        Płatność odbywa się na zewnętrznej stronie — dane rozliczeniowe w profilu nie są wymagane.
+    </div>
+</div>
+
+<!-- 3. Zbiórka — punkt zbiórki wskazywany na mapie -->
+<div class="form-section">
+    <h3>Zbiórka</h3>
+    <div class="hint" style="margin-bottom:10px;">Wskaż punkt na mapie — nie każde miejsce zbiórki ma adres (wiaty, parkingi leśne, punkty poza szlakiem).</div>
+    <div class="form-row">
+        <div class="form-field"><label>Region</label><select><option>Bieszczady</option><option>Tatry</option><option>Beskidy</option><option>Mazury</option><option>Podkarpacie</option></select></div>
+        <div class="form-field"><label>Opis miejsca (opcjonalnie)</label><input type="text" x-model="meetingPoint.label" placeholder="np. Parking leśny, Cisna"></div>
+    </div>
+    <a href="#" class="map-link-small" :class="meetingPoint.lat && 'set'" @click.prevent="openMap('meetingPoint')"
+       x-text="meetingPoint.lat ? `📍 ${meetingPoint.lat.toFixed(5)}, ${meetingPoint.lng.toFixed(5)} — koryguj punkt zbiórki` : '📍 koryguj punkt zbiórki na mapie'"></a>
+</div>
+
+<!-- 3. Parametry -->
+<div class="form-section">
+    <h3>Parametry</h3>
+    <div class="form-row">
+        <div class="form-field"><label>Poziom trudności</label><select><option>Łatwy</option><option>Średni</option><option>Trudny</option></select></div>
+        <div class="form-field"><label>Tempo grupy</label><select><option>A (18–22 km/h)</option><option>B (22–26 km/h)</option><option>C (26+ km/h)</option></select></div>
+    </div>
+    <div class="form-row">
+        <div class="form-field">
+            <label>Dopuszczalne rowery</label>
+            <div class="checkbox-grid">
+                <label class="checkbox-opt"><input type="checkbox">Szosowy</label>
+                <label class="checkbox-opt"><input type="checkbox" checked>Gravel</label>
+                <label class="checkbox-opt"><input type="checkbox" checked>MTB</label>
+                <label class="checkbox-opt"><input type="checkbox" checked>E-bike</label>
+            </div>
+        </div>
+    </div>
+    <label class="checkbox-opt" style="margin-bottom:10px;"><input type="checkbox" x-model="limitParticipants"> Ogranicz liczbę uczestników</label>
+    <div class="form-row" x-show="limitParticipants">
+        <div class="form-field"><label>Min. uczestników</label><input type="number" placeholder="np. 8"></div>
+        <div class="form-field"><label>Maks. uczestników</label><input type="number" placeholder="np. 20"></div>
+    </div>
+</div>
+
+<!-- 4. Plan wyjazdu -->
+<div class="form-section">
+    <h3>Plan wyjazdu</h3>
+    <template x-for="(stage, i) in stages" :key="i">
+        <div class="stage-block">
+            <button class="remove-btn" x-show="type==='wycieczka_wielodniowa' && stages.length>1" @click="removeStage(i)">Usuń dzień ✕</button>
+            <div class="stage-badge" x-show="type==='wycieczka_wielodniowa'" x-text="i+1"></div>
+
+            <div class="form-row" x-show="type==='wycieczka_wielodniowa'">
+                <div class="form-field"><label>Data</label><input type="date" x-model="stage.date"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Start etapu</label>
+                    <input type="text" x-model="stage.startLabel" placeholder="np. Cisna (opcjonalnie — nazwa)">
+                    <a href="#" class="map-link-small" :class="stage.startLat && 'set'" @click.prevent="openMap('stage', i, 'start')"
+                       x-text="stage.startLat ? `📍 ${stage.startLat.toFixed(5)}, ${stage.startLng.toFixed(5)} — koryguj` : '📍 koryguj start na mapie'"></a>
+                </div>
+                <div class="form-field">
+                    <label>Meta etapu</label>
+                    <input type="text" x-model="stage.endLabel" placeholder="np. Cisna (opcjonalnie — nazwa)">
+                    <a href="#" class="map-link-small" :class="stage.endLat && 'set'" @click.prevent="openMap('stage', i, 'end')"
+                       x-text="stage.endLat ? `📍 ${stage.endLat.toFixed(5)}, ${stage.endLng.toFixed(5)} — koryguj` : '📍 koryguj metę na mapie'"></a>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Plik GPX</label>
+                    <div class="upload-box" :class="stage.gpxLoaded && 'filled'" @click="loadGpx(i)">
+                        <span x-text="stage.gpxLoaded ? '✓ trasa.gpx — wczytano' : '📎 Wgraj plik GPX'"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Dystans (km)</label>
+                    <input type="number" x-model="stage.distanceKm" disabled placeholder="— wgraj GPX, aby obliczyć —">
+                </div>
+                <div class="form-field">
+                    <label>Przewyższenie (m)</label>
+                    <input type="number" x-model="stage.elevationM" disabled placeholder="— wgraj GPX, aby obliczyć —">
+                </div>
+                <div class="form-field">
+                    <label>Nawierzchnia</label>
+                    <select x-model="stage.surface">
+                        <option value="asfalt">Asfalt</option>
+                        <option value="gravel">Gravel</option>
+                        <option value="szuter">Szuter</option>
+                        <option value="singletrack">Singletrack</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row" x-show="type==='wycieczka_wielodniowa'">
+                <div class="form-field"><label>Typ noclegu</label>
+                    <select><option>Pensjonat</option><option>Hotel</option><option>Schronisko</option><option>Camping</option></select>
+                </div>
+                <div class="form-field"><label>Nazwa / adres noclegu</label><input type="text" placeholder="np. Pensjonat w Ždiarze"></div>
+            </div>
+            <div class="form-row" x-show="type==='wycieczka_wielodniowa'">
+                <div class="form-field">
+                    <label>Posiłki w cenie</label>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-opt"><input type="checkbox" checked>Śniadanie</label>
+                        <label class="checkbox-opt"><input type="checkbox">Obiad</label>
+                        <label class="checkbox-opt"><input type="checkbox">Kolacja</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-field"><label>Notatki do etapu</label><textarea placeholder="np. trudny odcinek po deszczu, uwaga na bydło na drodze"></textarea></div>
+            </div>
+        </div>
+    </template>
+    <button class="add-btn" x-show="type==='wycieczka_wielodniowa'" @click="addStage()">+ Dodaj kolejny dzień</button>
+</div>
+
+<!-- 5. Sprzęt -->
+<div class="form-section">
+    <h3>Wymagany sprzęt</h3>
+    <template x-for="(item, i) in equipment" :key="i">
+        <div class="price-item-row">
+            <input type="text" x-model="item.name" placeholder="np. kask, oświetlenie">
+            <label class="checkbox-opt"><input type="checkbox" x-model="item.mandatory">obowiązkowy</label>
+            <button class="remove-btn" style="position:static;" @click="equipment.splice(i,1)">✕</button>
+        </div>
+    </template>
+    <button class="add-btn" @click="equipment.push({name:'',mandatory:true})">+ Dodaj pozycję</button>
+</div>
+
+<!-- 6. Cennik -->
+<div class="form-section">
+    <div x-show="!isPaid" class="hint">To wydarzenie jest darmowe. Zmień w sekcji "Płatność i zapisy" powyżej, jeśli chcesz dodać cennik.</div>
+
+    <div x-show="isPaid && (registrationType==='external' || billingComplete)">
+        <div class="form-row">
+            <div class="form-field"><label>Cena</label><input type="number" placeholder="890"></div>
+            <div class="form-field"><label>Waluta</label><select><option>PLN</option><option>EUR</option></select></div>
+            <div class="form-field"><label>Cena za</label><select><option>osobę</option><option>drużynę</option></select></div>
+            <div class="form-field"><label>Zaliczka</label><input type="number" placeholder="200"></div>
+            <div class="form-field"><label>Dopłata do (dni przed)</label><input type="number" placeholder="30"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-field">
+                <label>W cenie</label>
+                <template x-for="(item, i) in priceItems.filter(p=>p.isIncluded)" :key="i">
+                    <div class="price-item-row">
+                        <span class="included-tag yes">✓</span>
+                        <input type="text" x-model="item.description" placeholder="np. 2 noclegi ze śniadaniem">
+                        <button class="remove-btn" style="position:static;" @click="priceItems.splice(priceItems.indexOf(item),1)">✕</button>
+                    </div>
+                </template>
+                <button class="add-btn" @click="priceItems.push({description:'',isIncluded:true})">+ Dodaj pozycję</button>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-field">
+                <label>Nie w cenie</label>
+                <template x-for="(item, i) in priceItems.filter(p=>!p.isIncluded)" :key="i">
+                    <div class="price-item-row">
+                        <span class="included-tag no">–</span>
+                        <input type="text" x-model="item.description" placeholder="np. dojazd własny">
+                        <button class="remove-btn" style="position:static;" @click="priceItems.splice(priceItems.indexOf(item),1)">✕</button>
+                    </div>
+                </template>
+                <button class="add-btn" @click="priceItems.push({description:'',isIncluded:false})">+ Dodaj pozycję</button>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-field"><label>Polityka anulowania</label><textarea placeholder="np. zwrot zaliczki do 14 dni przed wyjazdem"></textarea></div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Panel mapy — modal, wielokrotnego użytku -->
+<div class="modal-backdrop" x-show="mapOpen" x-cloak @click.self="mapOpen=false">
+    <div class="modal-box">
+        <div class="map-panel-head">
+            <span>Kliknij na mapie, aby ustawić pin</span>
+            <button class="map-btn" @click="mapOpen=false">Zamknij</button>
+        </div>
+        <div id="picker-map"></div>
+    </div>
+</div>
+
+<div class="submit-row" style="flex-direction:column;align-items:flex-end;">
+    <div class="hint" x-show="isPaid && registrationType==='internal' && !billingComplete" style="color:var(--accent-dark);margin-bottom:8px;">
+        Nie można opublikować — uzupełnij dane rozliczeniowe w sekcji "Płatność i zapisy".
+    </div>
+    <div style="display:flex;gap:12px;">
+        <button class="btn btn-secondary">Zapisz jako szkic</button>
+        <button class="btn" :disabled="isPaid && registrationType==='internal' && !billingComplete" :style="(isPaid && registrationType==='internal' && !billingComplete) ? 'opacity:.45;cursor:not-allowed;' : ''">Opublikuj wydarzenie →</button>
+    </div>
+</div>
+</div>
+
+<script>
+function eventForm() {
+    return {
+        type: 'ustawka',
+        registrationType: 'internal',
+        externalUrl: '',
+        isPaid: false,
+        billingComplete: false, // w produkcji: wynik Models\OrganizerBilling::isComplete() dla zalogowanego organizatora
+        limitParticipants: false,
+        meetingPoint: { lat: null, lng: null, label: '' },
+        stages: [{ date:'', startLabel:'', startLat:null, startLng:null, endLabel:'', endLat:null, endLng:null, distanceKm:'', elevationM:'', surface:'asfalt', gpxLoaded:false }],
+        equipment: [{ name:'', mandatory:true }],
+        priceItems: [{ description:'', isIncluded:true }, { description:'', isIncluded:false }],
+        mapOpen: false,
+        mapTarget: null,
+        leafletMap: null,
+        leafletMarker: null,
+
+        init() {},
+
+        addStage() {
+            const prev = this.stages[this.stages.length - 1];
+            this.stages.push({
+                date:'',
+                startLabel: prev ? prev.endLabel : '', startLat: prev ? prev.endLat : null, startLng: prev ? prev.endLng : null,
+                endLabel:'', endLat:null, endLng:null,
+                distanceKm:'', elevationM:'', surface:'asfalt', gpxLoaded:false
+            });
+        },
+        removeStage(i) { this.stages.splice(i, 1); },
+
+        // Mock: w produkcji tu wchodzi realny parser GPX (dystans + suma przewyższeń z trackpointów)
+        loadGpx(i) {
+            this.stages[i].gpxLoaded = true;
+            this.stages[i].distanceKm = (Math.random() * 60 + 40).toFixed(1);
+            this.stages[i].elevationM = Math.round(Math.random() * 800 + 400);
+        },
+
+        openMap(kind, stageIndex, which) {
+            this.mapTarget = { kind, stageIndex, which };
+            this.mapOpen = true;
+            this.$nextTick(() => {
+                if (!this.leafletMap) {
+                    this.leafletMap = L.map('picker-map').setView([49.4, 22.4], 9); // okolice Bieszczad jako domyślny widok
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(this.leafletMap);
+                    this.leafletMap.on('click', (e) => this.setPin(e.latlng));
+                } else {
+                    this.leafletMap.invalidateSize();
+                }
+            });
+        },
+        setPin(latlng) {
+            if (this.leafletMarker) this.leafletMap.removeLayer(this.leafletMarker);
+            this.leafletMarker = L.marker(latlng).addTo(this.leafletMap);
+
+            const t = this.mapTarget;
+            if (t.kind === 'meetingPoint') {
+                this.meetingPoint.lat = latlng.lat; this.meetingPoint.lng = latlng.lng;
+                // Zbiórka to ten sam punkt co start pierwszego dnia
+                if (this.stages[0]) {
+                    this.stages[0].startLat = latlng.lat;
+                    this.stages[0].startLng = latlng.lng;
+                    if (!this.stages[0].startLabel) this.stages[0].startLabel = this.meetingPoint.label;
+                }
+            } else if (t.kind === 'stage') {
+                if (t.which === 'start') {
+                    this.stages[t.stageIndex].startLat = latlng.lat; this.stages[t.stageIndex].startLng = latlng.lng;
+                } else {
+                    this.stages[t.stageIndex].endLat = latlng.lat; this.stages[t.stageIndex].endLng = latlng.lng;
+                    // Meta dnia to start kolejnego dnia
+                    const next = this.stages[t.stageIndex + 1];
+                    if (next) {
+                        next.startLat = latlng.lat; next.startLng = latlng.lng;
+                        if (!next.startLabel) next.startLabel = this.stages[t.stageIndex].endLabel;
+                    }
+                }
+            }
+        }
+    };
+}
+</script>
+</body>
+</html>

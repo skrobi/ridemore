@@ -1,0 +1,172 @@
+{
+    "version": "1.0.0",
+    "last_updated": "2026-01-02T12:00:00Z",
+    "recipes": {
+        "hero_daily": {
+            "name": "Rekomendacja Dnia",
+            "description": "Hero card - najlepsza trasa w obszarze, rotacja daily",
+            "type": "single_route",
+            "active": true,
+            "include_cover_photo": true,
+            "filters": {
+                "visibility": ["public", "curated"],
+                "min_quality": 0,
+                "min_segment_count": 0,
+                "min_views_count": 10,
+                "bbox_required": false
+            },
+            "scoring": {
+                "formula": "(r.avg_edge_score * 0.5) + (COALESCE((SELECT COUNT(*) FROM challenge_routes cr WHERE cr.route_id = r.route_id), 0) * 0.03) + (COALESCE(rm.difficulty_score, 5) / 10 * 0.2)",
+                "randomization": {
+                    "enabled": true,
+                    "seed": "DAYOFYEAR(NOW())"
+                }
+            },
+            "limit": 1,
+            "include_challenges": true,
+            "include_geometry": true,
+            "cache_ttl": 3600
+        },
+
+        "top_quality": {
+            "name": "Top Jakość",
+            "description": "5 najlepszych tras według edge_score",
+            "type": "route_list",
+            "active": true,
+            "filters": {
+                "visibility": ["public", "curated"],
+                "min_views_count": 10,
+                "bbox_required": true
+            },
+            "sorting": [
+                {
+                    "field": "rm.views_count",
+                    "direction": "DESC"
+                }
+            ],
+            "limit": 5,
+            "include_challenges": true,
+            "include_geometry": false,
+            "cache_ttl": 600
+        },
+
+        "random_adventure": {
+            "name": "Losowa Przygoda",
+            "description": "Losowa trasa z quality gate",
+            "type": "single_route",
+            "active": true,
+            "filters": {
+                "visibility": ["public", "curated"],
+                "min_quality": 0.6,
+                "min_segment_count": 1,
+                "bbox_required": true
+            },
+            "scoring": {
+                "randomization": {
+                    "enabled": true,
+                    "seed": "UNIX_TIMESTAMP()"
+                }
+            },
+            "limit": 1,
+            "include_challenges": true,
+            "include_geometry": true,
+            "cache_ttl": 0
+        },
+
+        "recent_routes": {
+            "name": "Najnowsze Trasy",
+            "description": "Ostatnio dodane trasy w obszarze",
+            "type": "route_list",
+            "active": true,
+            "filters": {
+                "visibility": ["public", "curated"],
+                "bbox_required": true
+            },
+            "sorting": [
+                {
+                    "field": "r.created_at",
+                    "direction": "DESC"
+                }
+            ],
+            "limit": 5,
+            "include_challenges": false,
+            "include_geometry": false,
+            "cache_ttl": 300
+        },
+
+        "for_ambitious": {
+            "name": "Dla Ambitnych",
+            "description": "Najtrudniejsze trasy w obszarze",
+            "type": "route_list",
+            "active": true,
+            "filters": {
+                "visibility": ["public", "curated"],
+                "difficulty_level": ["hard", "extreme"],
+                "bbox_required": true
+            },
+            "sorting": [
+                {
+                    "field": "rm.route_id",
+                    "direction": "DESC"
+                }
+            ],
+            "limit": 5,
+            "include_challenges": false,
+            "include_geometry": false,
+            "cache_ttl": 600
+        },
+
+        "hidden_gems": {
+            "name": "Ukryte Skarby",
+            "description": "Wysokiej jakości trasy z małą popularnością",
+            "type": "route_list",
+            "active": true,
+            "filters": {
+                "visibility": ["public", "curated"],
+                "min_quality": 0.75,
+                "max_views": 20,
+                "bbox_required": true,
+                "or_conditions": [
+                    "r.created_at > NOW() - INTERVAL 60 DAY",
+                    "(SELECT COUNT(*) FROM challenge_routes cr WHERE cr.route_id = r.route_id) = 0"
+                ]
+            },
+            "sorting": [
+                {
+                    "field": "r.avg_edge_score",
+                    "direction": "DESC"
+                }
+            ],
+            "limit": 2,
+            "include_challenges": false,
+            "include_geometry": false,
+            "cache_ttl": 1800
+        },
+
+        "trending": {
+            "name": "Gorące Teraz",
+            "description": "Wzrost popularności w ostatnich 24h",
+            "type": "route_list",
+            "active": false,
+            "note": "Wymaga views tracking - aktywuj gdy będzie więcej danych",
+            "filters": {
+                "visibility": ["public", "curated"],
+                "min_quality": 0.6
+            },
+            "scoring": {
+                "formula": "(COALESCE(rm.views_count, 0) / NULLIF((SELECT views_count FROM routes_meta WHERE route_id = r.route_id LIMIT 1), 0)) * r.avg_edge_score",
+                "having": "trend_score > 1.5"
+            },
+            "sorting": [
+                {
+                    "field": "trend_score",
+                    "direction": "DESC"
+                }
+            ],
+            "limit": 3,
+            "include_challenges": false,
+            "include_geometry": false,
+            "cache_ttl": 300
+        }
+    }
+}

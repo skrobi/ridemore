@@ -1,0 +1,15 @@
+# Katalog wewnętrzny aplikacji — nigdy nie powinien być dostępny przez HTTP.
+# Trzyma: logi poczty (mail.log / mail-error.log), liczniki rate-limit
+# (ratelimit/) oraz pliki sesji PHP (sessions/, sess_* — wrażliwe dane
+# zalogowanych userów, patrz core/bootstrap.php). Bez tej blokady request na
+# /storage/... trafiałby wprost w te pliki (RewriteCond !-f w głównym
+# .htaccess przepuszcza istniejące pliki). Blokada w obu składniach Apache
+# (2.4 mod_authz_core i 2.2 mod_access_compat) — ten sam wzorzec co blokada
+# skryptów administracyjnych w głównym .htaccess, pod różne hostingi.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

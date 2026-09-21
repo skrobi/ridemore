@@ -1,0 +1,38 @@
+-- migration_065_route_elevation_profile.sql
+-- Profil wysokosci znanej trasy — pod wykres na stronie /trasy/{slug}.
+--
+-- POWOD (zgloszenie usera 2026-08-20): strona trasy nie mowila o trasie prawie
+-- niczego. Dystans byl w podtytule, przewyzszenie jedna liczba, a „jaki jest
+-- profil" — czyli gdzie sa podjazdy, ktore decyduja o tym, czy w ogole tam
+-- jade — nie bylo widac wcale. Wykres profilu istnial w serwisie od dawna
+-- (event_stages.elevation_profile + ridemoreRenderElevationChart), tylko znane
+-- trasy nie mialy gdzie trzymac danych.
+--
+-- TA SAMA KOLUMNA I TEN SAM KSZTALT CO W `event_stages` (i w
+-- `event_route_variants`): JSON z ok. 50 probek {d, e, lat, lon}, liczony przez
+-- Utils\Gpx::sampleProfile() przy parsowaniu pliku. Nie nowy mechanizm, tylko
+-- ten sam byt dopiety do drugiego wlasciciela — dzieki temu wykres, szczyty
+-- (Gpx::detectPeaks liczone NA ZADANIE z tych probek) i synchronizacja
+-- „najedz na wykres → pinezka na mapie" dzialaja bez ani jednej nowej linii
+-- w JS.
+--
+-- DLACZEGO KOLUMNA, A NIE PARSOWANIE PRZY WEJSCIU NA STRONE: dokladnie ten sam
+-- powod, ktory zapisano przy migracji 063. Parsowanie pliku GPX to ok. 30 ms
+-- i pelny odczyt z dysku PRZY KAZDYM WEJSCIU na strone trasy, a trasa jest
+-- w tym serwisie bytem docelowym dla wyszukiwarek — ma byc tania.
+--
+-- NULL ZNACZY „NIE POLICZONO" i strona po prostu nie pokazuje wykresu (tak samo
+-- jak etap wydarzenia bez profilu). Zaden ekran nie przestaje dzialac przed
+-- backfillem.
+--
+-- BACKFILL ROBI `run_migrations.php` zaraz po tej migracji — ta sama metoda,
+-- ktora dopisala przewyzszenia po migr. 063 (`KnownRoute::backfillElevation`),
+-- bo i tak parsuje ten sam plik. Metoda sprawdza, czy ta kolumna juz istnieje,
+-- wiec jest bezpieczna takze przy pierwszym przebiegu na czystej bazie, gdzie
+-- wola sie ja RAZ po 063, zanim ten plik zostanie wykonany.
+--
+-- URUCHOMIENIE (prod): php run_migrations.php
+-- Lokalnie: mysql -u USER -p ridemorebike2 < migration_065_route_elevation_profile.sql
+
+ALTER TABLE known_routes
+    ADD COLUMN elevation_profile LONGTEXT NULL AFTER elevation_gain_m;

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ridemore.bike — Discovery</title>
+<style>
+:root{
+  --bg:#f7f7f3; --card:#fff; --ink:#18221d; --muted:#68716c;
+  --line:#dfe3de; --green:#2d7258; --green2:#79ad75;
+  --yellow:#f0c85a; --orange:#e89555; --red:#df6657;
+  --shadow:0 2px 12px rgba(20,30,25,.07);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button{font:inherit}
+.header{height:58px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;padding:0 28px;gap:30px}
+.logo{font-weight:800;font-size:18px;letter-spacing:-.6px;margin-right:auto}.logo span{color:#2d7258}
+.nav{display:flex;gap:26px;font-size:13px;color:#4f5953}.nav a.active{color:#17221c;font-weight:700;border-bottom:2px solid #d8a92e;padding:21px 0}
+.user{border:1px solid #d5dad5;border-radius:22px;padding:8px 13px;background:#fff;font-size:12px}
+.page{max-width:1500px;margin:auto;padding:25px 30px 50px}
+.crumb{font-size:10px;letter-spacing:1.5px;color:#7a827d;text-transform:uppercase;margin:5px 0 14px}
+.hero{display:grid;grid-template-columns:1.65fr .95fr;gap:22px;align-items:stretch}
+h1{font-size:45px;line-height:1.02;margin:0 0 10px;letter-spacing:-2px}
+.hero p{font-size:15px;color:var(--muted);line-height:1.45;max-width:720px;margin:0 0 17px}
+.actions{display:flex;gap:10px}.btn{border:1px solid #d1d7d1;background:#fff;border-radius:22px;padding:10px 17px;font-weight:650;font-size:12px}.btn.primary{background:#2f745b;color:#fff;border-color:#2f745b}
+.socialHero{border-radius:18px;overflow:hidden;position:relative;min-height:145px;background:linear-gradient(130deg,rgba(8,27,20,.85),rgba(34,61,43,.72)),url('https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1000&q=80') center/cover;color:#fff;padding:22px}
+.socialHero small{font-size:10px;letter-spacing:1.2px;opacity:.8}.socialHero strong{display:block;font-size:30px;margin:5px 0}.socialHero p{color:#fff;font-size:12px;margin:0 0 15px}.socialHero .btn{background:#fff;color:#17221c;border:0}
+.faces{position:absolute;right:18px;bottom:18px;display:flex}.face{width:32px;height:32px;border:2px solid #fff;border-radius:50%;margin-left:-7px;background:#ddd center/cover}
+.stats{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:17px;display:grid;grid-template-columns:repeat(5,1fr);box-shadow:var(--shadow)}
+.stat{padding:18px 20px;border-right:1px solid var(--line)}.stat:last-child{border:0}.label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#7b837e}.value{font-size:25px;font-weight:800;margin:5px 0}.sub{font-size:11px;color:#707973}.ring{float:right;width:43px;height:43px;border:6px solid #e5e8e4;border-top-color:#2d8c69;border-right-color:#2d8c69;border-radius:50%}
+.section{margin-top:28px}.sectionTitle{display:flex;align-items:end;justify-content:space-between;margin-bottom:12px}.sectionTitle h2{font-size:22px;margin:0;letter-spacing:-.7px}.link{font-size:12px;color:#2d7258;font-weight:700}
+.tabs{display:flex;gap:8px;margin-bottom:10px}.tab{border:1px solid #d3d9d3;background:#fff;border-radius:18px;padding:8px 14px;font-size:12px}.tab.active{background:#2d7258;color:#fff;border-color:#2d7258}
+.mapWrap{background:#fff;border:1px solid var(--line);border-radius:18px;padding:8px;box-shadow:var(--shadow)}
+.map{height:510px;border-radius:12px;overflow:hidden;position:relative;background:
+  linear-gradient(rgba(232,238,233,.78),rgba(232,238,233,.78)),
+  repeating-linear-gradient(30deg,transparent 0 72px,rgba(125,145,130,.18) 73px 74px),
+  repeating-linear-gradient(150deg,transparent 0 110px,rgba(125,145,130,.12) 111px 112px),
+  #cfd7d0}
+.map:before{content:"";position:absolute;inset:0;background:
+ radial-gradient(circle at 23% 37%,rgba(124,157,118,.45) 0 13%,transparent 14%),
+ radial-gradient(circle at 72% 58%,rgba(124,157,118,.38) 0 15%,transparent 16%),
+ radial-gradient(circle at 47% 78%,rgba(124,157,118,.35) 0 11%,transparent 12%);}
+.grid{position:absolute;inset:0;overflow:hidden}
+.hex{position:absolute;width:62px;height:54px;clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%);background:rgba(190,195,192,.58);border:1px solid rgba(255,255,255,.55);opacity:.9}
+.hex.g{background:rgba(91,169,105,.66)}.hex.y{background:rgba(239,194,72,.72)}.hex.o{background:rgba(226,132,70,.78)}.hex.r{background:rgba(218,82,68,.82)}
+.route{position:absolute;height:5px;background:#1593e5;border-radius:6px;transform-origin:left center;box-shadow:0 0 0 2px rgba(255,255,255,.55)}
+.route.r1{left:12%;top:64%;width:61%;transform:rotate(-19deg)}.route.r2{left:52%;top:50%;width:31%;transform:rotate(72deg)}
+.mapLabel{position:absolute;font-weight:650;color:#3c4841;font-size:14px;text-shadow:0 1px #fff}
+.mapPanel{position:absolute;right:18px;top:18px;width:265px;background:rgba(255,255,255,.96);border:1px solid #e1e5e0;border-radius:15px;padding:17px;box-shadow:0 8px 25px rgba(30,40,35,.12)}
+.mapPanel h3{margin:0 0 12px;font-size:14px}.event{display:grid;grid-template-columns:27px 1fr;gap:9px;padding:10px 0;border-top:1px solid #e8ebe7;font-size:11px}.icon{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:#edf4ef}.event b{font-size:12px}.event span{display:block;color:#6d756f;margin-top:3px}.progress{height:5px;background:#e5e9e5;border-radius:4px;margin-top:7px;overflow:hidden}.progress i{display:block;height:100%;background:#2d8b68;border-radius:4px}
+.legend{position:absolute;left:17px;bottom:18px;background:rgba(255,255,255,.94);border-radius:12px;padding:10px 13px;font-size:10px;border:1px solid #e2e6e1}.legend .sw{display:inline-block;width:18px;height:10px;margin:0 4px 0 10px;border-radius:2px;vertical-align:middle}.sw.gray{background:#c8ccca}.sw.green{background:#6da871}.sw.yellow{background:#eac451}.sw.orange{background:#e58b54}.sw.red{background:#d95d51}
+.mapBottom{display:flex;justify-content:space-between;align-items:center;padding:10px 8px 3px;font-size:11px;color:#6d756f}.mapBottom a{color:#2d7258;font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.trail{background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:var(--shadow)}.trailImg{height:93px;background:center/cover}.trailBody{padding:12px}.trailName{font-weight:750;font-size:13px}.trailMeta{font-size:10px;color:#727a75;margin:4px 0 8px}.trailFoot{display:flex;justify-content:space-between;font-size:10px;font-weight:700}.bar{height:5px;background:#e6e9e6;border-radius:4px;margin-top:7px}.bar i{display:block;height:100%;background:#328463;border-radius:4px}
+.three{display:grid;grid-template-columns:1.05fr 1fr .9fr;gap:12px}.box{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px;box-shadow:var(--shadow)}.box h3{margin:0 0 11px;font-size:15px}.row{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid #e9ece8;font-size:11px}.row small{color:#7a817d}.goal{margin:12px 0}.goalLine{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px}.goal .bar i{background:#2d7258}
+.cta{margin-top:18px;background:#fff3d5;border:1px solid #eedba7;border-radius:15px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}.cta h3{margin:0 0 4px;font-size:16px}.cta p{margin:0;color:#6d6755;font-size:11px}
+@media(max-width:1000px){.hero{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2n){border-right:0}.cards{grid-template-columns:repeat(2,1fr)}.three{grid-template-columns:1fr}.mapPanel{width:230px}.nav{display:none}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo">🚲 <span>ridemore</span>.bike</div>
+  <nav class="nav"><a>Wydarzenia</a><a>Puls</a><a class="active">Odkrycia</a><a>Organizatorzy</a><a>Moje wydarzenia (8)</a></nav>
+  <div>✉️　🔔</div><button class="user">Test Rowerzysta⌄</button>
+</header>
+
+<main class="page">
+  <div class="crumb">STRONA GŁÓWNA　/　RIDEMORE DISCOVERY</div>
+  <section class="hero">
+    <div>
+      <h1>Odkrywaj świat na rowerze</h1>
+      <p>Każdy Twój przejazd odkrywa nowe miejsca na mapie. Zbieraj punkty, zaliczaj trasy i odkrywaj razem z innymi riderami.</p>
+      <div class="actions"><button class="btn primary">Moje odkrycia</button><button class="btn">Znajdź wyjazd</button></div>
+    </div>
+    <div class="socialHero">
+      <small>RAZEM ODKRYLIŚMY</small><strong>12 456 pól</strong><p>W tym miesiącu społeczność ridemore odkryła 1 284 nowe pola.</p><button class="btn">Zobacz aktywność społeczności</button>
+      <div class="faces"><div class="face" style="background-image:url('https://i.pravatar.cc/80?img=12')"></div><div class="face" style="background-image:url('https://i.pravatar.cc/80?img=32')"></div><div class="face" style="background-image:url('https://i.pravatar.cc/80?img=47')"></div></div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="label">Twoje odkrycia</div><div class="value">383 pól <span class="ring"></span></div><div class="sub">3,2% Polski</div></div>
+    <div class="stat"><div class="label">Punkty</div><div class="value">24 560</div><div class="sub">+1 250 w tym tygodniu</div></div>
+    <div class="stat"><div class="label">Znane trasy</div><div class="value">12 / 47</div><div class="sub">ukończonych</div></div>
+    <div class="stat"><div class="label">Regiony</div><div class="value">5 / 16</div><div class="sub">odkrytych</div></div>
+    <div class="stat"><div class="label">Następna nagroda</div><div class="value">Explorer I</div><div class="sub">brakuje 440 pkt</div></div>
+  </section>
+
+  <section class="section">
+    <div class="sectionTitle"><h2>Twoja mapa odkryć</h2><div class="link">Jak to działa →</div></div>
+    <div class="tabs"><button class="tab active" onclick="setMap('personal')">Mapa osobista</button><button class="tab" onclick="setMap('community')">Mapa społeczności</button><button class="btn" style="margin-left:auto">⚙ Filtry</button><button class="btn">Polska⌄</button></div>
+    <div class="mapWrap">
+      <div class="map">
+        <div class="grid" id="hexes"></div>
+        <div class="route r1"></div><div class="route r2"></div>
+        <div class="mapLabel" style="left:9%;top:70%">Tarnów</div><div class="mapLabel" style="left:42%;top:58%">Dębica</div><div class="mapLabel" style="left:75%;top:69%">Rzeszów</div><div class="mapLabel" style="left:55%;top:36%">Tarnobrzeg</div><div class="mapLabel" style="left:79%;top:51%">Kolbuszowa</div>
+        <aside class="mapPanel"><h3>Ostatnia aktywność</h3>
+          <div class="event"><div class="icon">🚲</div><div><b>+12 pól</b><span>okolice Tarnobrzega</span></div></div>
+          <div class="event"><div class="icon">🏆</div><div><b>Zaliczyłeś fragment trasy</b><span>Velo Czorsztyn</span><div class="progress"><i style="width:72%"></i></div></div></div>
+          <div class="event"><div class="icon">📍</div><div><b>Odkryty punkt widokowy</b><span>Góra Pieprzowa</span></div></div>
+          <div class="event"><div class="icon">⭐</div><div><b>+240 pkt</b><span>łącznie dzisiaj</span></div></div>
+          <button class="btn" style="width:100%;margin-top:5px">Zobacz szczegóły</button>
+        </aside>
+        <div class="legend"><b>Poziom odkrycia pól</b><br><span class="sw gray"></span>Nieodkryte <span class="sw green"></span>Odkryte <span class="sw yellow"></span>Odkryte rzadko <span class="sw orange"></span>Popularne <span class="sw red"></span>Bardzo popularne</div>
+      </div>
+      <div class="mapBottom"><span>◉ Szare pola czekają na odkrycie. Jedź, zapisuj przejazdy i odkrywaj świat razem z innymi.</span><a>Jak to działa? →</a></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sectionTitle"><h2>Znane trasy</h2><div class="link">Zobacz wszystkie trasy →</div></div>
+    <div class="cards">
+      <div class="trail"><div class="trailImg" style="background-image:url('https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80')"></div><div class="trailBody"><div class="trailName">Velo Czorsztyn</div><div class="trailMeta">98 km</div><div class="trailFoot"><span>72%</span><span>+560 pkt</span></div><div class="bar"><i style="width:72%"></i></div></div></div>
+      <div class="trail"><div class="trailImg" style="background-image:url('https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80&sat=-25')"></div><div class="trailBody"><div class="trailName">Velo Dunajec</div><div class="trailMeta">237 km</div><div class="trailFoot"><span>24%</span><span>+320 pkt</span></div><div class="bar"><i style="width:24%"></i></div></div></div>
+      <div class="trail"><div class="trailImg" style="background-image:url('https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80')"></div><div class="trailBody"><div class="trailName">Green Velo</div><div class="trailMeta">2 000 km</div><div class="trailFoot"><span>8%</span><span>+180 pkt</span></div><div class="bar"><i style="width:8%"></i></div></div></div>
+      <div class="trail"><div class="trailImg" style="background-image:url('https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80')"></div><div class="trailBody"><div class="trailName">Szutry Śląskie</div><div class="trailMeta">150 km</div><div class="trailFoot"><span>100%</span><span>+1 000 pkt</span></div><div class="bar"><i style="width:100%"></i></div></div></div>
+      <div class="trail"><div class="trailImg" style="background-image:url('https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80')"></div><div class="trailBody"><div class="trailName">Pętla Bieszczadzka</div><div class="trailMeta">135 km</div><div class="trailFoot"><span>45%</span><span>+380 pkt</span></div><div class="bar"><i style="width:45%"></i></div></div></div>
+    </div>
+  </section>
+
+  <section class="section three">
+    <div class="box"><h3>Odkrycia w pobliżu <span class="link" style="float:right">Zobacz więcej →</span></h3>
+      <div class="row"><div>❓ <b>Schronisko PTTK w Turbaczu</b><br><small>12 km od Ciebie</small></div><small>Nieodkryte</small></div>
+      <div class="row"><div>📷 <b>Punkt widokowy na Jezioro Solińskie</b><br><small>27 km od Ciebie</small></div><small>Odkryte przez 23 riderów</small></div>
+      <div class="row"><div>❓ <b>Przełęcz Beskid</b><br><small>15 km od Ciebie</small></div><small>Nieodkryte</small></div>
+    </div>
+    <div class="box"><h3>Aktywność znajomych <span class="link" style="float:right">Zobacz wszystkich →</span></h3>
+      <div class="row"><div>👨🏻 <b>Michał K.</b><br><small>odkrył 34 nowe pola w okolicach Krosna</small></div><small>2 godz. temu</small></div>
+      <div class="row"><div>👩🏻 <b>Ania R.</b><br><small>ukończyła trasę Velo Czorsztyn</small></div><small>🏅</small></div>
+      <div class="row"><div>🚵 <b>Gravel Team</b><br><small>odkrył nowy region: Pogórze Dynowskie</small></div><small>Wczoraj</small></div>
+    </div>
+    <div class="box"><h3>Twoje cele <span class="link" style="float:right">Edytuj cele</span></h3>
+      <div class="goal"><div class="goalLine"><b>Odkryj 500 nowych pól</b><span>383 / 500</span></div><div class="bar"><i style="width:77%"></i></div></div>
+      <div class="goal"><div class="goalLine"><b>Ukończ 5 tras</b><span>3 / 5</span></div><div class="bar"><i style="width:60%"></i></div></div>
+      <div class="goal"><div class="goalLine"><b>Odkryj 3 regiony</b><span>2 / 3</span></div><div class="bar"><i style="width:67%"></i></div></div>
+      <button class="btn" style="width:100%">Zobacz wszystkie cele</button>
+    </div>
+  </section>
+
+  <div class="cta"><div><h3>Odkrywaj razem z innymi</h3><p>Dołącz do wydarzenia i jedź z innymi riderami. Razem odkrywamy więcej.</p></div><button class="btn primary">Znajdź wydarzenie</button></div>
+</main>
+
+<script>
+const grid=document.getElementById('hexes');
+const colors=['','g','y','o','r'];
+for(let row=0;row<9;row++){
+  for(let col=0;col<19;col++){
+    const h=document.createElement('div');
+    h.className='hex '+(Math.random()<.52?colors[0]:colors[1+Math.floor(Math.random()*4)]);
+    h.style.left=(col*57 + (row%2)*29 - 15)+'px';
+    h.style.top=(row*48 - 5)+'px';
+    if(Math.random()<.48) h.style.background='rgba(190,195,192,.52)';
+    grid.appendChild(h);
+  }
+}
+function setMap(type){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if(type==='community'){
+    document.querySelectorAll('.hex').forEach(h=>{
+      const r=Math.random();
+      h.className='hex '+(r<.35?'':r<.62?'g':r<.82?'y':r<.94?'o':'r');
+    });
+  }
+}
+</script>
+</body>
+</html>

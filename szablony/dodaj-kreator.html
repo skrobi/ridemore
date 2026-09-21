@@ -1,0 +1,688 @@
+<!-- /wydarzenia/nowe.html — ridemore.bike — kreator dodawania wyjazdu -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dodaj wyjazd — ridemore.bike</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F5F1;--card:#FFF;--tint:#EDF1EC;--line:#E2E5DD;--line-2:#D3D8CE;
+  --ink:#15201A;--tx-2:#55605A;--tx-3:#7E8880;
+  --pine:#1E4B38;--pine-2:#2C6B4F;--blaze:#FFC93F;
+  --s-red:#C3382F;--s-blue:#2B57C8;--s-green:#2E7D4F;
+  --f-d:"Archivo",system-ui,sans-serif;--f-b:"Instrument Sans",system-ui,sans-serif;--f-m:"IBM Plex Mono",monospace;
+  --gut:clamp(1rem,4vw,2rem);--e:cubic-bezier(.22,.61,.36,1);
+  --sh:0 1px 2px rgba(21,32,26,.04),0 12px 28px -22px rgba(21,32,26,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+/* 18px bazy — czytelność dla oka 50+ */
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-b);font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:110px}
+h1,h2{font-family:var(--f-d);font-weight:700;margin:0;line-height:1.14;font-variation-settings:"wdth" 110;letter-spacing:-.02em}
+p{margin:0}a{color:inherit}
+:focus-visible{outline:3px solid var(--pine);outline-offset:3px;border-radius:8px}
+.wrap{max-width:720px;margin:0 auto;padding-inline:var(--gut)}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-family:var(--f-b);font-weight:600;font-size:1.05rem;
+  min-height:54px;padding:.7rem 1.6rem;border-radius:999px;border:1px solid transparent;text-decoration:none;cursor:pointer;transition:.18s var(--e)}
+.btn--pine{background:var(--pine);color:#fff}.btn--pine:hover{background:var(--pine-2)}
+.btn--ghost{border-color:var(--line-2);background:var(--card);color:var(--ink)}.btn--ghost:hover{border-color:var(--ink)}
+.btn--wide{width:100%}
+.lnk{background:none;border:0;font:inherit;font-size:1rem;color:var(--tx-2);text-decoration:underline;text-underline-offset:4px;cursor:pointer;padding:.4rem 0}
+.lnk:hover{color:var(--ink)}
+
+/* Header */
+.hdr{background:var(--card);border-bottom:1px solid var(--line)}
+.hdr__in{display:flex;align-items:center;gap:1rem;height:60px;max-width:720px;margin:0 auto;padding-inline:var(--gut)}
+.logo{font-family:var(--f-d);font-weight:800;font-variation-settings:"wdth" 100;font-size:1.05rem;letter-spacing:-.03em;text-decoration:none;display:flex;align-items:center;gap:.5rem}
+.logo b{color:var(--pine)}
+.logo .mark{width:12px;height:20px;border-radius:2px;background:linear-gradient(var(--card) 0 33.3%,var(--blaze) 33.3% 66.6%,var(--card) 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.15)}
+.hdr__x{margin-left:auto;font-size:.95rem;color:var(--tx-2);text-decoration:none}
+
+/* ===== KROK 0 ===== */
+.pick{padding-block:2.2rem 3rem}
+.pick h1{font-size:clamp(1.8rem,6vw,2.5rem);font-variation-settings:"wdth" 114}
+.pick__l{margin-top:.7rem;color:var(--tx-2);font-size:1.05rem}
+.pk{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--bz);
+  border-radius:16px;padding:1.2rem 1.3rem;margin-top:.85rem;cursor:pointer;font:inherit;color:inherit;transition:.18s var(--e);box-shadow:var(--sh)}
+.pk:hover{transform:translateY(-2px);border-color:var(--bz);border-left-color:var(--bz)}
+.pk h2{font-size:1.35rem;margin-bottom:.3rem}
+.pk p{color:var(--tx-2);font-size:1rem}
+.pk__m{margin-top:.7rem;display:flex;gap:1rem;flex-wrap:wrap;font-family:var(--f-m);font-size:.8rem;color:var(--tx-3)}
+.pk__m b{color:var(--bz);font-weight:500}
+
+/* ===== PASEK POSTĘPU ===== */
+.bar{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:1px solid var(--line)}
+.bar__in{max-width:720px;margin:0 auto;padding:.75rem var(--gut) .8rem}
+.bar__t{display:flex;align-items:center;gap:.7rem;font-size:.95rem;color:var(--tx-2);margin-bottom:.5rem}
+.bar__t b{color:var(--ink);font-weight:600}
+.bar__ty{display:inline-flex;align-items:center;gap:.4rem;margin-left:auto;font-size:.88rem;color:var(--tx-2)}
+.bar__ty i{width:11px;height:17px;border-radius:2px;display:block;background:linear-gradient(#fff 0 33.3%,var(--bz) 33.3% 66.6%,#fff 66.6% 100%);box-shadow:inset 0 0 0 1px rgba(21,32,26,.15)}
+.bar__p{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar__p i{display:block;height:100%;background:var(--pine);width:20%;transition:width .3s var(--e)}
+
+/* ===== KROK ===== */
+.step{padding-block:2rem 1rem}
+.step h1{font-size:clamp(1.5rem,5vw,2.1rem);font-variation-settings:"wdth" 112}
+.step__l{margin-top:.6rem;color:var(--tx-2);font-size:1.02rem}
+.fields{margin-top:1.6rem;display:grid;gap:1.3rem}
+.fl{display:grid;gap:.45rem}
+/* Etykieta: normalne zdanie, nie wersaliki — kształt słowa zostaje czytelny */
+.fl > span{font-size:1rem;font-weight:600}
+.fl small{font-size:.92rem;color:var(--tx-3);font-weight:400}
+input[type=text],input[type=email],input[type=date],input[type=time],input[type=number],textarea,select{
+  font:inherit;font-size:1.05rem;min-height:54px;padding:.75rem .9rem;border:1.5px solid var(--line-2);border-radius:12px;background:var(--card);color:var(--ink);width:100%}
+textarea{min-height:130px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--pine);box-shadow:0 0 0 3px rgba(30,75,56,.12)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+@media(max-width:520px){.two{grid-template-columns:1fr}}
+
+/* Kafelki zamiast list rozwijanych */
+.tiles{display:grid;gap:.6rem}
+.tiles--2{grid-template-columns:1fr 1fr}
+.tiles--3{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+@media(max-width:520px){.tiles--2,.tiles--3{grid-template-columns:1fr}}
+.tile{display:flex;align-items:center;gap:.75rem;min-height:60px;padding:.8rem 1rem;background:var(--card);
+  border:1.5px solid var(--line-2);border-radius:12px;cursor:pointer;font:inherit;font-size:1.02rem;text-align:left;transition:.15s var(--e);color:inherit}
+.tile:hover{border-color:var(--pine)}
+.tile input{width:22px;height:22px;accent-color:var(--pine);margin:0;flex:none}
+.tile[aria-pressed="true"],.tile.on{border-color:var(--pine);background:#F1F6F2}
+.tile b{display:block;font-weight:600}
+.tile small{display:block;color:var(--tx-3);font-size:.9rem;line-height:1.35}
+
+/* Duże pole akcji (mapa, plik) */
+.big{display:flex;align-items:center;gap:.85rem;width:100%;min-height:64px;padding:.9rem 1.1rem;background:var(--card);
+  border:1.5px dashed var(--line-2);border-radius:12px;cursor:pointer;font:inherit;font-size:1.02rem;color:var(--tx-2);text-align:left;transition:.15s var(--e)}
+.big:hover{border-color:var(--pine);color:var(--pine)}
+.big.done{border-style:solid;border-color:var(--s-green);background:#F2F8F3;color:var(--ink)}
+.big svg{flex:none;color:currentColor}
+.big small{display:block;color:var(--tx-3);font-size:.9rem}
+
+/* „Możesz pominąć" */
+.opt{margin-top:.5rem}
+.opt__b{display:flex;align-items:center;gap:.6rem;width:100%;min-height:56px;padding:.7rem 1.1rem;background:none;
+  border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font:inherit;font-size:1rem;color:var(--tx-2);text-align:left}
+.opt__b:hover{border-color:var(--pine);color:var(--pine)}
+.opt__b em{font-style:normal;margin-left:auto;font-size:.9rem;color:var(--tx-3)}
+.opt__c{margin-top:1rem;display:grid;gap:1.2rem;padding-left:.2rem;border-left:3px solid var(--line);padding-left:1rem}
+
+/* Dzień */
+.day{background:var(--card);border:1.5px solid var(--line);border-left:5px solid var(--dc);border-radius:14px;padding:1.1rem;margin-bottom:.8rem}
+.day__h{display:flex;align-items:center;gap:.7rem;margin-bottom:.9rem}
+.day__n{font-family:var(--f-d);font-weight:700;font-size:1.15rem;color:var(--dc)}
+.day__x{margin-left:auto;background:none;border:0;color:var(--tx-3);cursor:pointer;font-size:1.4rem;line-height:1;padding:.2rem .4rem;border-radius:8px}
+.day__x:hover{color:var(--s-red);background:var(--tint)}
+.day .fields{margin-top:0;gap:.9rem}
+
+/* Wiersz listy */
+.lr{display:flex;gap:.5rem;align-items:center;margin-bottom:.55rem}
+.lr input{flex:1}
+.lr button{background:none;border:0;color:var(--tx-3);cursor:pointer;font-size:1.4rem;padding:.2rem .5rem;border-radius:8px;min-height:44px}
+.lr button:hover{color:var(--s-red);background:var(--tint)}
+.addr{background:none;border:1.5px dashed var(--line-2);border-radius:999px;font:inherit;font-size:.98rem;color:var(--tx-2);padding:.6rem 1.2rem;cursor:pointer;min-height:48px}
+.addr:hover{border-color:var(--pine);color:var(--pine)}
+
+/* Info / ostrzeżenie */
+.note{padding:1rem 1.15rem;border-radius:12px;background:var(--tint);border:1px solid var(--line);font-size:1rem;color:var(--tx-2)}
+.note b{color:var(--ink)}
+.warn{padding:1rem 1.15rem;border-radius:12px;background:#FFF8E2;border:1px solid #F3E1A8;font-size:1rem}
+.warn b{display:block;margin-bottom:.3rem}
+
+/* ===== PODSUMOWANIE ===== */
+.sum{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--sh);margin-top:1.4rem}
+.sum__r{display:flex;gap:1rem;align-items:baseline;padding:.95rem 1.15rem;border-bottom:1px solid var(--line)}
+.sum__r:last-child{border-bottom:0}
+.sum__k{flex:0 0 34%;color:var(--tx-3);font-size:.95rem}
+.sum__v{flex:1;font-weight:500}
+.sum__v.empty{color:var(--tx-3);font-weight:400}
+.sum__r .lnk{font-size:.92rem;flex:none}
+.pv{margin-top:1.4rem;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--sh)}
+.pv__h{padding:.75rem 1.15rem;border-bottom:1px solid var(--line);font-size:.95rem;color:var(--tx-3)}
+.pv__c{padding:1.15rem}
+.pvc{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pvc__v{height:130px;background:linear-gradient(180deg,#B9CBD4 0%,#D8DFD5 32%,#8FA377 35%,#4B6540 68%,#2A3B2E 100%);position:relative}
+.pvc__f{position:absolute;top:.6rem;left:.6rem;display:inline-flex;align-items:center;gap:.4rem;font-family:var(--f-m);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;background:var(--card);border:1px solid var(--line);padding:.25rem .55rem .25rem .3rem;border-radius:999px}
+.pvc__f i{width:9px;height:14px;border-radius:1px;display:block;background:linear-gradient(#fff 0 33.3%,var(--bz) 33.3% 66.6%,#fff 66.6% 100%)}
+.pvc__b{padding:.85rem 1rem 1rem}
+.pvc__t{font-family:var(--f-d);font-weight:700;font-size:1.1rem;line-height:1.2}
+.pvc__d{font-family:var(--f-m);font-size:.85rem;color:var(--tx-2);margin-top:.35rem}
+.pvc__p{font-family:var(--f-m);font-size:.85rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--line);color:var(--s-green)}
+
+/* Dopasowania — tylko na podsumowaniu i tylko gdy są dane */
+.ms{margin-top:1.4rem;background:var(--pine);color:#fff;border-radius:16px;padding:1.15rem}
+.ms h2{font-size:1.15rem;color:#fff;margin-bottom:.2rem}
+.ms > p{color:rgba(255,255,255,.78);font-size:.98rem}
+.msc{background:var(--card);color:var(--ink);border-radius:12px;padding:.9rem 1rem;margin-top:.9rem}
+.msc__w{font-size:.88rem;color:var(--tx-3)}
+.msc__t{font-family:var(--f-d);font-weight:700;font-size:1.12rem;margin:.25rem 0 .2rem}
+.msc__m{font-family:var(--f-m);font-size:.85rem;color:var(--tx-2)}
+.msc__r{display:flex;align-items:center;gap:.6rem;margin-top:.65rem;padding:.55rem .8rem;background:var(--tint);border-radius:10px}
+.msc__r b{font-family:var(--f-d);font-size:1.5rem;line-height:1;color:var(--pine)}
+.msc__r span{font-size:.92rem;color:var(--tx-2)}
+.msc__a{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-top:.8rem}
+.msc__a .lnk{margin-left:auto}
+
+/* ===== PASEK NAWIGACJI ===== */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--card);border-top:1px solid var(--line-2);box-shadow:0 -8px 24px -20px rgba(21,32,26,.55)}
+.nav__in{max-width:720px;margin:0 auto;padding:.75rem var(--gut);display:flex;align-items:center;gap:.7rem}
+.nav__in .btn--pine{flex:1}
+.save{text-align:center;font-size:.85rem;color:var(--tx-3);padding-bottom:.55rem;margin-top:-.2rem}
+
+/* Modal mapy */
+.mdl{position:fixed;inset:0;z-index:100;background:rgba(21,32,26,.55);display:grid;place-items:end center;padding:0}
+.mdl__b{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:720px;overflow:hidden}
+.mdl__h{display:flex;align-items:center;gap:1rem;padding:1rem 1.15rem;border-bottom:1px solid var(--line);font-size:1rem}
+.mdl__s{padding:.85rem 1.15rem;border-bottom:1px solid var(--line)}
+.mdl__m{height:min(46vh,380px);background:var(--tint)}
+.mdl__m svg{width:100%;height:100%;display:block}
+.mdl__f{padding:.85rem 1.15rem}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hdr"><div class="hdr__in">
+  <a class="logo" href="/"><span class="mark" aria-hidden="true"></span>ride<b>more</b>.bike</a>
+  <a class="hdr__x" href="/wydarzenia">Anuluj</a>
+</div></header>
+
+<!-- ===== KROK 0 ===== -->
+<section class="wrap pick" id="pick">
+  <h1>Co chcesz wystawić?</h1>
+  <p class="pick__l">Wybierz jedno — dalej zapytamy tylko o to, co dla niego potrzebne.</p>
+
+  <button class="pk" style="--bz:var(--s-green)" data-ty="pokrec">
+    <h2>Pokręć z kimś</h2>
+    <p>Masz wolny termin i trasę w głowie, ale nie chcesz jechać sam.</p>
+    <p class="pk__m"><span><b>3 pytania</b> · ok. 40 sekund</span><span>Zawsze bez opłat</span></p>
+  </button>
+
+  <button class="pk" style="--bz:var(--s-red)" data-ty="ustawka">
+    <h2>Wspólna jazda</h2>
+    <p>Jeden dzień, konkretna godzina zbiórki, jedna trasa.</p>
+    <p class="pk__m"><span><b>5 kroków</b> · ok. 3 minuty</span><span>Może wystawić każdy</span></p>
+  </button>
+
+  <button class="pk" style="--bz:var(--s-blue)" data-ty="wielo">
+    <h2>Wycieczka wielodniowa</h2>
+    <p>Dwa dni lub więcej, etapy, noclegi, zwykle z wpisowym.</p>
+    <p class="pk__m"><span><b>7 kroków</b> · ok. 8 minut</span><span>Możesz przerwać i wrócić</span></p>
+  </button>
+</section>
+
+<!-- ===== KREATOR ===== -->
+<div id="wiz" hidden>
+  <div class="bar"><div class="bar__in">
+    <p class="bar__t"><b id="stepNo">Krok 1 z 5</b><span id="stepLeft">— zostało ok. 3 min</span>
+      <span class="bar__ty"><i id="tyDot" style="--bz:var(--s-red)"></i><span id="tyName">Wspólna jazda</span></span></p>
+    <div class="bar__p"><i id="prog"></i></div>
+  </div></div>
+
+  <main class="wrap" id="steps">
+
+    <!-- ══ KIEDY ══ -->
+    <section class="step" data-s="when" data-ty="ustawka wielo pokrec">
+      <h1 id="whenQ">Kiedy jedziecie?</h1>
+      <p class="step__l" id="whenL">Dzień i godzina zbiórki. Godzinę można doprecyzować później.</p>
+      <div class="fields">
+
+        <!-- pokręć z kimś: dwa tryby -->
+        <div data-ty="pokrec" class="fl">
+          <span>Jak to wygląda?</span>
+          <div class="tiles tiles--2" id="mode">
+            <button class="tile" type="button" aria-pressed="true" data-mode="fixed"><b>Mam konkretny termin</b></button>
+            <button class="tile" type="button" aria-pressed="false" data-mode="flex"><b>Jestem elastyczny</b></button>
+          </div>
+        </div>
+
+        <div class="two">
+          <label class="fl"><span id="lbA">Data wyjazdu</span><input type="date" id="dA"></label>
+          <label class="fl" data-ty="pokrec"><span id="lbB">Data zakończenia</span><input type="date" id="dB"></label>
+          <label class="fl" data-ty="ustawka wielo"><span>Godzina zbiórki</span><input type="time" value="08:00"></label>
+        </div>
+        <p class="note" data-ty="pokrec" id="modeNote">Podany zakres to rzeczywista długość wyjazdu.</p>
+        <p class="note" data-ty="wielo">Datę zakończenia policzymy sami — z liczby dni, które dodasz w planie.</p>
+
+        <div class="opt" data-ty="ustawka wielo">
+          <button class="opt__b" type="button" data-open="#turnus">+ Ten sam wyjazd w kilku terminach <em>możesz pominąć</em></button>
+          <div class="opt__c" id="turnus" hidden>
+            <p class="note">Każdy termin dostanie własny limit miejsc i własną listę zapisanych. Trasę wpisujesz raz.</p>
+            <div id="turnusList"></div>
+            <button class="addr" type="button" id="addTurnus">+ Dodaj termin</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ GDZIE ══ -->
+    <section class="step" data-s="where" data-ty="ustawka wielo pokrec">
+      <h1 id="whereQ">Skąd startujecie?</h1>
+      <p class="step__l" id="whereL">Wskaż punkt na mapie — nie każde miejsce zbiórki ma adres.</p>
+      <div class="fields">
+        <label class="fl"><span>Region</span>
+          <select id="region"><option value="">Wybierz region</option>
+            <option>Bieszczady</option><option>Tatry</option><option>Beskidy</option>
+            <option>Mazury</option><option>Podkarpacie</option><option>Roztocze</option></select></label>
+
+        <button class="big" type="button" data-map id="pinMeet">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+          <span id="pinMeetTxt">Ustaw punkt zbiórki na mapie<small>Kliknij, otworzy się mapa</small></span>
+        </button>
+
+        <label class="fl" data-ty="ustawka wielo"><span>Jak nazwać to miejsce? <small>opcjonalnie</small></span>
+          <input type="text" placeholder="np. Parking leśny, Cisna"></label>
+      </div>
+    </section>
+
+    <!-- ══ TRASA (jednodniowa) ══ -->
+    <section class="step" data-s="route" data-ty="ustawka">
+      <h1>Jaka trasa?</h1>
+      <p class="step__l">Najprościej wgrać plik GPX — dystans, przewyższenie i nawierzchnię policzymy sami.</p>
+      <div class="fields">
+        <label class="big" data-gpx>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <span>Wgraj plik GPX<small>Z Komoota, Stravy albo licznika</small></span>
+          <input type="file" accept=".gpx" hidden></label>
+
+        <p class="note">Nie masz GPX? Wpisz dystans ręcznie — resztę można uzupełnić później.</p>
+        <div class="two">
+          <label class="fl"><span>Dystans (km)</span><input type="number" step="0.1" placeholder="45" data-km></label>
+          <label class="fl"><span>Przewyższenie (m) <small>opcjonalnie</small></span><input type="number" placeholder="600"></label>
+        </div>
+
+        <div class="fl" data-surf hidden><span>Nawierzchnia <small>wykryta z trasy</small></span>
+          <p class="note"><b>62% asfalt</b> · 31% szuter · 7% ścieżka</p></div>
+      </div>
+    </section>
+
+    <!-- ══ PLAN (wielodniowa) ══ -->
+    <section class="step" data-s="plan" data-ty="wielo">
+      <h1>Jak wygląda plan?</h1>
+      <p class="step__l">Dzień po dniu. Meta jednego dnia staje się startem następnego — nie musisz jej wpisywać dwa razy.</p>
+      <div class="fields">
+        <div id="days"></div>
+        <button class="addr" type="button" id="addDay">+ Dodaj kolejny dzień</button>
+      </div>
+    </section>
+
+    <!-- ══ O CZYM ══ -->
+    <section class="step" data-s="what" data-ty="ustawka wielo pokrec">
+      <h1 id="whatQ">Jak to opisać?</h1>
+      <p class="step__l" id="whatL">Tytuł zobaczą na liście. Opis przeczytają ci, którzy klikną.</p>
+      <div class="fields">
+        <label class="fl"><span>Tytuł</span><input type="text" id="title" placeholder="np. Niedzielna jazda gravelowa nad Wisłok">
+          <small data-ty="pokrec" class="fl">Podpowiemy tytuł z regionu i dat — możesz go zmienić.</small></label>
+        <label class="fl"><span>Opis</span>
+          <textarea id="desc" placeholder="Dla kogo to jest, jakie tempo, co warto wiedzieć. Napisz jak do znajomych."></textarea></label>
+        <label class="big" data-ty="ustawka wielo" id="coverUp">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.5"/></svg>
+          <span id="coverTxt">Dodaj zdjęcie<small>Bez zdjęcia pokażemy profil trasy</small></span>
+          <input type="file" accept="image/*" hidden></label>
+      </div>
+    </section>
+
+    <!-- ══ DLA KOGO ══ -->
+    <section class="step" data-s="who" data-ty="ustawka wielo pokrec">
+      <h1 id="whoQ">Dla kogo to jest?</h1>
+      <p class="step__l" id="whoL">Dzięki temu trafi do właściwych osób. Wszystko można pominąć.</p>
+      <div class="fields">
+        <div class="fl"><span id="bikeQ">Jakie rowery?</span>
+          <div class="tiles tiles--2">
+            <label class="tile"><input type="checkbox">Szosowy</label>
+            <label class="tile"><input type="checkbox">Gravel</label>
+            <label class="tile"><input type="checkbox">MTB</label>
+            <label class="tile"><input type="checkbox">E-bike</label>
+          </div>
+          <small style="color:var(--tx-3)">Nic nie zaznaczasz = jadą wszyscy.</small>
+        </div>
+
+        <div class="fl"><span>Tempo</span>
+          <div class="tiles tiles--3" data-single>
+            <button class="tile" type="button"><span><b>Spokojne</b><small>do 20 km/h</small></span></button>
+            <button class="tile" type="button"><span><b>Średnie</b><small>22–26 km/h</small></span></button>
+            <button class="tile" type="button"><span><b>Szybkie</b><small>powyżej 28 km/h</small></span></button>
+          </div>
+        </div>
+
+        <div class="opt">
+          <button class="opt__b" type="button" data-open="#whoMore">+ Trudność, liczba miejsc, sprzęt <em>możesz pominąć</em></button>
+          <div class="opt__c" id="whoMore" hidden>
+            <div class="fl"><span>Trudność</span>
+              <div class="tiles tiles--3" data-single>
+                <button class="tile" type="button"><b>Łatwa</b></button>
+                <button class="tile" type="button"><b>Średnia</b></button>
+                <button class="tile" type="button"><b>Trudna</b></button>
+              </div></div>
+            <div class="two">
+              <label class="fl"><span>Najmniej osób</span><input type="number" min="1" placeholder="np. 4"></label>
+              <label class="fl"><span>Najwięcej osób</span><input type="number" min="1" placeholder="np. 20"></label>
+            </div>
+            <div class="fl"><span>Co trzeba mieć ze sobą</span>
+              <div id="kit"></div>
+              <button class="addr" type="button" id="addKit">+ Dodaj pozycję</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ZAPISY I WPISOWE ══ -->
+    <section class="step" data-s="money" data-ty="ustawka wielo">
+      <h1>Wpisowe i zapisy</h1>
+      <p class="step__l">Pieniądze idą bezpośrednio do Ciebie — nie bierzemy prowizji.</p>
+      <div class="fields">
+        <div class="fl"><span>Czy jest wpisowe?</span>
+          <div class="tiles tiles--2" id="paid">
+            <button class="tile" type="button" aria-pressed="true" data-paid="0"><b>Nie, bez opłat</b></button>
+            <button class="tile" type="button" aria-pressed="false" data-paid="1"><b>Tak, jest wpisowe</b></button>
+          </div></div>
+
+        <div id="paidBox" hidden class="fields" style="margin-top:0">
+          <div class="two">
+            <label class="fl"><span>Kwota od osoby (zł)</span><input type="number" step="0.01" placeholder="620" data-price></label>
+            <label class="fl"><span>Zaliczka (zł) <small>opcjonalnie</small></span><input type="number" step="0.01" placeholder="200"></label>
+          </div>
+          <div class="fl"><span>Co jest w cenie?</span>
+            <div id="inc"></div>
+            <button class="addr" type="button" data-add-p="1">+ Dodaj pozycję</button></div>
+          <div class="opt">
+            <button class="opt__b" type="button" data-open="#payMore">+ Terminy płatności i zwrotów <em>możesz pominąć</em></button>
+            <div class="opt__c" id="payMore" hidden>
+              <div class="two">
+                <label class="fl"><span>Dopłata do (dni przed)</span><input type="number" placeholder="30"></label>
+                <label class="fl"><span>Anulowanie do (dni przed)</span><input type="number" placeholder="14"></label>
+              </div>
+              <div class="fl"><span>Czego nie ma w cenie</span>
+                <div id="exc"></div>
+                <button class="addr" type="button" data-add-p="0">+ Dodaj pozycję</button></div>
+            </div>
+          </div>
+          <div class="warn" id="billing">
+            <b>Zanim opublikujesz płatny wyjazd, uzupełnij dane rozliczeniowe.</b>
+            Potrzebujemy ich, żeby uczestnicy dostali fakturę. Do tego czasu zapiszemy wszystko jako szkic — nic nie przepadnie.
+            <p style="margin-top:.8rem"><a class="btn btn--ghost" href="/admin/profil-rozliczeniowy">Uzupełnij dane →</a></p>
+          </div>
+        </div>
+
+        <div class="opt">
+          <button class="opt__b" type="button" data-open="#regBox">+ Zapisy prowadzę gdzie indziej <em>możesz pominąć</em></button>
+          <div class="opt__c" id="regBox" hidden>
+            <label class="fl"><span>Link do zapisów</span>
+              <input type="text" placeholder="np. wydarzenie na Facebooku albo formularz">
+              <small style="color:var(--tx-3)">Uczestnicy zobaczą przycisk, który przeniesie ich pod ten adres.</small></label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ PODSUMOWANIE ══ -->
+    <section class="step" data-s="sum" data-ty="ustawka wielo pokrec">
+      <h1>Sprawdź i opublikuj</h1>
+      <p class="step__l">Wszystko można jeszcze poprawić — kliknij „zmień" przy dowolnej pozycji.</p>
+
+      <div class="sum" id="sumBox"></div>
+
+      <div class="pv">
+        <p class="pv__h">Tak zobaczą to inni na liście wyjazdów</p>
+        <div class="pv__c"><div class="pvc">
+          <div class="pvc__v"><span class="pvc__f" id="pvF" style="--bz:var(--s-red)"><i></i><span id="pvFt">Wspólna jazda</span></span></div>
+          <div class="pvc__b">
+            <p class="pvc__t" id="pvT">Tytuł wydarzenia</p>
+            <p class="pvc__d" id="pvD">termin · dystans</p>
+            <p class="pvc__p" id="pvP">Bez wpisowego</p>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Dopasowania: dopiero tutaj i tylko gdy jest z czego dopasowywać -->
+      <div class="ms" id="ms" hidden>
+        <h2>Ktoś planuje to samo</h2>
+        <p>Zanim opublikujesz — może wolisz dołączyć do gotowej grupy?</p>
+        <div class="msc" id="mscCard">
+          <p class="msc__w">Ten sam region, terminy się pokrywają</p>
+          <p class="msc__t">Gravelowa pętla wokół Cisnej</p>
+          <p class="msc__m">2 sierpnia · 68 km · gravel</p>
+          <p class="msc__r"><b>4</b><span>osoby już jadą</span></p>
+          <p class="msc__m" style="margin-top:.5rem">Do uzgodnienia: <b>godzina startu</b></p>
+          <div class="msc__a"><a class="btn btn--pine" href="#">Zobacz i dołącz</a>
+            <button class="lnk" type="button" id="msNo">Nie, wystawiam swój</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="nav">
+    <div class="nav__in">
+      <button class="btn btn--ghost" type="button" id="back">Wstecz</button>
+      <button class="btn btn--pine" type="button" id="next">Dalej</button>
+    </div>
+    <p class="save" id="saveTxt">Szkic zapisuje się sam</p>
+  </div>
+</div>
+
+<!-- Mapa -->
+<div class="mdl" id="mdl" hidden>
+  <div class="mdl__b">
+    <div class="mdl__h"><span>Dotknij mapy, żeby ustawić punkt</span></div>
+    <div class="mdl__s"><input type="text" placeholder="Szukaj miejscowości…"></div>
+    <div class="mdl__m"><svg viewBox="0 0 720 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="720" height="400" fill="#E9EDE6"/>
+      <g stroke="#D6DDD2" fill="none"><path d="M0 90 H720M0 180 H720M0 270 H720M0 350 H720M140 0 V400M300 0 V400M450 0 V400M600 0 V400"/></g>
+      <path d="M-20 280 C 160 240 280 290 420 245 S 660 195 740 225" stroke="#CBD7C8" stroke-width="22" fill="none"/>
+      <circle cx="360" cy="200" r="26" fill="#1E4B38" fill-opacity=".14"/><circle cx="360" cy="200" r="10" fill="#1E4B38"/>
+    </svg></div>
+    <div class="mdl__f"><button class="btn btn--pine btn--wide" type="button" id="mdlOk">Gotowe</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)},
+      $$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
+
+  var TY={
+    pokrec:{n:'Pokręć z kimś',c:'var(--s-green)',pub:'Wystaw ogłoszenie',min:1},
+    ustawka:{n:'Wspólna jazda',c:'var(--s-red)',pub:'Opublikuj wyjazd',min:3},
+    wielo:{n:'Wycieczka wielodniowa',c:'var(--s-blue)',pub:'Opublikuj wyjazd',min:8}
+  };
+  var ty='ustawka', i=0, steps=[];
+
+  $$('.pk').forEach(function(b){b.addEventListener('click',function(){start(b.dataset.ty)})});
+
+  function start(t){
+    ty=t; $('#pick').hidden=true; $('#wiz').hidden=false;
+    $('#tyName').textContent=TY[t].n; $('#tyDot').style.setProperty('--bz',TY[t].c);
+    $('#pvFt').textContent=TY[t].n; $('#pvF').style.setProperty('--bz',TY[t].c);
+    $$('[data-ty]').forEach(function(el){el.hidden=el.dataset.ty.split(' ').indexOf(t)===-1});
+    if(t==='pokrec'){
+      $('#whenQ').textContent='Kiedy masz czas?';
+      $('#whenL').textContent='Podaj zakres dni — dokładny termin dogadacie później.';
+      $('#whereQ').textContent='Gdzie chcesz jechać?';
+      $('#whereL').textContent='Wystarczy region. Punkt na mapie jest opcjonalny.';
+      $('#whatQ').textContent='Napisz, co planujesz';
+      $('#whatL').textContent='Krótko i po ludzku — dokąd, w jakim tempie, czego szukasz.';
+      $('#whoQ').textContent='Na czym jedziesz?';
+      $('#whoL').textContent='To pomaga dobrać towarzystwo. Możesz pominąć.';
+      $('#bikeQ').textContent='Twój rower';
+    }
+    if(t==='wielo') addDay();
+    steps=$$('#steps .step').filter(function(s){return !s.hidden});
+    go(0);
+  }
+
+  function go(n){
+    i=Math.max(0,Math.min(n,steps.length-1));
+    steps.forEach(function(s,k){s.hidden=k!==i});
+    $('#stepNo').textContent='Krok '+(i+1)+' z '+steps.length;
+    var left=Math.max(1,Math.round(TY[ty].min*(1-i/steps.length)));
+    $('#stepLeft').textContent = i===steps.length-1 ? '— ostatni krok' : '— zostało ok. '+left+' min';
+    $('#prog').style.width=Math.round((i+1)/steps.length*100)+'%';
+    $('#back').hidden=i===0;
+    var last=i===steps.length-1;
+    $('#next').textContent=last?TY[ty].pub:'Dalej';
+    if(last){buildSum();maybeMatch()}
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  $('#next').addEventListener('click',function(){ if(i<steps.length-1) go(i+1); });
+  $('#back').addEventListener('click',function(){go(i-1)});
+
+  /* kafelki */
+  function single(host){
+    $$('.tile',host).forEach(function(b){
+      if(b.tagName!=='BUTTON')return;
+      b.addEventListener('click',function(){
+        $$('.tile',host).forEach(function(x){x.setAttribute('aria-pressed','false')});
+        b.setAttribute('aria-pressed','true');
+      });
+    });
+  }
+  $$('[data-single]').forEach(single);
+  $$('.tile input').forEach(function(c){c.addEventListener('change',function(){c.closest('.tile').classList.toggle('on',c.checked)})});
+
+  single($('#mode'));
+  $$('#mode .tile').forEach(function(b){
+    b.addEventListener('click',function(){
+      var flex=b.dataset.mode==='flex';
+      $('#lbA').textContent=flex?'Od kiedy':'Data rozpoczęcia';
+      $('#lbB').textContent=flex?'Do kiedy':'Data zakończenia';
+      $('#modeNote').textContent=flex?'To okno dostępności — konkretny dzień ustalicie w komentarzach.':'Podany zakres to rzeczywista długość wyjazdu.';
+    });
+  });
+
+  single($('#paid'));
+  $$('#paid .tile').forEach(function(b){
+    b.addEventListener('click',function(){
+      var p=b.dataset.paid==='1';
+      $('#paidBox').hidden=!p;
+      $('#pvP').textContent=p?'Wpisowe':'Bez wpisowego';
+      $('#pvP').style.color=p?'var(--ink)':'var(--s-green)';
+    });
+  });
+
+  /* rozwijane „możesz pominąć" */
+  $$('[data-open]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var box=$(b.dataset.open), open=box.hidden;
+      box.hidden=!open;
+      b.firstChild.textContent=(open?'− ':'+ ')+b.textContent.replace(/^[+−]\s*/,'').replace(/możesz pominąć$/,'').trim()+' ';
+    });
+  });
+
+  /* turnusy */
+  $('#addTurnus').addEventListener('click',function(){
+    var h=$('#turnusList'), r=document.createElement('div'); r.className='lr';
+    r.innerHTML='<input type="date"><button type="button" aria-label="Usuń termin">×</button>';
+    r.querySelector('button').onclick=function(){r.remove()}; h.appendChild(r);
+  });
+
+  /* dni */
+  var DC=['var(--s-red)','var(--s-green)','var(--s-blue)','#B07A2B','#6A4E8C'];
+  function addDay(){
+    var h=$('#days'), n=h.children.length, d=document.createElement('div');
+    d.className='day'; d.style.setProperty('--dc',DC[n%DC.length]);
+    d.innerHTML='<div class="day__h"><span class="day__n">Dzień '+(n+1)+'</span>'+
+      '<button class="day__x" type="button" aria-label="Usuń dzień">×</button></div>'+
+      '<div class="fields">'+
+      '<label class="big" data-gpx><span>Wgraj GPX tego dnia<small>albo wpisz dystans niżej</small></span><input type="file" accept=".gpx" hidden></label>'+
+      '<div class="two"><label class="fl"><span>Dystans (km)</span><input type="number" step="0.1" placeholder="95"></label>'+
+      '<label class="fl"><span>Przewyższenie (m)</span><input type="number" placeholder="1200"></label></div>'+
+      '<label class="fl"><span>Dokąd dojeżdżacie?</span><input type="text" placeholder="np. Ustrzyki Górne"></label>'+
+      '<label class="fl"><span>Nocleg <small>opcjonalnie</small></span><input type="text" placeholder="np. Schronisko, pokoje 2–4 os."></label>'+
+      '</div>';
+    d.querySelector('.day__x').onclick=function(){d.remove();renumber()};
+    h.appendChild(d); renumber(); bindGpx();
+  }
+  function renumber(){
+    $$('#days .day').forEach(function(d,k){
+      d.querySelector('.day__n').textContent='Dzień '+(k+1);
+      d.style.setProperty('--dc',DC[k%DC.length]);
+      d.querySelector('.day__x').hidden=$$('#days .day').length<2;
+    });
+  }
+  $('#addDay').addEventListener('click',addDay);
+
+  /* listy */
+  function lrow(host,ph){
+    var r=document.createElement('div'); r.className='lr';
+    r.innerHTML='<input type="text" placeholder="'+ph+'"><button type="button" aria-label="Usuń">×</button>';
+    r.querySelector('button').onclick=function(){r.remove()}; host.appendChild(r);
+  }
+  $('#addKit').addEventListener('click',function(){lrow($('#kit'),'np. kask')});
+  $$('[data-add-p]').forEach(function(b){b.addEventListener('click',function(){
+    lrow(b.dataset.addP==='1'?$('#inc'):$('#exc'), b.dataset.addP==='1'?'np. nocleg':'np. dojazd');})});
+  lrow($('#kit'),'np. kask'); lrow($('#inc'),'np. nocleg'); lrow($('#exc'),'np. dojazd');
+
+  /* GPX */
+  function bindGpx(){
+    $$('[data-gpx]').forEach(function(l){
+      var f=l.querySelector('input'); if(f.dataset.b)return; f.dataset.b=1;
+      f.addEventListener('change',function(){
+        var t=l.querySelector('span'); t.innerHTML='Analizuję trasę…';
+        setTimeout(function(){
+          l.classList.add('done');
+          t.innerHTML='trasa.gpx — wczytano<small>45,3 km · 612 m przewyższenia</small>';
+          var km=$('[data-km]'); if(km&&!km.value)km.value='45.3';
+          var sf=$('[data-surf]'); if(sf)sf.hidden=false;
+        },800);
+      });
+    });
+  }
+  bindGpx();
+  $('#coverUp').querySelector('input').addEventListener('change',function(){
+    $('#coverUp').classList.add('done');
+    $('#coverTxt').innerHTML='Zdjęcie dodane<small>Możesz je zmienić później</small>';
+  });
+
+  /* mapa */
+  var pinBtn=null;
+  $$('[data-map]').forEach(function(b){b.addEventListener('click',function(){pinBtn=b;$('#mdl').hidden=false})});
+  $('#mdlOk').addEventListener('click',function(){
+    $('#mdl').hidden=true;
+    if(pinBtn){pinBtn.classList.add('done');
+      pinBtn.querySelector('span').innerHTML='Punkt ustawiony<small>49.30712, 22.42372 — dotknij, żeby poprawić</small>';}
+  });
+
+  /* podsumowanie */
+  function row(k,v,step){
+    return '<div class="sum__r"><span class="sum__k">'+k+'</span>'+
+      '<span class="sum__v'+(v?'':' empty')+'">'+(v||'nie podano')+'</span>'+
+      '<button class="lnk" type="button" data-go="'+step+'">zmień</button></div>';
+  }
+  function buildSum(){
+    var t=$('#title').value, d=$('#dA').value, r=$('#region').value,
+        km=$('[data-km]')?$('[data-km]').value:'', pr=$('[data-price]')?$('[data-price]').value:'';
+    var h=row('Tytuł',t,'what')+row('Termin',d,'when')+row('Region',r,'where');
+    if(ty==='ustawka') h+=row('Dystans',km?km+' km':'','route');
+    if(ty==='wielo')   h+=row('Liczba dni',$$('#days .day').length+' dni','plan');
+    if(ty!=='pokrec')  h+=row('Wpisowe',pr?pr+' zł':'bez opłat','money');
+    if(ty!=='pokrec')  h+=row('Organizator','Ja','what');
+    $('#sumBox').innerHTML=h;
+    $$('#sumBox [data-go]').forEach(function(b){
+      b.addEventListener('click',function(){
+        var k=steps.map(function(s){return s.dataset.s}).indexOf(b.dataset.go);
+        if(k>=0) go(k);
+      });
+    });
+    $('#pvT').textContent=t||'Tytuł wydarzenia';
+    $('#pvD').textContent=[d,km?km+' km':null,r].filter(Boolean).join(' · ')||'termin · dystans';
+  }
+  function maybeMatch(){
+    $('#ms').hidden = !( ty!=='wielo' && $('#dA').value && $('#region').value && !window._no );
+  }
+  $('#msNo').addEventListener('click',function(){window._no=1;$('#ms').hidden=true});
+
+  /* autozapis */
+  var tmr;
+  document.addEventListener('input',function(){
+    clearTimeout(tmr);
+    $('#saveTxt').textContent='Zapisuję…';
+    tmr=setTimeout(function(){$('#saveTxt').textContent='Szkic zapisany '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})},700);
+  });
+})();
+</script>
+</body>
+</html>

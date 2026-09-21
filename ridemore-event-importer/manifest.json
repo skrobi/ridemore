@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Ridemore – Importer eventów",
+  "version": "0.4.3",
+  "description": "Zbiera dane o wydarzeniu rowerowym z dowolnej strony i wypełnia nimi kreator dodawania eventu na ridemore.bike. Tryby: AI-Engine (strona → kreator), Post → wydarzenie (wskazany post FB → formularz wydarzenia), Zbierz linki (lista/kalendarz, także SPA → linki wydarzeń), Skanuj grupę FB (posty → wiadomość do autora), Dodaj skarb (Wikipedia → formularz zgłoszenia).",
+  "minimum_chrome_version": "116",
+  "action": {
+    "default_title": "Ridemore – importer eventów"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "scripting", "activeTab", "tabs", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

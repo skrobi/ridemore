@@ -1,0 +1,13 @@
+# Mapa kodu (dokumentacja wewnętrzna) — nie powinna być dostępna przez HTTP.
+#
+# Zmierzone 2026-09-12: `/md/database.md` oddawał 65 837 B. Te dokumenty opisują
+# schemat bazy, bramki uprawnień, nazwy endpointów i świadome luki — czyli
+# gotową instrukcję dla kogoś, kto szuka słabego punktu. Wewnątrz repozytorium
+# są bezcenne, na zewnątrz nie mają po co być.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

@@ -1,0 +1,5 @@
+requests>=2.31
+# Garmin Connect (ai-engine/garmin.py) — NIEOFICJALNY klient, loguje sie jak
+# aplikacja mobilna. Ciagnie za soba curl_cffi (podszywa sie pod odcisk TLS
+# Androida) — bez tego Garmin odrzuca logowanie na poziomie Cloudflare.
+garminconnect>=0.3.11

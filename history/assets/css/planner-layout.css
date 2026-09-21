@@ -1,0 +1,1386 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ============ LAYOUT ============ */
+.planner-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+.planner-sidebar {
+    width: 360px;
+    background: #fff;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f9fafb;
+}
+
+.sidebar-header h1 {
+    font-size: 16px;
+    font-weight: 700;
+    flex: 1;
+}
+
+.sidebar-header .back-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: white;
+    cursor: pointer;
+    color: #374151;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+.sidebar-header .back-btn:hover {
+    background: #f3f4f6;
+}
+
+/* Challenge banner */
+.challenge-banner {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    border-bottom: 1px solid #e5e7eb;
+}
+.challenge-banner .icon {
+    font-size: 20px;
+}
+.challenge-banner .info {
+    flex: 1;
+}
+.challenge-banner .name {
+    font-weight: 600;
+}
+.challenge-banner .stats {
+    color: #6b7280;
+    font-size: 11px;
+}
+
+/* Waypoints list */
+.waypoints-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0;
+}
+
+.waypoint-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    font-size: 13px;
+    transition: background 0.1s;
+    cursor: default;
+}
+.waypoint-item:hover {
+    background: #f9fafb;
+}
+
+.wp-marker {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+.wp-marker.start {
+    background: #10b981;
+}
+.wp-marker.via {
+    background: #3b82f6;
+}
+.wp-marker.end {
+    background: #ef4444;
+}
+
+.wp-info {
+    flex: 1;
+    min-width: 0;
+}
+.wp-label {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.wp-coords {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.wp-remove {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+.wp-remove:hover {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+/* Segment stats between waypoints */
+.segment-stats {
+    padding: 2px 16px 2px 54px;
+    font-size: 11px;
+    color: #6b7280;
+    display: flex;
+    gap: 12px;
+}
+
+/* Empty state */
+.empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    text-align: center;
+    padding: 40px 20px;
+}
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+.empty-state p {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Sidebar footer - totals */
+.sidebar-footer {
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 16px;
+    background: #f9fafb;
+}
+
+.total-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+.total-stats .stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.total-stats .stat-val {
+    font-weight: 700;
+}
+
+.sidebar-actions {
+    display: flex;
+    gap: 8px;
+}
+.sidebar-actions button {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-clear {
+    background: white;
+    color: #374151;
+}
+.btn-clear:hover {
+    background: #f3f4f6;
+}
+.btn-save {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+.btn-save:hover {
+    background: #2563eb;
+}
+.btn-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============ MAP ============ */
+.planner-map {
+    flex: 1;
+    position: relative;
+}
+#planner-map {
+    width: 100%;
+    height: 100%;
+}
+
+/* Map crosshair cursor when in add mode */
+.planner-map.adding-mode #planner-map {
+    cursor: crosshair;
+}
+
+/* Map toolbar */
+.map-toolbar {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 1000;
+    display: flex;
+    gap: 6px;
+}
+
+.toolbar-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    cursor: pointer;
+    color: #374151;
+    transition: all 0.15s;
+}
+.toolbar-spacer {
+    width: 1px;
+    height: 28px;
+    background: #e5e7eb;
+    margin: 0 6px;
+}
+.toolbar-btn:hover {
+    background: #f3f4f6;
+}
+.toolbar-btn.active {
+    background: #3b82f6;
+    color: white;
+}
+
+/* Routing indicator */
+.routing-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    background: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #3b82f6;
+}
+.routing-indicator i {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Waypoint markers on map */
+.planner-wp-marker {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    cursor: grab;
+    transition: transform 0.15s;
+}
+.planner-wp-marker:hover {
+    transform: scale(1.15);
+}
+.planner-wp-marker.start {
+    background: #10b981;
+}
+.planner-wp-marker.via {
+    background: #3b82f6;
+}
+.planner-wp-marker.end {
+    background: #ef4444;
+}
+
+/* Snap indicator */
+.snap-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    background: #ecfdf5;
+    color: #059669;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .planner-sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 45vh;
+        border-right: none;
+        border-top: 1px solid #e5e7eb;
+        border-radius: 16px 16px 0 0;
+    }
+    .planner-map {
+        height: 55vh;
+    }
+}
+
+
+/* Day break marker - special styling */
+.planner-wp-marker.day-break {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    font-size: 16px;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #f59e0b, 0 4px 12px rgba(245, 158, 11, 0.4);
+    animation: dayBreakPulse 2s ease-in-out infinite;
+}
+
+@keyframes dayBreakPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.planner-wp-marker.day-break:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px #f59e0b, 0 6px 16px rgba(245, 158, 11, 0.6);
+}
+
+/* Day break separator in sidebar */
+.day-separator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    margin: 8px 0;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    border-left: 4px solid #f59e0b;
+    font-weight: 600;
+    color: #d97706;
+    font-size: 13px;
+}
+
+.day-separator i {
+    font-size: 16px;
+}
+
+/* Day block */
+.day-block {
+    margin: 8px 0;
+}
+
+/* Day header */
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.day-header:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateX(2px);
+}
+
+.day-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.day-icon {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.day-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.day-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    opacity: 0.95;
+}
+
+.day-stats span {
+    white-space: nowrap;
+}
+
+/* Day separator (after day-break waypoint) */
+.day-separator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    margin: 8px 0;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    border-left: 4px solid #f59e0b;
+    font-weight: 600;
+    color: #d97706;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+}
+
+.day-separator i {
+    font-size: 16px;
+}
+
+/* Segment stats - cursor pointer for context menu */
+.segment-stats {
+    cursor: context-menu;
+    position: relative;
+}
+
+.segment-stats:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+/* Waypoint wrapper spacing within day */
+.day-block .waypoint-wrapper {
+    margin-left: 8px;
+    border-left: 2px solid rgba(59, 130, 246, 0.2);
+    padding-left: 8px;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.sidebar-header h1 {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+/* Profile selector */
+.profile-selector {
+    position: relative;
+}
+
+.profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.profile-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.profile-btn i:last-child {
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+
+.profile-btn i.rotate-180 {
+    transform: rotate(180deg);
+}
+
+/* Dropdown */
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    padding: 4px 0;
+    z-index: 1000;
+}
+
+.profile-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.profile-option:hover {
+    background: #f3f4f6;
+}
+
+.profile-option.active {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 500;
+}
+
+.profile-option i {
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.profile-option span:first-of-type {
+    flex: 1;
+    font-size: 13px;
+}
+
+.speed-badge {
+    font-size: 11px;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.profile-option.active .speed-badge {
+    background: #3b82f6;
+    color: white;
+}
+
+.profile-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 4px 0;
+}
+
+.profile-option.custom-speed {
+    color: #f59e0b;
+}
+
+.profile-option.custom-speed:hover {
+    background: #fffbeb;
+}
+
+@keyframes wpPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+    50% {
+        transform: scale(1.3);
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+}
+
+.planner-wp-marker.wp-pulse {
+    animation: wpPulse 1s ease-in-out 2;
+}
+
+.waypoint-item {
+    transition: background 0.15s;
+}
+
+.waypoint-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.waypoint-item:active {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+
+/* Challenge Coverage - Enhanced */
+.challenge-coverage {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.coverage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.coverage-header:hover {
+    opacity: 0.8;
+}
+
+.coverage-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.coverage-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.coverage-percent {
+    font-weight: 700;
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+.coverage-details {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.coverage-progress {
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.5s ease, background 0.3s;
+    border-radius: 999px;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.progress-text .text-muted {
+    opacity: 0.5;
+}
+
+.coverage-routes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.stat-label {
+    flex: 1;
+    color: #6b7280;
+}
+
+.stat-value {
+    font-weight: 700;
+    color: #1f2937;
+    min-width: 24px;
+    text-align: right;
+}
+
+.stat-value.success {
+    color: #10b981;
+}
+
+/* SVG white filter for buttons */
+.svg-white {
+    filter: brightness(0) invert(1);
+}
+
+/* ============================================================================
+   PLANNER CONFIG SECTION
+   ============================================================================ */
+
+.planner-config {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: #f9fafb;
+    transition: background 0.15s;
+}
+
+.config-header:hover {
+    background: #f3f4f6;
+}
+
+.config-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.config-body {
+    padding: 12px 16px;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+}
+
+.config-item {
+    margin-bottom: 16px;
+}
+
+.config-item:last-child {
+    margin-bottom: 0;
+}
+
+.config-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.config-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 13px;
+}
+
+.config-toggle:hover {
+    background: #f3f4f6;
+}
+
+.config-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Profile Selector Inline */
+.profile-selector-inline {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.profile-option-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 6px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 11px;
+}
+
+.profile-option-btn:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.profile-option-btn.active {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.speed-mini {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6b7280;
+}
+
+.profile-option-btn.active .speed-mini {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.btn-custom-speed {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: white;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.btn-custom-speed:hover {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    color: #f59e0b;
+}
+
+.btn-reverse {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.btn-reverse:hover:not(:disabled) {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.btn-reverse:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* POI Select */
+.poi-select {
+    width: 100%;
+    min-height: 120px;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 12px;
+    background: white;
+}
+
+.poi-select optgroup {
+    font-weight: 600;
+    color: #374151;
+    padding: 4px 0;
+}
+
+.poi-select option {
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+.poi-select option:checked {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.poi-count {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #6b7280;
+    text-align: right;
+}
+
+.poi-count span {
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+/* POI Range Slider */
+.poi-range {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e5e7eb;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.poi-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.poi-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+/* ============================================================================
+   POI CARDS
+   ============================================================================ */
+
+.poi-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    margin: 4px 16px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.poi-card:hover {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.poi-card-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.poi-card-icon {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.poi-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.poi-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.poi-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.poi-category {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.poi-distance {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+    font-weight: 600;
+    color: #3b82f6;
+}
+
+.poi-card-thumb {
+    flex-shrink: 0;
+}
+
+.poi-card-arrow {
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.poi-card:hover .poi-card-arrow {
+    opacity: 1;
+}
+
+.poi-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* POI Checkboxes */
+.poi-checkboxes {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 8px;
+    background: white;
+}
+
+.poi-category-group {
+    margin-bottom: 12px;
+}
+
+.poi-category-group:last-child {
+    margin-bottom: 0;
+}
+
+.poi-category-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 8px;
+    background: #f9fafb;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.poi-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s;
+    font-size: 12px;
+}
+
+.poi-checkbox-item:hover {
+    background: #f0f9ff;
+}
+
+.poi-checkbox-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.poi-checkbox-item span:nth-of-type(1) {
+    flex: 1;
+}
+
+.poi-count-badge {
+    font-size: 10px;
+    color: #9ca3af;
+    font-weight: 600;
+}
+
+.poi-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================================
+   ROUTE DETAILS SECTION
+   ============================================================================ */
+
+.route-details-section {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: #f9fafb;
+    transition: background 0.15s;
+}
+
+.details-header:hover {
+    background: #f3f4f6;
+}
+
+.details-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.required-badge {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.details-body {
+    padding: 12px 16px;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+}
+
+.detail-item {
+    margin-bottom: 16px;
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+}
+
+.detail-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.detail-label.required::after {
+    content: '*';
+    color: #ef4444;
+    margin-left: 2px;
+}
+
+.detail-input,
+.detail-textarea,
+.detail-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: border-color 0.15s;
+    font-family: inherit;
+}
+
+.detail-input:focus,
+.detail-textarea:focus,
+.detail-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.detail-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.detail-hint {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.detail-select {
+    cursor: pointer;
+    background: white;
+}
+
+/* ============================================================================
+   PLANNER CONFIG SECTION (adjust if needed)
+   ============================================================================ */
+
+.planner-config {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: #f9fafb;
+    transition: background 0.15s;
+}
+
+.config-header:hover {
+    background: #f3f4f6;
+}
+
+.config-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.config-body {
+    padding: 12px 16px;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ============================================================================
+   TOOLBAR SPACER (dla separatora w toolbar)
+   ============================================================================ */
+
+.toolbar-spacer {
+    width: 1px;
+    height: 28px;
+    background: #e5e7eb;
+    margin: 0 6px;
+    align-self: center;
+}

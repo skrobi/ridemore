@@ -1,0 +1,338 @@
+<!-- prototypes/event-trip.html -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3-dniowa Pętla Tatrzańska — ridemore.bike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F5F1;--paper:#FFFFFF;--ink:#1A1A18;--ink-soft:#6B6A64;--ink-mute:#9C9A92;
+    --hair:#E4E2DA;--hair-strong:#C9C6BB;
+    --accent:#D14E1E;--accent-dark:#A23913;--accent-soft:#F7E3D8;--accent-text:#FBEEE6;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px 60px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .display{font-family:'Big Shoulders Display',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.01em;}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--hair);}
+  .logo{font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:22px;}
+  .logo span{color:var(--accent);}
+  nav a{color:var(--ink-soft);text-decoration:none;font-size:14px;margin-left:24px;}
+  .eyebrow{display:inline-block;background:var(--accent-soft);color:var(--accent-dark);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 10px;border-radius:4px;margin:24px 0 14px;}
+  h1{font-size:44px;line-height:0.98;margin:0 0 10px;max-width:640px;}
+  .subline{font-size:16px;color:var(--ink-soft);margin:0 0 20px;}
+  .subline b{color:var(--ink);font-weight:600;}
+  .photo-block{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--hair-strong);margin-bottom:24px;}
+  .photo-block svg{display:block;width:100%;height:auto;}
+  .edit-photo{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.92);border:1px solid var(--hair-strong);border-radius:20px;padding:7px 12px;font-size:12px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;cursor:pointer;}
+  .profile-overlay{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,0.88);backdrop-filter:blur(2px);padding:10px 16px 8px;}
+  .profile-overlay svg{height:64px;width:100%;}
+  .profile-labels{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .stat-strip{display:flex;flex-wrap:wrap;border:1px solid var(--hair-strong);border-radius:var(--radius);overflow:hidden;margin-bottom:24px;background:var(--paper);}
+  .stat{flex:1;min-width:120px;padding:14px 16px;border-right:1px solid var(--hair);}
+  .stat:last-child{border-right:none;}
+  .stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-mute);margin-bottom:4px;}
+  .stat-value{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:17px;}
+  .price-cta{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;border:1px solid var(--hair-strong);border-radius:var(--radius);padding:20px 22px;margin-bottom:32px;background:var(--paper);}
+  .price-amount{font-family:'Big Shoulders Display',sans-serif;font-size:38px;font-weight:800;}
+  .price-sub{font-size:13px;color:var(--ink-soft);margin-top:2px;}
+  .btn{font-family:'Inter',sans-serif;font-weight:700;font-size:15px;background:var(--accent);color:var(--accent-text);border:1px solid var(--accent-dark);padding:13px 24px;border-radius:var(--radius);cursor:pointer;box-shadow:3px 3px 0 var(--accent-dark);transition:transform .08s ease;}
+  .btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--accent-dark);}
+  .btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--accent-dark);}
+  .btn.joined{background:var(--ink);border-color:var(--ink);box-shadow:3px 3px 0 var(--hair-strong);color:#fff;}
+  .btn.ghost{background:var(--paper);color:var(--ink);border:1px solid var(--hair-strong);box-shadow:none;}
+  .org-bar{display:flex;align-items:center;gap:14px;padding:18px 0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);margin-bottom:32px;}
+  .avatar{width:42px;height:42px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+  .org-name{font-weight:700;font-size:15px;}
+  .org-meta{font-size:13px;color:var(--ink-soft);}
+  .verified{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--accent-dark);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;padding:3px 8px;border-radius:20px;margin-left:8px;}
+  .bento{display:grid;grid-template-columns:repeat(4,1fr);grid-template-areas:"trasa trasa tempo sprzet" "mapa mapa zbiorka pogoda";gap:14px;margin-bottom:44px;}
+  .card{background:var(--paper);border:1px solid var(--hair-strong);border-radius:var(--radius);padding:18px;}
+  .card h3{font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-mute);margin:0 0 12px;}
+  .card-trasa{grid-area:trasa;}.card-tempo{grid-area:tempo;}.card-sprzet{grid-area:sprzet;}.card-mapa{grid-area:mapa;}.card-zbiorka{grid-area:zbiorka;}.card-pogoda{grid-area:pogoda;}
+  .mini-stat{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--hair);font-size:14px;}
+  .mini-stat:last-of-type{border-bottom:none;}
+  .mini-stat b{font-family:'JetBrains Mono',monospace;}
+  .gpx-link{display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--accent-dark);text-decoration:none;border-bottom:1px solid var(--accent);}
+  .card p{font-size:14px;color:var(--ink-soft);margin:0;line-height:1.55;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .chip{font-size:12px;background:var(--bg);border:1px solid var(--hair-strong);border-radius:20px;padding:3px 9px;color:var(--ink-soft);}
+  .map-svg{width:100%;height:140px;border-radius:6px;background:var(--bg);margin-bottom:10px;}
+  .map-link{font-size:13px;font-weight:600;color:var(--accent-dark);text-decoration:none;}
+  .section-title{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;margin:0 0 16px;}
+  .day-card{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--hair);}
+  .day-card:last-child{border-bottom:none;}
+  .day-num{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;flex-shrink:0;}
+  .day-title{font-weight:700;font-size:16px;margin-bottom:4px;}
+  .day-stats{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-soft);margin-bottom:4px;}
+  .day-stay{font-size:13px;color:var(--ink-soft);}
+  .day-stay b{color:var(--ink);font-weight:600;}
+  .price-block-full{border:1px solid var(--hair-strong);border-radius:var(--radius);padding:22px;background:var(--paper);margin-bottom:44px;}
+  .price-block-full .price-amount{font-size:34px;}
+  .include-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:18px;}
+  .include-heading{font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-mute);font-family:'JetBrains Mono',monospace;margin-bottom:8px;}
+  .include-list{list-style:none;padding:0;margin:0;}
+  .include-list li{display:flex;gap:8px;padding:5px 0;font-size:14px;}
+  .include-list.included li{color:var(--ink);}
+  .include-list.excluded li{color:var(--ink-mute);}
+  .include-icon{flex-shrink:0;font-weight:700;width:16px;}
+  .included .include-icon{color:var(--accent);}
+  .excluded .include-icon{color:var(--ink-mute);}
+  .cancel-note{font-size:12px;color:var(--ink-mute);margin-top:16px;border-top:1px solid var(--hair);padding-top:14px;}
+  .avatars-row{display:flex;align-items:center;margin-bottom:16px;}
+  .stack-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--paper);margin-left:-10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;background:var(--ink-soft);}
+  .stack-avatar:first-child{margin-left:0;}
+  .quote{border-left:3px solid var(--accent);padding:4px 0 4px 16px;font-size:15px;font-style:italic;color:var(--ink-soft);margin:0 0 40px;}
+  .quote cite{display:block;font-style:normal;font-size:13px;margin-top:6px;color:var(--ink-mute);}
+  .desc{font-size:16px;line-height:1.7;color:var(--ink-soft);max-width:680px;margin-bottom:44px;}
+  .desc b{color:var(--ink);}
+  .comments{margin-bottom:20px;}
+  .comment{display:flex;gap:12px;margin-bottom:18px;}
+  .comment.reply{margin-left:48px;}
+  .c-avatar{width:34px;height:34px;border-radius:50%;background:var(--hair-strong);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+  .c-avatar.org{background:var(--ink);color:#fff;}
+  .c-body{flex:1;}
+  .c-head{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+  .c-name{font-weight:600;font-size:14px;}
+  .c-time{font-size:12px;color:var(--ink-mute);}
+  .c-org-tag{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--accent-dark);background:var(--accent-soft);padding:2px 6px;border-radius:10px;}
+  .c-text{font-size:14px;color:var(--ink-soft);line-height:1.5;}
+  .comment-form{display:flex;gap:12px;margin-top:24px;align-items:flex-start;}
+  .comment-form textarea{flex:1;border:1px solid var(--hair-strong);border-radius:var(--radius);padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;resize:vertical;min-height:44px;background:var(--paper);color:var(--ink);}
+  .comment-form textarea:focus{outline:none;border-color:var(--accent);}
+  footer{border-top:1px solid var(--hair);padding:20px 0;font-size:13px;color:var(--ink-mute);}
+  @media(max-width:680px){
+    h1{font-size:32px;}
+    .bento{grid-template-columns:1fr;grid-template-areas:"trasa" "tempo" "sprzet" "mapa" "zbiorka" "pogoda";}
+    .include-grid{grid-template-columns:1fr;}
+    .comment.reply{margin-left:20px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="sr-only">Strona wielodniowej płatnej wycieczki rowerowej: 3-dniowa Pętla Tatrzańska, z planem dnia po dniu i cennikiem</h1>
+  <header>
+    <div class="logo">ride<span>more</span>.bike</div>
+    <nav><a href="#">Wydarzenia</a><a href="#">Jak to działa</a><a href="#">Zaloguj</a></nav>
+  </header>
+
+  <div class="eyebrow">Wycieczka wielodniowa · płatna</div>
+  <h1 class="display">3-dniowa Pętla<br>Tatrzańska</h1>
+  <p class="subline">Czwartek–niedziela, <b>13–16 sierpnia 2026</b> · start: Czarny Dunajec</p>
+
+  <div class="photo-block">
+    <button class="edit-photo" title="Zmień zdjęcie wydarzenia">📷 Zmień zdjęcie</button>
+    <svg viewBox="0 0 960 320" preserveAspectRatio="none">
+      <rect width="960" height="320" fill="#EDECE7"/>
+      <polygon points="0,320 0,180 140,80 300,170 460,60 620,160 780,90 960,180 960,320" fill="#D9D7CF"/>
+      <polygon points="0,320 0,240 220,150 420,220 620,130 820,210 960,180 960,320" fill="#C4C1B6"/>
+      <polygon points="0,320 0,280 260,230 520,270 780,225 960,260 960,320" fill="#A8A59A"/>
+    </svg>
+    <div class="profile-overlay">
+      <svg viewBox="0 0 900 70" preserveAspectRatio="none">
+        <polyline points="0,55 50,45 100,20 160,38 220,15 300,40 360,48 420,22 480,42 540,12 620,35 680,45 740,20 800,38 900,50" fill="none" stroke="#D14E1E" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <div class="profile-labels"><span>Dzień 1</span><span>Dzień 2</span><span>Dzień 3</span></div>
+    </div>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat"><div class="stat-label">Dystans łącznie</div><div class="stat-value">215 km</div></div>
+    <div class="stat"><div class="stat-label">Przewyższenie</div><div class="stat-value">~2750 m</div></div>
+    <div class="stat"><div class="stat-label">Czas trwania</div><div class="stat-value">3 dni / 2 noce</div></div>
+    <div class="stat"><div class="stat-label">Rower</div><div class="stat-value">Gravel / szosa 32c+</div></div>
+  </div>
+
+  <div class="price-cta">
+    <div>
+      <div class="price-amount">890 zł <span style="font-size:16px;font-weight:500;color:var(--ink-soft);">/ os.</span></div>
+      <div class="price-sub">przy grupie min. 8 osób · zaliczka 200 zł przy rezerwacji</div>
+    </div>
+    <button class="btn" id="joinBtn" onclick="toggleJoin()">Zarezerwuj miejsce →</button>
+  </div>
+
+  <div class="org-bar">
+    <div class="avatar">GT</div>
+    <div style="flex:1;">
+      <div class="org-name">Górski Szlak Tours <span class="verified">Zweryfikowany operator</span></div>
+      <div class="org-meta">Wpisany do rejestru organizatorów turystyki · 4.8★ · 34 zrealizowane wyjazdy</div>
+    </div>
+  </div>
+
+  <div class="bento">
+    <div class="card card-trasa">
+      <h3>Trasa</h3>
+      <div class="mini-stat"><span>Nawierzchnia</span><b>70% asfalt / 30% leśna</b></div>
+      <div class="mini-stat"><span>Grupa</span><b>tempo B, 22–25 km/h</b></div>
+      <div class="mini-stat"><span>Granica</span><b>przejście do Słowacji</b></div>
+      <a class="gpx-link" href="#">Pobierz GPX (3 etapy) ↓</a>
+    </div>
+    <div class="card card-tempo">
+      <h3>Tempo grupy</h3>
+      <p>Jeden przewodnik z przodu, jeden zamyka grupę. Regroupy na każdym szczycie podjazdu.</p>
+    </div>
+    <div class="card card-sprzet">
+      <h3>Wymagany sprzęt</h3>
+      <p>Opony min. 32c, oświetlenie, sakwy/plecak na 1 dzień (bagaż główny jedzie transportem).</p>
+    </div>
+    <div class="card card-mapa">
+      <h3>Mapa trasy</h3>
+      <svg class="map-svg" viewBox="0 0 400 140">
+        <rect width="400" height="140" fill="#EEEDE8"/>
+        <line x1="0" y1="30" x2="400" y2="30" stroke="#DAD8D0" stroke-width="1"/>
+        <line x1="0" y1="70" x2="400" y2="70" stroke="#DAD8D0" stroke-width="1"/>
+        <line x1="0" y1="110" x2="400" y2="110" stroke="#DAD8D0" stroke-width="1"/>
+        <line x1="90" y1="0" x2="90" y2="140" stroke="#DAD8D0" stroke-width="1"/>
+        <line x1="230" y1="0" x2="230" y2="140" stroke="#DAD8D0" stroke-width="1"/>
+        <line x1="330" y1="0" x2="330" y2="140" stroke="#DAD8D0" stroke-width="1"/>
+        <path d="M30,100 C90,50 130,110 190,55 S260,30 320,45 S 370,80 350,115" fill="none" stroke="#D14E1E" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="30" cy="100" r="6" fill="#1A1A18"/>
+        <circle cx="190" cy="55" r="5" fill="#6B6A64"/>
+        <circle cx="320" cy="45" r="5" fill="#6B6A64"/>
+        <circle cx="350" cy="115" r="6" fill="#1A1A18"/>
+      </svg>
+      <a class="map-link" href="#">Otwórz w pełnym rozmiarze ↗</a>
+    </div>
+    <div class="card card-zbiorka">
+      <h3>Start</h3>
+      <p>Parking przy dworcu, Czarny Dunajec. Powrót w to samo miejsce w niedzielę.</p>
+    </div>
+    <div class="card card-pogoda">
+      <h3>Pogoda</h3>
+      <p>Prognoza pojawi się na 7 dni przed startem.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Plan wyjazdu</div>
+  <div class="day-card">
+    <div class="day-num">1</div>
+    <div>
+      <div class="day-title">Czarny Dunajec → Ždiar</div>
+      <div class="day-stats">75 km · 950 m przewyższenia</div>
+      <div class="day-stay">Nocleg: <b>pensjonat w Ždiarze</b> · śniadanie w cenie</div>
+    </div>
+  </div>
+  <div class="day-card">
+    <div class="day-num">2</div>
+    <div>
+      <div class="day-title">Ždiar → Liptovský Mikuláš</div>
+      <div class="day-stats">90 km · 1200 m przewyższenia</div>
+      <div class="day-stay">Nocleg: <b>hotel w Liptovskim Mikulašu</b> · śniadanie w cenie</div>
+    </div>
+  </div>
+  <div class="day-card">
+    <div class="day-num">3</div>
+    <div>
+      <div class="day-title">Liptovský Mikuláš → Czarny Dunajec</div>
+      <div class="day-stats">50 km · 600 m przewyższenia</div>
+      <div class="day-stay">Powrót do bazy w godzinach popołudniowych</div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:36px;">Cena i co obejmuje</div>
+  <div class="price-block-full">
+    <div class="price-amount">890 zł <span style="font-size:14px;font-weight:500;color:var(--ink-soft);">/ os., grupa min. 8 osób</span></div>
+    <div class="include-grid">
+      <div>
+        <div class="include-heading">W cenie</div>
+        <ul class="include-list included">
+          <li><span class="include-icon">✓</span>2 noclegi ze śniadaniem</li>
+          <li><span class="include-icon">✓</span>Transport bagażu między noclegami</li>
+          <li><span class="include-icon">✓</span>Przewodnik na całej trasie</li>
+          <li><span class="include-icon">✓</span>Wsparcie mechaniczne (serwisówka)</li>
+          <li><span class="include-icon">✓</span>Trasa GPX + mapa papierowa</li>
+          <li><span class="include-icon">✓</span>Ubezpieczenie grupowe NNW</li>
+        </ul>
+      </div>
+      <div>
+        <div class="include-heading">Nie w cenie</div>
+        <ul class="include-list excluded">
+          <li><span class="include-icon">–</span>Dojazd do Czarnego Dunajca i powrót</li>
+          <li><span class="include-icon">–</span>Obiady i kolacje</li>
+          <li><span class="include-icon">–</span>Wypożyczenie roweru</li>
+          <li><span class="include-icon">–</span>Ubezpieczenie indywidualne (KL za granicą)</li>
+          <li><span class="include-icon">–</span>Napiwki dla przewodnika</li>
+        </ul>
+      </div>
+    </div>
+    <div class="cancel-note">Zwrot zaliczki możliwy do 14 dni przed wyjazdem. Pełna płatność do 30 dni przed startem.</div>
+  </div>
+
+  <div class="section-title">Kto już jedzie</div>
+  <div class="avatars-row">
+    <div class="stack-avatar">M</div><div class="stack-avatar">K</div><div class="stack-avatar">T</div><div class="stack-avatar">O</div><div class="stack-avatar">P</div>
+    <div class="stack-avatar" style="font-size:11px;">+3</div>
+  </div>
+  <blockquote class="quote">
+    Trasa dobrze rozłożona, bagaż zawsze czekał na miejscu. Trzeci dzień lżejszy, więc kończy się bez zapasu sił na zero.
+    <cite>— Ola, uczestniczka edycji z zeszłego roku</cite>
+  </blockquote>
+
+  <div class="section-title">O wyjeździe</div>
+  <p class="desc">Trzy dni w Tatrach po obu stronach granicy — <b>bagaż jedzie transportem</b>, Ty jedziesz z lekkim plecakiem. Tempo dopasowane do grupy, przewodnik pilnuje trasy i tempa, serwisówka jedzie za peletonem. Dzień 2 jest najcięższy — reszta sił zostaje na trzeci dzień.</p>
+
+  <div class="section-title" id="commentsTitle">Dyskusja (3)</div>
+  <div class="comments" id="commentsList">
+    <div class="comment">
+      <div class="c-avatar">K</div>
+      <div class="c-body">
+        <div class="c-head"><span class="c-name">Kasia B.</span><span class="c-time">3 dni temu</span></div>
+        <div class="c-text">Przekraczamy granicę ze Słowacją — wystarczy dowód czy trzeba paszport?</div>
+      </div>
+    </div>
+    <div class="comment reply">
+      <div class="c-avatar org">GT</div>
+      <div class="c-body">
+        <div class="c-head"><span class="c-name">Górski Szlak Tours</span><span class="c-org-tag">Organizator</span><span class="c-time">3 dni temu</span></div>
+        <div class="c-text">Dowód osobisty wystarczy, oba kraje są w strefie Schengen.</div>
+      </div>
+    </div>
+    <div class="comment">
+      <div class="c-avatar">T</div>
+      <div class="c-body">
+        <div class="c-head"><span class="c-name">Tomek</span><span class="c-time">1 dzień temu</span></div>
+        <div class="c-text">Czy zaliczka jest zwrotna, gdyby coś wypadło w pracy?</div>
+      </div>
+    </div>
+  </div>
+  <div class="comment-form">
+    <div class="c-avatar">TY</div>
+    <textarea id="commentInput" placeholder="Zadaj pytanie organizatorowi..."></textarea>
+    <button class="btn ghost" onclick="addComment()">Dodaj</button>
+  </div>
+
+  <footer>ridemore.bike · wydarzenia rowerowe, nie tylko trasy</footer>
+</div>
+
+<script>
+let joined = false;
+function toggleJoin(){
+  joined = !joined;
+  document.getElementById('joinBtn').textContent = joined ? '✓ Zarezerwowano — potwierdzenie na mailu' : 'Zarezerwuj miejsce →';
+  document.getElementById('joinBtn').classList.toggle('joined', joined);
+}
+function addComment(){
+  const input = document.getElementById('commentInput');
+  const text = input.value.trim();
+  if(!text) return;
+  const list = document.getElementById('commentsList');
+  const div = document.createElement('div');
+  div.className = 'comment';
+  div.innerHTML = '<div class="c-avatar">TY</div><div class="c-body"><div class="c-head"><span class="c-name">Ty</span><span class="c-time">teraz</span></div><div class="c-text"></div></div>';
+  div.querySelector('.c-text').textContent = text;
+  list.appendChild(div);
+  input.value = '';
+  const title = document.getElementById('commentsTitle');
+  const n = list.querySelectorAll('.comment').length;
+  title.textContent = 'Dyskusja (' + n + ')';
+}
+</script>
+</body>
+</html>

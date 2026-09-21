@@ -1,0 +1,11 @@
+# Kontrakty implementacyjne — nie powinny być dostępne przez HTTP.
+#
+# Ten sam powód co przy md/ (zmierzone 2026-09-12: `/tasks/README.md` oddawał
+# 3 568 B): opisują stan prac, niedokończone etapy i znalezione słabe miejsca.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

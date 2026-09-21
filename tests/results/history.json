@@ -1,0 +1,638 @@
+[
+    {
+        "ts": "2026-08-19T20:01:19+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 1675,
+        "suites": [
+            {
+                "name": "dopasowania",
+                "exit": 0,
+                "duration_ms": 48,
+                "passed": 1,
+                "failed": 0,
+                "output": ""
+            },
+            {
+                "name": "preferencje",
+                "exit": 0,
+                "duration_ms": 261,
+                "passed": 1,
+                "failed": 0,
+                "output": ""
+            },
+            {
+                "name": "skarby",
+                "exit": 0,
+                "duration_ms": 157,
+                "passed": 34,
+                "failed": 0,
+                "output": ""
+            },
+            {
+                "name": "uzytkownicy",
+                "exit": 0,
+                "duration_ms": 747,
+                "passed": 12,
+                "failed": 0,
+                "output": ""
+            },
+            {
+                "name": "znane_trasy",
+                "exit": 0,
+                "duration_ms": 135,
+                "passed": 22,
+                "failed": 0,
+                "output": ""
+            }
+        ],
+        "total": 70,
+        "passed": 70,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-08-19T20:09:01+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 1728,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[dopasowania]\n---\n  PASS  Silnik dopasowań: RouteCells, zgodność regionów, MatchEngine\n\nOK: 1 przeszło, 0 nie przeszło (56 ms)\n",
+                "duration_ms": 56,
+                "name": "dopasowania",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[preferencje]\nTestowy user id=468\nUsunięto usera testowego id=468 (kaskadowo posprzątało wszystkie powiązane wiersze).\n---\n  PASS  Preferencje: sygnały, wyliczanie, rekomendacje\n\nOK: 1 przeszło, 0 nie przeszło (271 ms)\n",
+                "duration_ms": 271,
+                "name": "preferencje",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 34\n\n[skarby]\n  PASS  QR: zaliczenie w promieniu daje punkty\n  PASS  QR: to samo zaliczenie drugi raz nie płaci\n  PASS  QR: poza promieniem nie zalicza\n  PASS  QR: brak lokalizacji NIE blokuje zaliczenia\n  PASS  QR: nieznany kod nie zdradza, czy skarb istnieje\n  PASS  GPS: jedno potwierdzenie zalicza wszystkie skarby w zasięgu\n  PASS  GPS: powtórzone kliknięcie nic nie dokłada\n  PASS  GPX: ślad w promieniu zalicza, poza promieniem nie\n  PASS  GPX: bez pól siatki nie rusza tablicy punktów\n  PASS  Metody nie sumują się: skan i ślad tego samego dnia to jedno znalezienie\n  PASS  Mapa: kod z naklejki NIE wychodzi w odpowiedzi\n  PASS  Ujawnienie 2: jawny skarb widać dokładnie i bez logowania\n  PASS  Ujawnienie 0 i 1: niewidoczne w polu, którego oglądający nie odkrył\n  PASS  Ujawnienie 0 i 1: w odkrytym polu widać, ale bez dokładnego miejsca\n  PASS  Znalazca widzi swój skarb w pełni, niezależnie od poziomu\n  PASS  Ukryty skarb nadal da się zaliczyć — o to w nim chodzi\n  PASS  Zgłoszony punkt nie płaci żadną z trzech dróg\n  PASS  Zgłoszony punkt widać na mapie z zerową wartością\n  PASS  Próg potwierdzeń aktywuje punkt i dopiero wtedy zaczyna płacić\n  PASS  Ten sam głos drugi raz się nie liczy\n  PASS  Potwierdzenie z mapy wymaga bycia na miejscu\n  PASS  Poczekalnia pokazuje tylko zgłoszone, od najbliższych progu\n  PASS  Decyzja admina omija głosowanie\n  PASS  Limit otwartych zgłoszeń liczy tylko czekające\n  PASS  Rzadkość ustawia punkty wyjściowe, nie mnożnik\n  PASS  Stawka z bazy nadpisuje plik i daje się cofnąć\n  PASS  Statystyki społeczności liczą czekające, nie znalezione\n  PASS  Kolekcja pokazuje tylko kategorie, w których coś znaleziono\n  PASS  Znalezienie trafia do aktywności rowerzysty\n  PASS  Puls: partia skarbów z jednej doby to JEDEN wpis\n  PASS  Puls: pierwsze znalezienie dostaje wpis, kolejne już nie\n  PASS  Ikony kategorii to KLUCZE do Utils\\Icon, nie znaki\n  PASS  Utils\\Icon nie zawiera emoji ani uszkodzonych bajtów\n  PASS  Nazwy kategorii nie zawierają uszkodzonych bajtów\n\nOK: 34 przeszło, 0 nie przeszło (197 ms)\n",
+                "duration_ms": 197,
+                "name": "skarby",
+                "passed": 34,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 12\n\n[uzytkownicy]\n  PASS  Blokada zapisuje powód, datę i autora\n  PASS  Blokada bez powodu jest odrzucana\n  PASS  Blokada jest jednorazowa — druga nie nadpisuje pierwszej\n  PASS  Administratora nie da się zablokować z tego ekranu\n  PASS  Odblokowanie czyści komplet pól\n  PASS  Zablokowany user jest widoczny dla Models\\User i oznaczony\n  PASS  Puste konto da się skasować\n  PASS  Konto Z HISTORIĄ nie da się skasować\n  PASS  Własnego konta i konta admina nie da się skasować\n  PASS  Podsumowanie treści nazywa to, co zablokowało kasowanie\n  PASS  Filtry listy trafiają w to, co obiecują\n  PASS  Szukanie działa po e-mailu i po imieniu\n\nOK: 12 przeszło, 0 nie przeszło (748 ms)\n",
+                "duration_ms": 748,
+                "name": "uzytkownicy",
+                "passed": 12,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 22\n\n[znane_trasy]\n  PASS  mapa: trasa, której NIKT nie przejechał, jest widoczna\n  PASS  mapa: trasa spoza kadru nie wchodzi do wyniku\n  PASS  mapa: trasa wyłączona znika z warstwy\n  PASS  mapa: punkty wracają w kolejności wzdłuż śladu\n  PASS  mapa: pola bez kolejności są pomijane i zgłaszane\n  PASS  pola: współrzędne osiowe zgadzają się z identyfikatorem\n  PASS  edycja: zmiana danych opisowych nie rusza slugu ani pól\n  PASS  edycja: kolumn spoza whitelisty nie da się podać\n  PASS  edycja: podmiana przebiegu zmienia pola, zachowuje id i slug\n  PASS  edycja: po podmianie przebiegu trasa dalej jest na mapie\n  PASS  panel: szukanie zawęża listę do pasujących tras\n  PASS  panel: szukanie działa też po adresie trasy\n  PASS  panel: stronicowanie tnie wynik i liczy strony\n  PASS  panel: numer strony poza zakresem daje pustkę, nie błąd\n  PASS  panel: sortowanie po dystansie idzie od najdłuższej\n  PASS  panel: nieznane sortowanie spada do domyślnego, nie do SQL-a\n  PASS  panel: filtry rozdzielają aktywne, wyłączone i bez punktów\n  PASS  panel: filtr „do przeliczenia\" znajduje trasę, która się nie rysuje\n  PASS  panel: liczniki zgadzają się z filtrami\n  PASS  panel: find() podaje KOD regionu, nie tylko jego id\n  PASS  kadr: boundsFor obejmuje wszystkie pola trasy\n  PASS  kadr: trasa bez pól nie udaje, że ma kadr\n\nOK: 22 przeszło, 0 nie przeszło (105 ms)\n",
+                "duration_ms": 105,
+                "name": "znane_trasy",
+                "passed": 22,
+                "failed": 0
+            }
+        ],
+        "total": 70,
+        "passed": 70,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-08-19T20:09:35+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 290,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 34\n\n[skarby]\n  PASS  QR: zaliczenie w promieniu daje punkty\n  PASS  QR: to samo zaliczenie drugi raz nie płaci\n  PASS  QR: poza promieniem nie zalicza\n  PASS  QR: brak lokalizacji NIE blokuje zaliczenia\n  PASS  QR: nieznany kod nie zdradza, czy skarb istnieje\n  PASS  GPS: jedno potwierdzenie zalicza wszystkie skarby w zasięgu\n  PASS  GPS: powtórzone kliknięcie nic nie dokłada\n  PASS  GPX: ślad w promieniu zalicza, poza promieniem nie\n  PASS  GPX: bez pól siatki nie rusza tablicy punktów\n  PASS  Metody nie sumują się: skan i ślad tego samego dnia to jedno znalezienie\n  PASS  Mapa: kod z naklejki NIE wychodzi w odpowiedzi\n  PASS  Ujawnienie 2: jawny skarb widać dokładnie i bez logowania\n  PASS  Ujawnienie 0 i 1: niewidoczne w polu, którego oglądający nie odkrył\n  PASS  Ujawnienie 0 i 1: w odkrytym polu widać, ale bez dokładnego miejsca\n  PASS  Znalazca widzi swój skarb w pełni, niezależnie od poziomu\n  PASS  Ukryty skarb nadal da się zaliczyć — o to w nim chodzi\n  PASS  Zgłoszony punkt nie płaci żadną z trzech dróg\n  PASS  Zgłoszony punkt widać na mapie z zerową wartością\n  PASS  Próg potwierdzeń aktywuje punkt i dopiero wtedy zaczyna płacić\n  PASS  Ten sam głos drugi raz się nie liczy\n  PASS  Potwierdzenie z mapy wymaga bycia na miejscu\n  PASS  Poczekalnia pokazuje tylko zgłoszone, od najbliższych progu\n  PASS  Decyzja admina omija głosowanie\n  PASS  Limit otwartych zgłoszeń liczy tylko czekające\n  PASS  Rzadkość ustawia punkty wyjściowe, nie mnożnik\n  PASS  Stawka z bazy nadpisuje plik i daje się cofnąć\n  PASS  Statystyki społeczności liczą czekające, nie znalezione\n  PASS  Kolekcja pokazuje tylko kategorie, w których coś znaleziono\n  PASS  Znalezienie trafia do aktywności rowerzysty\n  PASS  Puls: partia skarbów z jednej doby to JEDEN wpis\n  PASS  Puls: pierwsze znalezienie dostaje wpis, kolejne już nie\n  PASS  Ikony kategorii to KLUCZE do Utils\\Icon, nie znaki\n  PASS  Utils\\Icon nie zawiera emoji ani uszkodzonych bajtów\n  PASS  Nazwy kategorii nie zawierają uszkodzonych bajtów\n\nOK: 34 przeszło, 0 nie przeszło (212 ms)\n",
+                "duration_ms": 212,
+                "name": "skarby",
+                "passed": 34,
+                "failed": 0
+            }
+        ],
+        "total": 34,
+        "passed": 34,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-08-19T20:59:10+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 1814,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 13\n\n[dodawanie_tras]\n  PASS  minimalnie: sama nazwa i plik GPX\n  PASS  komplet: nazwa, opis, region i zdjęcie\n  PASS  nazwa + opis, bez regionu i zdjęcia\n  PASS  nazwa + region, bez opisu i zdjęcia\n  PASS  nazwa + zdjęcie, bez opisu i regionu\n  PASS  model nie normalizuje opisu — pusty string zostaje pustym stringiem\n  PASS  nazwa z polskimi znakami daje czysty slug\n  PASS  ta sama nazwa drugi raz dostaje inny slug\n  PASS  nazwa bez liter nie daje pustego sluga\n  PASS  nazwa o dokładnie 200 znakach mieści się w całości\n  PASS  pusty GPX (bez punktów) jest odrzucany przez parser\n  PASS  ślad krótszy niż 100 m jest odrzucany przez parser\n  PASS  dłuższy ślad daje więcej pól i większy dystans\n\nOK: 13 przeszło, 0 nie przeszło (69 ms)\n",
+                "duration_ms": 69,
+                "name": "dodawanie_tras",
+                "passed": 13,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[dopasowania]\n---\n  PASS  Silnik dopasowań: RouteCells, zgodność regionów, MatchEngine\n\nOK: 1 przeszło, 0 nie przeszło (50 ms)\n",
+                "duration_ms": 50,
+                "name": "dopasowania",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[preferencje]\nTestowy user id=510\nUsunięto usera testowego id=510 (kaskadowo posprzątało wszystkie powiązane wiersze).\n---\n  PASS  Preferencje: sygnały, wyliczanie, rekomendacje\n\nOK: 1 przeszło, 0 nie przeszło (264 ms)\n",
+                "duration_ms": 264,
+                "name": "preferencje",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 34\n\n[skarby]\n  PASS  QR: zaliczenie w promieniu daje punkty\n  PASS  QR: to samo zaliczenie drugi raz nie płaci\n  PASS  QR: poza promieniem nie zalicza\n  PASS  QR: brak lokalizacji NIE blokuje zaliczenia\n  PASS  QR: nieznany kod nie zdradza, czy skarb istnieje\n  PASS  GPS: jedno potwierdzenie zalicza wszystkie skarby w zasięgu\n  PASS  GPS: powtórzone kliknięcie nic nie dokłada\n  PASS  GPX: ślad w promieniu zalicza, poza promieniem nie\n  PASS  GPX: bez pól siatki nie rusza tablicy punktów\n  PASS  Metody nie sumują się: skan i ślad tego samego dnia to jedno znalezienie\n  PASS  Mapa: kod z naklejki NIE wychodzi w odpowiedzi\n  PASS  Ujawnienie 2: jawny skarb widać dokładnie i bez logowania\n  PASS  Ujawnienie 0 i 1: niewidoczne w polu, którego oglądający nie odkrył\n  PASS  Ujawnienie 0 i 1: w odkrytym polu widać, ale bez dokładnego miejsca\n  PASS  Znalazca widzi swój skarb w pełni, niezależnie od poziomu\n  PASS  Ukryty skarb nadal da się zaliczyć — o to w nim chodzi\n  PASS  Zgłoszony punkt nie płaci żadną z trzech dróg\n  PASS  Zgłoszony punkt widać na mapie z zerową wartością\n  PASS  Próg potwierdzeń aktywuje punkt i dopiero wtedy zaczyna płacić\n  PASS  Ten sam głos drugi raz się nie liczy\n  PASS  Potwierdzenie z mapy wymaga bycia na miejscu\n  PASS  Poczekalnia pokazuje tylko zgłoszone, od najbliższych progu\n  PASS  Decyzja admina omija głosowanie\n  PASS  Limit otwartych zgłoszeń liczy tylko czekające\n  PASS  Rzadkość ustawia punkty wyjściowe, nie mnożnik\n  PASS  Stawka z bazy nadpisuje plik i daje się cofnąć\n  PASS  Statystyki społeczności liczą czekające, nie znalezione\n  PASS  Kolekcja pokazuje tylko kategorie, w których coś znaleziono\n  PASS  Znalezienie trafia do aktywności rowerzysty\n  PASS  Puls: partia skarbów z jednej doby to JEDEN wpis\n  PASS  Puls: pierwsze znalezienie dostaje wpis, kolejne już nie\n  PASS  Ikony kategorii to KLUCZE do Utils\\Icon, nie znaki\n  PASS  Utils\\Icon nie zawiera emoji ani uszkodzonych bajtów\n  PASS  Nazwy kategorii nie zawierają uszkodzonych bajtów\n\nOK: 34 przeszło, 0 nie przeszło (152 ms)\n",
+                "duration_ms": 152,
+                "name": "skarby",
+                "passed": 34,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 12\n\n[uzytkownicy]\n  PASS  Blokada zapisuje powód, datę i autora\n  PASS  Blokada bez powodu jest odrzucana\n  PASS  Blokada jest jednorazowa — druga nie nadpisuje pierwszej\n  PASS  Administratora nie da się zablokować z tego ekranu\n  PASS  Odblokowanie czyści komplet pól\n  PASS  Zablokowany user jest widoczny dla Models\\User i oznaczony\n  PASS  Puste konto da się skasować\n  PASS  Konto Z HISTORIĄ nie da się skasować\n  PASS  Własnego konta i konta admina nie da się skasować\n  PASS  Podsumowanie treści nazywa to, co zablokowało kasowanie\n  PASS  Filtry listy trafiają w to, co obiecują\n  PASS  Szukanie działa po e-mailu i po imieniu\n\nOK: 12 przeszło, 0 nie przeszło (758 ms)\n",
+                "duration_ms": 758,
+                "name": "uzytkownicy",
+                "passed": 12,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 22\n\n[znane_trasy]\n  PASS  mapa: trasa, której NIKT nie przejechał, jest widoczna\n  PASS  mapa: trasa spoza kadru nie wchodzi do wyniku\n  PASS  mapa: trasa wyłączona znika z warstwy\n  PASS  mapa: punkty wracają w kolejności wzdłuż śladu\n  PASS  mapa: pola bez kolejności są pomijane i zgłaszane\n  PASS  pola: współrzędne osiowe zgadzają się z identyfikatorem\n  PASS  edycja: zmiana danych opisowych nie rusza slugu ani pól\n  PASS  edycja: kolumn spoza whitelisty nie da się podać\n  PASS  edycja: podmiana przebiegu zmienia pola, zachowuje id i slug\n  PASS  edycja: po podmianie przebiegu trasa dalej jest na mapie\n  PASS  panel: szukanie zawęża listę do pasujących tras\n  PASS  panel: szukanie działa też po adresie trasy\n  PASS  panel: stronicowanie tnie wynik i liczy strony\n  PASS  panel: numer strony poza zakresem daje pustkę, nie błąd\n  PASS  panel: sortowanie po dystansie idzie od najdłuższej\n  PASS  panel: nieznane sortowanie spada do domyślnego, nie do SQL-a\n  PASS  panel: filtry rozdzielają aktywne, wyłączone i bez punktów\n  PASS  panel: filtr „do przeliczenia\" znajduje trasę, która się nie rysuje\n  PASS  panel: liczniki zgadzają się z filtrami\n  PASS  panel: find() podaje KOD regionu, nie tylko jego id\n  PASS  kadr: boundsFor obejmuje wszystkie pola trasy\n  PASS  kadr: trasa bez pól nie udaje, że ma kadr\n\nOK: 22 przeszło, 0 nie przeszło (108 ms)\n",
+                "duration_ms": 108,
+                "name": "znane_trasy",
+                "passed": 22,
+                "failed": 0
+            }
+        ],
+        "total": 83,
+        "passed": 83,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-08-19T21:46:05+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 1791,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 13\n\n[dodawanie_tras]\n  PASS  minimalnie: sama nazwa i plik GPX\n  PASS  komplet: nazwa, opis, region i zdjęcie\n  PASS  nazwa + opis, bez regionu i zdjęcia\n  PASS  nazwa + region, bez opisu i zdjęcia\n  PASS  nazwa + zdjęcie, bez opisu i regionu\n  PASS  model nie normalizuje opisu — pusty string zostaje pustym stringiem\n  PASS  nazwa z polskimi znakami daje czysty slug\n  PASS  ta sama nazwa drugi raz dostaje inny slug\n  PASS  nazwa bez liter nie daje pustego sluga\n  PASS  nazwa o dokładnie 200 znakach mieści się w całości\n  PASS  pusty GPX (bez punktów) jest odrzucany przez parser\n  PASS  ślad krótszy niż 100 m jest odrzucany przez parser\n  PASS  dłuższy ślad daje więcej pól i większy dystans\n\nOK: 13 przeszło, 0 nie przeszło (93 ms)\n",
+                "duration_ms": 93,
+                "name": "dodawanie_tras",
+                "passed": 13,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[dopasowania]\n---\n  PASS  Silnik dopasowań: RouteCells, zgodność regionów, MatchEngine\n\nOK: 1 przeszło, 0 nie przeszło (37 ms)\n",
+                "duration_ms": 37,
+                "name": "dopasowania",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[preferencje]\nTestowy user id=524\nUsunięto usera testowego id=524 (kaskadowo posprzątało wszystkie powiązane wiersze).\n---\n  PASS  Preferencje: sygnały, wyliczanie, rekomendacje\n\nOK: 1 przeszło, 0 nie przeszło (267 ms)\n",
+                "duration_ms": 267,
+                "name": "preferencje",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 34\n\n[skarby]\n  PASS  QR: zaliczenie w promieniu daje punkty\n  PASS  QR: to samo zaliczenie drugi raz nie płaci\n  PASS  QR: poza promieniem nie zalicza\n  PASS  QR: brak lokalizacji NIE blokuje zaliczenia\n  PASS  QR: nieznany kod nie zdradza, czy skarb istnieje\n  PASS  GPS: jedno potwierdzenie zalicza wszystkie skarby w zasięgu\n  PASS  GPS: powtórzone kliknięcie nic nie dokłada\n  PASS  GPX: ślad w promieniu zalicza, poza promieniem nie\n  PASS  GPX: bez pól siatki nie rusza tablicy punktów\n  PASS  Metody nie sumują się: skan i ślad tego samego dnia to jedno znalezienie\n  PASS  Mapa: kod z naklejki NIE wychodzi w odpowiedzi\n  PASS  Ujawnienie 2: jawny skarb widać dokładnie i bez logowania\n  PASS  Ujawnienie 0 i 1: niewidoczne w polu, którego oglądający nie odkrył\n  PASS  Ujawnienie 0 i 1: w odkrytym polu widać, ale bez dokładnego miejsca\n  PASS  Znalazca widzi swój skarb w pełni, niezależnie od poziomu\n  PASS  Ukryty skarb nadal da się zaliczyć — o to w nim chodzi\n  PASS  Zgłoszony punkt nie płaci żadną z trzech dróg\n  PASS  Zgłoszony punkt widać na mapie z zerową wartością\n  PASS  Próg potwierdzeń aktywuje punkt i dopiero wtedy zaczyna płacić\n  PASS  Ten sam głos drugi raz się nie liczy\n  PASS  Potwierdzenie z mapy wymaga bycia na miejscu\n  PASS  Poczekalnia pokazuje tylko zgłoszone, od najbliższych progu\n  PASS  Decyzja admina omija głosowanie\n  PASS  Limit otwartych zgłoszeń liczy tylko czekające\n  PASS  Rzadkość ustawia punkty wyjściowe, nie mnożnik\n  PASS  Stawka z bazy nadpisuje plik i daje się cofnąć\n  PASS  Statystyki społeczności liczą czekające, nie znalezione\n  PASS  Kolekcja pokazuje tylko kategorie, w których coś znaleziono\n  PASS  Znalezienie trafia do aktywności rowerzysty\n  PASS  Puls: partia skarbów z jednej doby to JEDEN wpis\n  PASS  Puls: pierwsze znalezienie dostaje wpis, kolejne już nie\n  PASS  Ikony kategorii to KLUCZE do Utils\\Icon, nie znaki\n  PASS  Utils\\Icon nie zawiera emoji ani uszkodzonych bajtów\n  PASS  Nazwy kategorii nie zawierają uszkodzonych bajtów\n\nOK: 34 przeszło, 0 nie przeszło (131 ms)\n",
+                "duration_ms": 131,
+                "name": "skarby",
+                "passed": 34,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 12\n\n[uzytkownicy]\n  PASS  Blokada zapisuje powód, datę i autora\n  PASS  Blokada bez powodu jest odrzucana\n  PASS  Blokada jest jednorazowa — druga nie nadpisuje pierwszej\n  PASS  Administratora nie da się zablokować z tego ekranu\n  PASS  Odblokowanie czyści komplet pól\n  PASS  Zablokowany user jest widoczny dla Models\\User i oznaczony\n  PASS  Puste konto da się skasować\n  PASS  Konto Z HISTORIĄ nie da się skasować\n  PASS  Własnego konta i konta admina nie da się skasować\n  PASS  Podsumowanie treści nazywa to, co zablokowało kasowanie\n  PASS  Filtry listy trafiają w to, co obiecują\n  PASS  Szukanie działa po e-mailu i po imieniu\n\nOK: 12 przeszło, 0 nie przeszło (753 ms)\n",
+                "duration_ms": 753,
+                "name": "uzytkownicy",
+                "passed": 12,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 22\n\n[znane_trasy]\n  PASS  mapa: trasa, której NIKT nie przejechał, jest widoczna\n  PASS  mapa: trasa spoza kadru nie wchodzi do wyniku\n  PASS  mapa: trasa wyłączona znika z warstwy\n  PASS  mapa: punkty wracają w kolejności wzdłuż śladu\n  PASS  mapa: pola bez kolejności są pomijane i zgłaszane\n  PASS  pola: współrzędne osiowe zgadzają się z identyfikatorem\n  PASS  edycja: zmiana danych opisowych nie rusza slugu ani pól\n  PASS  edycja: kolumn spoza whitelisty nie da się podać\n  PASS  edycja: podmiana przebiegu zmienia pola, zachowuje id i slug\n  PASS  edycja: po podmianie przebiegu trasa dalej jest na mapie\n  PASS  panel: szukanie zawęża listę do pasujących tras\n  PASS  panel: szukanie działa też po adresie trasy\n  PASS  panel: stronicowanie tnie wynik i liczy strony\n  PASS  panel: numer strony poza zakresem daje pustkę, nie błąd\n  PASS  panel: sortowanie po dystansie idzie od najdłuższej\n  PASS  panel: nieznane sortowanie spada do domyślnego, nie do SQL-a\n  PASS  panel: filtry rozdzielają aktywne, wyłączone i bez punktów\n  PASS  panel: filtr „do przeliczenia\" znajduje trasę, która się nie rysuje\n  PASS  panel: liczniki zgadzają się z filtrami\n  PASS  panel: find() podaje KOD regionu, nie tylko jego id\n  PASS  kadr: boundsFor obejmuje wszystkie pola trasy\n  PASS  kadr: trasa bez pól nie udaje, że ma kadr\n\nOK: 22 przeszło, 0 nie przeszło (110 ms)\n",
+                "duration_ms": 110,
+                "name": "znane_trasy",
+                "passed": 22,
+                "failed": 0
+            }
+        ],
+        "total": 83,
+        "passed": 83,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-08-19T21:46:15+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 1790,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 13\n\n[dodawanie_tras]\n  PASS  minimalnie: sama nazwa i plik GPX\n  PASS  komplet: nazwa, opis, region i zdjęcie\n  PASS  nazwa + opis, bez regionu i zdjęcia\n  PASS  nazwa + region, bez opisu i zdjęcia\n  PASS  nazwa + zdjęcie, bez opisu i regionu\n  PASS  model nie normalizuje opisu — pusty string zostaje pustym stringiem\n  PASS  nazwa z polskimi znakami daje czysty slug\n  PASS  ta sama nazwa drugi raz dostaje inny slug\n  PASS  nazwa bez liter nie daje pustego sluga\n  PASS  nazwa o dokładnie 200 znakach mieści się w całości\n  PASS  pusty GPX (bez punktów) jest odrzucany przez parser\n  PASS  ślad krótszy niż 100 m jest odrzucany przez parser\n  PASS  dłuższy ślad daje więcej pól i większy dystans\n\nOK: 13 przeszło, 0 nie przeszło (78 ms)\n",
+                "duration_ms": 78,
+                "name": "dodawanie_tras",
+                "passed": 13,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[dopasowania]\n---\n  PASS  Silnik dopasowań: RouteCells, zgodność regionów, MatchEngine\n\nOK: 1 przeszło, 0 nie przeszło (47 ms)\n",
+                "duration_ms": 47,
+                "name": "dopasowania",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[preferencje]\nTestowy user id=538\nUsunięto usera testowego id=538 (kaskadowo posprzątało wszystkie powiązane wiersze).\n---\n  PASS  Preferencje: sygnały, wyliczanie, rekomendacje\n\nOK: 1 przeszło, 0 nie przeszło (265 ms)\n",
+                "duration_ms": 265,
+                "name": "preferencje",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 34\n\n[skarby]\n  PASS  QR: zaliczenie w promieniu daje punkty\n  PASS  QR: to samo zaliczenie drugi raz nie płaci\n  PASS  QR: poza promieniem nie zalicza\n  PASS  QR: brak lokalizacji NIE blokuje zaliczenia\n  PASS  QR: nieznany kod nie zdradza, czy skarb istnieje\n  PASS  GPS: jedno potwierdzenie zalicza wszystkie skarby w zasięgu\n  PASS  GPS: powtórzone kliknięcie nic nie dokłada\n  PASS  GPX: ślad w promieniu zalicza, poza promieniem nie\n  PASS  GPX: bez pól siatki nie rusza tablicy punktów\n  PASS  Metody nie sumują się: skan i ślad tego samego dnia to jedno znalezienie\n  PASS  Mapa: kod z naklejki NIE wychodzi w odpowiedzi\n  PASS  Ujawnienie 2: jawny skarb widać dokładnie i bez logowania\n  PASS  Ujawnienie 0 i 1: niewidoczne w polu, którego oglądający nie odkrył\n  PASS  Ujawnienie 0 i 1: w odkrytym polu widać, ale bez dokładnego miejsca\n  PASS  Znalazca widzi swój skarb w pełni, niezależnie od poziomu\n  PASS  Ukryty skarb nadal da się zaliczyć — o to w nim chodzi\n  PASS  Zgłoszony punkt nie płaci żadną z trzech dróg\n  PASS  Zgłoszony punkt widać na mapie z zerową wartością\n  PASS  Próg potwierdzeń aktywuje punkt i dopiero wtedy zaczyna płacić\n  PASS  Ten sam głos drugi raz się nie liczy\n  PASS  Potwierdzenie z mapy wymaga bycia na miejscu\n  PASS  Poczekalnia pokazuje tylko zgłoszone, od najbliższych progu\n  PASS  Decyzja admina omija głosowanie\n  PASS  Limit otwartych zgłoszeń liczy tylko czekające\n  PASS  Rzadkość ustawia punkty wyjściowe, nie mnożnik\n  PASS  Stawka z bazy nadpisuje plik i daje się cofnąć\n  PASS  Statystyki społeczności liczą czekające, nie znalezione\n  PASS  Kolekcja pokazuje tylko kategorie, w których coś znaleziono\n  PASS  Znalezienie trafia do aktywności rowerzysty\n  PASS  Puls: partia skarbów z jednej doby to JEDEN wpis\n  PASS  Puls: pierwsze znalezienie dostaje wpis, kolejne już nie\n  PASS  Ikony kategorii to KLUCZE do Utils\\Icon, nie znaki\n  PASS  Utils\\Icon nie zawiera emoji ani uszkodzonych bajtów\n  PASS  Nazwy kategorii nie zawierają uszkodzonych bajtów\n\nOK: 34 przeszło, 0 nie przeszło (146 ms)\n",
+                "duration_ms": 146,
+                "name": "skarby",
+                "passed": 34,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 12\n\n[uzytkownicy]\n  PASS  Blokada zapisuje powód, datę i autora\n  PASS  Blokada bez powodu jest odrzucana\n  PASS  Blokada jest jednorazowa — druga nie nadpisuje pierwszej\n  PASS  Administratora nie da się zablokować z tego ekranu\n  PASS  Odblokowanie czyści komplet pól\n  PASS  Zablokowany user jest widoczny dla Models\\User i oznaczony\n  PASS  Puste konto da się skasować\n  PASS  Konto Z HISTORIĄ nie da się skasować\n  PASS  Własnego konta i konta admina nie da się skasować\n  PASS  Podsumowanie treści nazywa to, co zablokowało kasowanie\n  PASS  Filtry listy trafiają w to, co obiecują\n  PASS  Szukanie działa po e-mailu i po imieniu\n\nOK: 12 przeszło, 0 nie przeszło (746 ms)\n",
+                "duration_ms": 746,
+                "name": "uzytkownicy",
+                "passed": 12,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 22\n\n[znane_trasy]\n  PASS  mapa: trasa, której NIKT nie przejechał, jest widoczna\n  PASS  mapa: trasa spoza kadru nie wchodzi do wyniku\n  PASS  mapa: trasa wyłączona znika z warstwy\n  PASS  mapa: punkty wracają w kolejności wzdłuż śladu\n  PASS  mapa: pola bez kolejności są pomijane i zgłaszane\n  PASS  pola: współrzędne osiowe zgadzają się z identyfikatorem\n  PASS  edycja: zmiana danych opisowych nie rusza slugu ani pól\n  PASS  edycja: kolumn spoza whitelisty nie da się podać\n  PASS  edycja: podmiana przebiegu zmienia pola, zachowuje id i slug\n  PASS  edycja: po podmianie przebiegu trasa dalej jest na mapie\n  PASS  panel: szukanie zawęża listę do pasujących tras\n  PASS  panel: szukanie działa też po adresie trasy\n  PASS  panel: stronicowanie tnie wynik i liczy strony\n  PASS  panel: numer strony poza zakresem daje pustkę, nie błąd\n  PASS  panel: sortowanie po dystansie idzie od najdłuższej\n  PASS  panel: nieznane sortowanie spada do domyślnego, nie do SQL-a\n  PASS  panel: filtry rozdzielają aktywne, wyłączone i bez punktów\n  PASS  panel: filtr „do przeliczenia\" znajduje trasę, która się nie rysuje\n  PASS  panel: liczniki zgadzają się z filtrami\n  PASS  panel: find() podaje KOD regionu, nie tylko jego id\n  PASS  kadr: boundsFor obejmuje wszystkie pola trasy\n  PASS  kadr: trasa bez pól nie udaje, że ma kadr\n\nOK: 22 przeszło, 0 nie przeszło (120 ms)\n",
+                "duration_ms": 120,
+                "name": "znane_trasy",
+                "passed": 22,
+                "failed": 0
+            }
+        ],
+        "total": 83,
+        "passed": 83,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-08-19T21:46:43+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 159,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 13\n\n[dodawanie_tras]\n  PASS  minimalnie: sama nazwa i plik GPX\n  PASS  komplet: nazwa, opis, region i zdjęcie\n  PASS  nazwa + opis, bez regionu i zdjęcia\n  PASS  nazwa + region, bez opisu i zdjęcia\n  PASS  nazwa + zdjęcie, bez opisu i regionu\n  PASS  model nie normalizuje opisu — pusty string zostaje pustym stringiem\n  PASS  nazwa z polskimi znakami daje czysty slug\n  PASS  ta sama nazwa drugi raz dostaje inny slug\n  PASS  nazwa bez liter nie daje pustego sluga\n  PASS  nazwa o dokładnie 200 znakach mieści się w całości\n  PASS  pusty GPX (bez punktów) jest odrzucany przez parser\n  PASS  ślad krótszy niż 100 m jest odrzucany przez parser\n  PASS  dłuższy ślad daje więcej pól i większy dystans\n\nOK: 13 przeszło, 0 nie przeszło (78 ms)\n",
+                "duration_ms": 78,
+                "name": "dodawanie_tras",
+                "passed": 13,
+                "failed": 0
+            }
+        ],
+        "total": 13,
+        "passed": 13,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-08-19T21:49:03+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 1935,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 13\n\n[dodawanie_tras]\n  PASS  minimalnie: sama nazwa i plik GPX\n  PASS  komplet: nazwa, opis, region i zdjęcie\n  PASS  nazwa + opis, bez regionu i zdjęcia\n  PASS  nazwa + region, bez opisu i zdjęcia\n  PASS  nazwa + zdjęcie, bez opisu i regionu\n  PASS  model nie normalizuje opisu — pusty string zostaje pustym stringiem\n  PASS  nazwa z polskimi znakami daje czysty slug\n  PASS  ta sama nazwa drugi raz dostaje inny slug\n  PASS  nazwa bez liter nie daje pustego sluga\n  PASS  nazwa o dokładnie 200 znakach mieści się w całości\n  PASS  pusty GPX (bez punktów) jest odrzucany przez parser\n  PASS  ślad krótszy niż 100 m jest odrzucany przez parser\n  PASS  dłuższy ślad daje więcej pól i większy dystans\n\nOK: 13 przeszło, 0 nie przeszło (122 ms)\n",
+                "duration_ms": 122,
+                "name": "dodawanie_tras",
+                "passed": 13,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[dopasowania]\n---\n  PASS  Silnik dopasowań: RouteCells, zgodność regionów, MatchEngine\n\nOK: 1 przeszło, 0 nie przeszło (45 ms)\n",
+                "duration_ms": 45,
+                "name": "dopasowania",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[preferencje]\nTestowy user id=552\nUsunięto usera testowego id=552 (kaskadowo posprzątało wszystkie powiązane wiersze).\n---\n  PASS  Preferencje: sygnały, wyliczanie, rekomendacje\n\nOK: 1 przeszło, 0 nie przeszło (237 ms)\n",
+                "duration_ms": 237,
+                "name": "preferencje",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 34\n\n[skarby]\n  PASS  QR: zaliczenie w promieniu daje punkty\n  PASS  QR: to samo zaliczenie drugi raz nie płaci\n  PASS  QR: poza promieniem nie zalicza\n  PASS  QR: brak lokalizacji NIE blokuje zaliczenia\n  PASS  QR: nieznany kod nie zdradza, czy skarb istnieje\n  PASS  GPS: jedno potwierdzenie zalicza wszystkie skarby w zasięgu\n  PASS  GPS: powtórzone kliknięcie nic nie dokłada\n  PASS  GPX: ślad w promieniu zalicza, poza promieniem nie\n  PASS  GPX: bez pól siatki nie rusza tablicy punktów\n  PASS  Metody nie sumują się: skan i ślad tego samego dnia to jedno znalezienie\n  PASS  Mapa: kod z naklejki NIE wychodzi w odpowiedzi\n  PASS  Ujawnienie 2: jawny skarb widać dokładnie i bez logowania\n  PASS  Ujawnienie 0 i 1: niewidoczne w polu, którego oglądający nie odkrył\n  PASS  Ujawnienie 0 i 1: w odkrytym polu widać, ale bez dokładnego miejsca\n  PASS  Znalazca widzi swój skarb w pełni, niezależnie od poziomu\n  PASS  Ukryty skarb nadal da się zaliczyć — o to w nim chodzi\n  PASS  Zgłoszony punkt nie płaci żadną z trzech dróg\n  PASS  Zgłoszony punkt widać na mapie z zerową wartością\n  PASS  Próg potwierdzeń aktywuje punkt i dopiero wtedy zaczyna płacić\n  PASS  Ten sam głos drugi raz się nie liczy\n  PASS  Potwierdzenie z mapy wymaga bycia na miejscu\n  PASS  Poczekalnia pokazuje tylko zgłoszone, od najbliższych progu\n  PASS  Decyzja admina omija głosowanie\n  PASS  Limit otwartych zgłoszeń liczy tylko czekające\n  PASS  Rzadkość ustawia punkty wyjściowe, nie mnożnik\n  PASS  Stawka z bazy nadpisuje plik i daje się cofnąć\n  PASS  Statystyki społeczności liczą czekające, nie znalezione\n  PASS  Kolekcja pokazuje tylko kategorie, w których coś znaleziono\n  PASS  Znalezienie trafia do aktywności rowerzysty\n  PASS  Puls: partia skarbów z jednej doby to JEDEN wpis\n  PASS  Puls: pierwsze znalezienie dostaje wpis, kolejne już nie\n  PASS  Ikony kategorii to KLUCZE do Utils\\Icon, nie znaki\n  PASS  Utils\\Icon nie zawiera emoji ani uszkodzonych bajtów\n  PASS  Nazwy kategorii nie zawierają uszkodzonych bajtów\n\nOK: 34 przeszło, 0 nie przeszło (142 ms)\n",
+                "duration_ms": 142,
+                "name": "skarby",
+                "passed": 34,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 12\n\n[uzytkownicy]\n  PASS  Blokada zapisuje powód, datę i autora\n  PASS  Blokada bez powodu jest odrzucana\n  PASS  Blokada jest jednorazowa — druga nie nadpisuje pierwszej\n  PASS  Administratora nie da się zablokować z tego ekranu\n  PASS  Odblokowanie czyści komplet pól\n  PASS  Zablokowany user jest widoczny dla Models\\User i oznaczony\n  PASS  Puste konto da się skasować\n  PASS  Konto Z HISTORIĄ nie da się skasować\n  PASS  Własnego konta i konta admina nie da się skasować\n  PASS  Podsumowanie treści nazywa to, co zablokowało kasowanie\n  PASS  Filtry listy trafiają w to, co obiecują\n  PASS  Szukanie działa po e-mailu i po imieniu\n\nOK: 12 przeszło, 0 nie przeszło (737 ms)\n",
+                "duration_ms": 737,
+                "name": "uzytkownicy",
+                "passed": 12,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 22\n\n[znane_trasy]\n  PASS  mapa: trasa, której NIKT nie przejechał, jest widoczna\n  PASS  mapa: trasa spoza kadru nie wchodzi do wyniku\n  PASS  mapa: trasa wyłączona znika z warstwy\n  PASS  mapa: punkty wracają w kolejności wzdłuż śladu\n  PASS  mapa: pola bez kolejności są pomijane i zgłaszane\n  PASS  pola: współrzędne osiowe zgadzają się z identyfikatorem\n  PASS  edycja: zmiana danych opisowych nie rusza slugu ani pól\n  PASS  edycja: kolumn spoza whitelisty nie da się podać\n  PASS  edycja: podmiana przebiegu zmienia pola, zachowuje id i slug\n  PASS  edycja: po podmianie przebiegu trasa dalej jest na mapie\n  PASS  panel: szukanie zawęża listę do pasujących tras\n  PASS  panel: szukanie działa też po adresie trasy\n  PASS  panel: stronicowanie tnie wynik i liczy strony\n  PASS  panel: numer strony poza zakresem daje pustkę, nie błąd\n  PASS  panel: sortowanie po dystansie idzie od najdłuższej\n  PASS  panel: nieznane sortowanie spada do domyślnego, nie do SQL-a\n  PASS  panel: filtry rozdzielają aktywne, wyłączone i bez punktów\n  PASS  panel: filtr „do przeliczenia\" znajduje trasę, która się nie rysuje\n  PASS  panel: liczniki zgadzają się z filtrami\n  PASS  panel: find() podaje KOD regionu, nie tylko jego id\n  PASS  kadr: boundsFor obejmuje wszystkie pola trasy\n  PASS  kadr: trasa bez pól nie udaje, że ma kadr\n\nOK: 22 przeszło, 0 nie przeszło (130 ms)\n",
+                "duration_ms": 130,
+                "name": "znane_trasy",
+                "passed": 22,
+                "failed": 0
+            }
+        ],
+        "total": 83,
+        "passed": 83,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-08-19T21:58:57+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 1942,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 12\n\n[dodawanie_skarbow]\n  PASS  Minimalne dane: nazwa + współrzędne wystarczą, reszta ma domyślne\n  PASS  Minimalne dane: opis, wskazówka i kategoria mogą zostać puste\n  PASS  Dwa skarby z minimalnymi danymi dostają różne kody\n  PASS  Wariant 1\/3 — COMMON: minimalne dane dostają stawkę zwykłego\n  PASS  Wariant 2\/3 — RARE: minimalne dane dostają stawkę rzadkiego\n  PASS  Wariant 3\/3 — EPIC: minimalne dane dostają stawkę epickiego\n  PASS  Wpisana stawka nadpisuje rzadkość — bez cichego mnożenia\n  PASS  Zaliczenie zapisuje znalezienie i jedną transakcję punktów\n  PASS  Punkty za skarb widać w rozbiciu wyników jako źródło TREASURE_FOUND\n  PASS  Wycofanie skarbu blokuje wszystkie trzy drogi zaliczenia\n  PASS  Wycofany skarb znika z mapy, ale zostaje w bazie\n  PASS  Wycofanie NIE kasuje już naliczonych punktów — rejestr jest niezmienny\n\nOK: 12 przeszło, 0 nie przeszło (38 ms)\n",
+                "duration_ms": 38,
+                "name": "dodawanie_skarbow",
+                "passed": 12,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 13\n\n[dodawanie_tras]\n  PASS  minimalnie: sama nazwa i plik GPX\n  PASS  komplet: nazwa, opis, region i zdjęcie\n  PASS  nazwa + opis, bez regionu i zdjęcia\n  PASS  nazwa + region, bez opisu i zdjęcia\n  PASS  nazwa + zdjęcie, bez opisu i regionu\n  PASS  model nie normalizuje opisu — pusty string zostaje pustym stringiem\n  PASS  nazwa z polskimi znakami daje czysty slug\n  PASS  ta sama nazwa drugi raz dostaje inny slug\n  PASS  nazwa bez liter nie daje pustego sluga\n  PASS  nazwa o dokładnie 200 znakach mieści się w całości\n  PASS  pusty GPX (bez punktów) jest odrzucany przez parser\n  PASS  ślad krótszy niż 100 m jest odrzucany przez parser\n  PASS  dłuższy ślad daje więcej pól i większy dystans\n\nOK: 13 przeszło, 0 nie przeszło (68 ms)\n",
+                "duration_ms": 68,
+                "name": "dodawanie_tras",
+                "passed": 13,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[dopasowania]\n---\n  PASS  Silnik dopasowań: RouteCells, zgodność regionów, MatchEngine\n\nOK: 1 przeszło, 0 nie przeszło (44 ms)\n",
+                "duration_ms": 44,
+                "name": "dopasowania",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[preferencje]\nTestowy user id=580\nUsunięto usera testowego id=580 (kaskadowo posprzątało wszystkie powiązane wiersze).\n---\n  PASS  Preferencje: sygnały, wyliczanie, rekomendacje\n\nOK: 1 przeszło, 0 nie przeszło (282 ms)\n",
+                "duration_ms": 282,
+                "name": "preferencje",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 34\n\n[skarby]\n  PASS  QR: zaliczenie w promieniu daje punkty\n  PASS  QR: to samo zaliczenie drugi raz nie płaci\n  PASS  QR: poza promieniem nie zalicza\n  PASS  QR: brak lokalizacji NIE blokuje zaliczenia\n  PASS  QR: nieznany kod nie zdradza, czy skarb istnieje\n  PASS  GPS: jedno potwierdzenie zalicza wszystkie skarby w zasięgu\n  PASS  GPS: powtórzone kliknięcie nic nie dokłada\n  PASS  GPX: ślad w promieniu zalicza, poza promieniem nie\n  PASS  GPX: bez pól siatki nie rusza tablicy punktów\n  PASS  Metody nie sumują się: skan i ślad tego samego dnia to jedno znalezienie\n  PASS  Mapa: kod z naklejki NIE wychodzi w odpowiedzi\n  PASS  Ujawnienie 2: jawny skarb widać dokładnie i bez logowania\n  PASS  Ujawnienie 0 i 1: niewidoczne w polu, którego oglądający nie odkrył\n  PASS  Ujawnienie 0 i 1: w odkrytym polu widać, ale bez dokładnego miejsca\n  PASS  Znalazca widzi swój skarb w pełni, niezależnie od poziomu\n  PASS  Ukryty skarb nadal da się zaliczyć — o to w nim chodzi\n  PASS  Zgłoszony punkt nie płaci żadną z trzech dróg\n  PASS  Zgłoszony punkt widać na mapie z zerową wartością\n  PASS  Próg potwierdzeń aktywuje punkt i dopiero wtedy zaczyna płacić\n  PASS  Ten sam głos drugi raz się nie liczy\n  PASS  Potwierdzenie z mapy wymaga bycia na miejscu\n  PASS  Poczekalnia pokazuje tylko zgłoszone, od najbliższych progu\n  PASS  Decyzja admina omija głosowanie\n  PASS  Limit otwartych zgłoszeń liczy tylko czekające\n  PASS  Rzadkość ustawia punkty wyjściowe, nie mnożnik\n  PASS  Stawka z bazy nadpisuje plik i daje się cofnąć\n  PASS  Statystyki społeczności liczą czekające, nie znalezione\n  PASS  Kolekcja pokazuje tylko kategorie, w których coś znaleziono\n  PASS  Znalezienie trafia do aktywności rowerzysty\n  PASS  Puls: partia skarbów z jednej doby to JEDEN wpis\n  PASS  Puls: pierwsze znalezienie dostaje wpis, kolejne już nie\n  PASS  Ikony kategorii to KLUCZE do Utils\\Icon, nie znaki\n  PASS  Utils\\Icon nie zawiera emoji ani uszkodzonych bajtów\n  PASS  Nazwy kategorii nie zawierają uszkodzonych bajtów\n\nOK: 34 przeszło, 0 nie przeszło (150 ms)\n",
+                "duration_ms": 150,
+                "name": "skarby",
+                "passed": 34,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 12\n\n[uzytkownicy]\n  PASS  Blokada zapisuje powód, datę i autora\n  PASS  Blokada bez powodu jest odrzucana\n  PASS  Blokada jest jednorazowa — druga nie nadpisuje pierwszej\n  PASS  Administratora nie da się zablokować z tego ekranu\n  PASS  Odblokowanie czyści komplet pól\n  PASS  Zablokowany user jest widoczny dla Models\\User i oznaczony\n  PASS  Puste konto da się skasować\n  PASS  Konto Z HISTORIĄ nie da się skasować\n  PASS  Własnego konta i konta admina nie da się skasować\n  PASS  Podsumowanie treści nazywa to, co zablokowało kasowanie\n  PASS  Filtry listy trafiają w to, co obiecują\n  PASS  Szukanie działa po e-mailu i po imieniu\n\nOK: 12 przeszło, 0 nie przeszło (760 ms)\n",
+                "duration_ms": 760,
+                "name": "uzytkownicy",
+                "passed": 12,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 22\n\n[znane_trasy]\n  PASS  mapa: trasa, której NIKT nie przejechał, jest widoczna\n  PASS  mapa: trasa spoza kadru nie wchodzi do wyniku\n  PASS  mapa: trasa wyłączona znika z warstwy\n  PASS  mapa: punkty wracają w kolejności wzdłuż śladu\n  PASS  mapa: pola bez kolejności są pomijane i zgłaszane\n  PASS  pola: współrzędne osiowe zgadzają się z identyfikatorem\n  PASS  edycja: zmiana danych opisowych nie rusza slugu ani pól\n  PASS  edycja: kolumn spoza whitelisty nie da się podać\n  PASS  edycja: podmiana przebiegu zmienia pola, zachowuje id i slug\n  PASS  edycja: po podmianie przebiegu trasa dalej jest na mapie\n  PASS  panel: szukanie zawęża listę do pasujących tras\n  PASS  panel: szukanie działa też po adresie trasy\n  PASS  panel: stronicowanie tnie wynik i liczy strony\n  PASS  panel: numer strony poza zakresem daje pustkę, nie błąd\n  PASS  panel: sortowanie po dystansie idzie od najdłuższej\n  PASS  panel: nieznane sortowanie spada do domyślnego, nie do SQL-a\n  PASS  panel: filtry rozdzielają aktywne, wyłączone i bez punktów\n  PASS  panel: filtr „do przeliczenia\" znajduje trasę, która się nie rysuje\n  PASS  panel: liczniki zgadzają się z filtrami\n  PASS  panel: find() podaje KOD regionu, nie tylko jego id\n  PASS  kadr: boundsFor obejmuje wszystkie pola trasy\n  PASS  kadr: trasa bez pól nie udaje, że ma kadr\n\nOK: 22 przeszło, 0 nie przeszło (109 ms)\n",
+                "duration_ms": 109,
+                "name": "znane_trasy",
+                "passed": 22,
+                "failed": 0
+            }
+        ],
+        "total": 95,
+        "passed": 95,
+        "failed": 0,
+        "ok": true
+    },
+    {
+        "ts": "2026-09-05T10:41:24+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 40007,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 16\n\n[dodawanie_skarbow]\n  PASS  Minimalne dane: nazwa + współrzędne wystarczą, reszta ma domyślne\n  PASS  Minimalne dane: opis, wskazówka i kategoria mogą zostać puste\n  PASS  Dwa skarby z minimalnymi danymi dostają różne kody\n  PASS  Wariant 1\/3 — COMMON: minimalne dane dostają stawkę zwykłego\n  PASS  Wariant 2\/3 — RARE: minimalne dane dostają stawkę rzadkiego\n  PASS  Wariant 3\/3 — EPIC: minimalne dane dostają stawkę epickiego\n  PASS  Wpisana stawka nadpisuje rzadkość — bez cichego mnożenia\n  PASS  Zaliczenie zapisuje znalezienie i jedną transakcję punktów\n  PASS  Punkty za skarb widać w rozbiciu wyników jako źródło TREASURE_FOUND\n  PASS  Wycofanie skarbu blokuje wszystkie trzy drogi zaliczenia\n  PASS  Wycofany skarb znika z mapy, ale zostaje w bazie\n  PASS  Wycofanie NIE kasuje już naliczonych punktów — rejestr jest niezmienny\n  PASS  Zgłoszenie ze zdjęciem: photo_url dochodzi do bazy\n  PASS  Zgłoszenie BEZ zdjęcia przechodzi — pole jest opcjonalne\n  PASS  Kontroler zgłoszenia PODAJE zdjęcie modelowi i bierze je z uploadu\n  PASS  Ekran zgłoszenia w apce: aparat, jedno zdjęcie i uprzedzenie o ukryciu\n\nOK: 16 przeszło, 0 nie przeszło (44 ms)\n",
+                "duration_ms": 44,
+                "name": "dodawanie_skarbow",
+                "passed": 16,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 17\n\n[dodawanie_tras]\n  PASS  minimalnie: sama nazwa i plik GPX\n  PASS  komplet: nazwa, opis, region wyliczony z GPX i zdjęcie\n  PASS  nazwa + opis, bez regionu i zdjęcia\n  PASS  sam plik na realnym terenie wystarczy, żeby region się wyliczył\n  PASS  nazwa + zdjęcie, bez opisu i regionu\n  PASS  model nie normalizuje opisu — pusty string zostaje pustym stringiem\n  PASS  nazwa z polskimi znakami daje czysty slug\n  PASS  ta sama nazwa drugi raz dostaje inny slug\n  PASS  nazwa bez liter nie daje pustego sluga\n  PASS  nazwa o dokładnie 200 znakach mieści się w całości\n  PASS  pusty GPX (bez punktów) jest odrzucany przez parser\n  PASS  ślad krótszy niż 100 m jest odrzucany przez parser\n  PASS  szlak dłuższy niż 1000 km wchodzi jako znana trasa\n  PASS  ten sam plik odrzuca DOMYŚLNY próg parsera\n  PASS  powyżej progu długiej trasy nadal odrzucane\n  PASS  token trzymanego GPX-a nie jest ścieżką do pliku\n  PASS  dłuższy ślad daje więcej pól i większy dystans\n\nOK: 17 przeszło, 0 nie przeszło (1222 ms)\n",
+                "duration_ms": 1222,
+                "name": "dodawanie_tras",
+                "passed": 17,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[dopasowania]\n---\n  PASS  Silnik dopasowań: RouteCells, zgodność regionów, MatchEngine\n\nOK: 1 przeszło, 0 nie przeszło (40 ms)\n",
+                "duration_ms": 40,
+                "name": "dopasowania",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 18\n\n[garmin]\n  PASS  token Garmina szyfruje się i odszyfrowuje z powrotem\n  PASS  ten sam token szyfrowany dwa razy daje dwa różne szyfrogramy\n  PASS  podmieniony szyfrogram nie deszyfruje się po cichu\n  PASS  połączenie konta zapisuje się i daje się odczytać\n  PASS  dwa liczniki naraz to normalny przypadek, nie konflikt\n  PASS  hasło nie trafia do bazy w żadnej postaci\n  PASS  odłączenie kasuje połączenie, ale ZOSTAWIA rejestr pobranych\n  PASS  rejestr zna WSZYSTKIE stany, nie tylko udane pobrania\n  PASS  rejestr jest osobny dla każdego konta\n  PASS  import znanej już aktywności NIE strzela do Garmina\n  PASS  żywy status (2026-08-26): pusta partia nie woła onProgress ani razu\n  PASS  import bez połączenia odmawia, zamiast próbować cokolwiek pobrać\n  PASS  most do Pythona odpowiada kopertą JSON, a nie wysypaniem się\n  PASS  most odrzuca nieznaną komendę\n  PASS  token w STARYM kształcie (sprzed migr. 069) dalej otwiera połączenie\n  PASS  token bez rozpoznawalnego kształtu dalej znaczy „brak połączenia\"\n  PASS  import bierze CAŁĄ partię jednym wywołaniem mostu, nie po jednym\n  PASS  okno historii sięga dalej niż jedna strona wyników\n\nOK: 18 przeszło, 0 nie przeszło (449 ms)\n",
+                "duration_ms": 449,
+                "name": "garmin",
+                "passed": 18,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 5\n\n[heatmapa_spolecznosci]\n  PASS  ensureTrimmed: geometria przycięta ma MNIEJ punktów niż pełny plik\n  PASS  ensureTrimmed jest IDEMPOTENTNY — drugie wywołanie nie liczy niczego ponownie\n  PASS  ensureTrimmedFromPoints: zero parsowania pliku — bierze gotowe, już przycięte punkty\n  PASS  inTileTrimmed: kafel na trasie widzi hash, kafel z dala od trasy — nie\n  PASS  backfillAllTrimmed + missingTrimmedCount: policzy solo, które go jeszcze nie ma\n\nOK: 5 przeszło, 0 nie przeszło (80 ms)\n",
+                "duration_ms": 80,
+                "name": "heatmapa_spolecznosci",
+                "passed": 5,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 10\n\n[kadr_mapy]\n  PASS  kadr: bez danych zwraca null, nie pustą tablicę\n  PASS  kadr: jeden zwarty klaster daje ciasny prostokąt obejmujący go cały\n  PASS  kadr: odległy wyjazd NIE przeciąga środka w pustkę (regresja Teneryfy)\n  PASS  kadr: prostokąt ze skupiskiem jest WYRAŹNIE mniejszy niż naiwny MIN\/MAX\n  PASS  kadr: druga osoba nie wpływa na kadr pierwszej (izolacja per user)\n  PASS  kadr społeczności: odległy punkt w discovery_cell_totals nie wciąga kadru\n  PASS  kadr profilu: pusta lista hashy daje null, nie wyjątek\n  PASS  kadr profilu: jeden ślad daje kadr obejmujący dokładnie jego\n  PASS  kadr profilu: odległy wyjazd NIE przeciąga środka w pustkę\n  PASS  kadr profilu: prostokąt ze skupiskiem jest WYRAŹNIE mniejszy niż naiwny MIN\/MAX\n\nOK: 10 przeszło, 0 nie przeszło (82 ms)\n",
+                "duration_ms": 82,
+                "name": "kadr_mapy",
+                "passed": 10,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 14\n\n[kolory_sladow]\n  PASS  paleta: kolor WYBORU nie jest w palecie śladów\n  PASS  paleta: żaden kolor nie powtarza się i wszystkie są poprawnym HEX-em\n  PASS  paleta: brak przydziału NIE psuje mapy, tylko jej nie poprawia\n  PASS  paleta: znane trasy i ślady malują się z TEJ SAMEJ bazy kolorów\n  PASS  dwa ślady W TYM SAMYM MIEJSCU dostają RÓŻNE kolory\n  PASS  kolor przydziela się SAM przy liczeniu geometrii, bez osobnego kroku\n  PASS  ślad DALEKO od innych może wziąć kolor bazowy — sąsiedztwo, nie licznik\n  PASS  przydział NIE przemalowuje sąsiadów — kafle nie lecą lawinowo\n  PASS  backfill jest IDEMPOTENTNY — drugi przebieg nic nie maluje\n  PASS  kafel: każdy ślad idzie OSOBNĄ grupą ze swoim kolorem\n  PASS  kafel: `all` (społeczność) niesie WYŁĄCZNIE grupy stylu `heat`, bez koloru z palety\n  PASS  styl `heat`: niska krycie, żeby nakładanie się śladów SAMO rysowało natężenie\n  PASS  kafel: trasy ZAPOWIADANE zostają jedną szarą grupą\n  PASS  renderer dostaje HEX-a z palety, nie surowy indeks z bazy (kontekst `me`)\n\nOK: 14 przeszło, 0 nie przeszło (173 ms)\n",
+                "duration_ms": 173,
+                "name": "kolory_sladow",
+                "passed": 14,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 13\n\n[liczniki]\n  PASS  FIT: prawdziwy plik z licznika zamienia się w GPX ze śladem\n  PASS  FIT: nagranie bez GPS jest ODRZUCONE z własnym komunikatem\n  PASS  FIT: śmieci zamiast pliku nie wywracają nas cicho\n  PASS  FIT: rozpoznajemy go po rozszerzeniu w JEDNYM miejscu\n  PASS  liczniki: zakładki mają wszystkich sześciu dostawców\n  PASS  liczniki: dostawca bez adaptera NIE jest używalny, choć ma zakładkę\n  PASS  liczniki: bez kluczy API dostawca jest wyłączony\n  PASS  liczniki: adres powrotny nie dubluje katalogu aplikacji\n  PASS  rejestr pobrań jest WSPÓLNY, ale rozdzielony po dostawcy\n  PASS  rejestr przyjmuje TEKSTOWE identyfikatory (Polar hashuje swoje)\n  PASS  import bez połączenia odmawia, zanim cokolwiek poleci do sieci\n  PASS  żywy status (2026-08-26): znana już aktywność nie woła onProgress ani razu\n  PASS  token OAuth wraca z bazy w całości i tylko właścicielowi\n\nOK: 13 przeszło, 0 nie przeszło (196 ms)\n",
+                "duration_ms": 196,
+                "name": "liczniki",
+                "passed": 13,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 1\n\n[preferencje]\nTestowy user id=7031\nPOMINIĘTO: testowe wydarzenie bez region_item_id\nUsunięto usera testowego id=7031 (kaskadowo posprzątało wszystkie powiązane wiersze).\n---\n  PASS  Preferencje: sygnały, wyliczanie, rekomendacje\n\nOK: 1 przeszło, 0 nie przeszło (215 ms)\n",
+                "duration_ms": 215,
+                "name": "preferencje",
+                "passed": 1,
+                "failed": 0
+            },
+            {
+                "exit": 1,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 56\n\n[przejazdy_solo]\n  PASS  lista solo pokazuje przejazd bez wydarzenia i tylko właściciela\n  PASS  właściciel może nadać własną nazwę przejazdowi solo — widać ją na liście i na stronie przejazdu\n  PASS  cudzej nazwy przejazdu solo nie da się zmienić (anty-IDOR)\n  PASS  pusta nazwa CZYŚCI własną nazwę, nie zapisuje pustego stringu\n  PASS  za długa nazwa przycina się do limitu kolumny, zamiast wywrócić zapis\n  PASS  recordSolo zwraca dystans i przewyższenie — ekran wyniku jazdy w apce ich potrzebuje\n  PASS  powiązanie robi ze śladu solo WŁASNY ślad turnusu\n  PASS  powiązanie potwierdza obecność, bo ślad jest dowodem\n  PASS  te same kilometry NIE liczą się dwa razy\n  PASS  odkrycia nie przepadają — pola wracają na nowym przejeździe\n  PASS  cudzego przejazdu nie da się powiązać ze swoim wyjazdem\n  PASS  bez potwierdzonego zapisu na turnus powiązanie odmawia\n  PASS  po odpowiedzi „nie dojechałem\" powiązanie odmawia i NIC nie kasuje\n  PASS  druga runda tą samą pętlą NIE daje ani jednego pola i ani punktu za odkrycie\n  PASS  ten sam skarb liczy się RAZ NA ZAWSZE, nie raz na przejazd\n  PASS  za samą jazdę punkty NALEŻĄ SIĘ za każdym razem — i to jest decyzja, nie luka\n  PASS  plik solo zostaje na dysku SUROWY — bo to z niego liczą się kilometry\n  FAIL  wspólna warstwa „Ślady\" niesie solo — PRZYCIĘTE, nigdy surowe (naprawa 2026-08-28)\n        ślad WYJAZDU nadal jest w warstwie `all` — oczekiwano wartości, jest null\n  PASS  WŁASNA warstwa „Ślady\" (klucz `me`) NIESIE solo — naprawa 2026-08-26\n  PASS  klucz `me` nie wybucha (regresja `Auth::id()`) i jest pusty bez sesji\n  PASS  adres pliku solo dostaje z feedu wyłącznie właściciel\n  PASS  podświetlenie śladu bierze geometrię z bazy, nie plik GPX\n  PASS  feed podaje adres endpointu geometrii, nie adres pliku\n  PASS  szukanie solo: druga osoba nie widzi cudzego przejazdu\n  PASS  szukanie solo: fraza dopasowana do daty znajduje przejazd, inna fraza nie\n  PASS  szukanie solo: kształt wyniku ma total\/strona\/stron\/szukaj\n  PASS  kasowanie własnego przejazdu solo usuwa go z listy I z dysku\n  PASS  cudzego przejazdu solo nie da się usunąć (anty-IDOR)\n  PASS  nieistniejący przejazd solo: kasowanie zwraca false, nie wysypuje się\n  PASS  klik w punkt NA śladzie znajduje ten przejazd\n  PASS  klik DALEKO od śladu nie trafia w nic\n  PASS  CUDZEGO śladu nie da się kliknąć — to jest ochrona adresu domowego\n  PASS  trafienie niesie to, co pokazuje wiersz listy — z kolorem linii włącznie\n  PASS  tolerancja rośnie z oddaleniem — inaczej przy oddaleniu nie dałoby się trafić\n  PASS  apka: sukces\/duplikat solo przejazdu ląduje w sesji i wraca ekranem wyniku, nie query stringiem\n  PASS  apka: przycisk nagrywania NIGDY nie nawiguje — informuje i przełącza, nic poza tym\n  PASS  apka: GPX złożony w apce ma przestrzeń nazw i Gpx::parse widzi w nim punkty\n  PASS  apka: nagranie 5 km odsłania pola — cały tor zapisu, nie sam parser\n  PASS  apka: odrzucony ślad NIE wygląda jak policzony — wysyłka rozróżnia trzy wyniki\n  PASS  apka: przejazd trwa do „Zatrzymaj\" — nawigacja i zamknięcie apki go nie tną\n  PASS  apka: postój nie nabija punktów, jazda zachowuje kształt śladu\n  PASS  apka: JEDEN klient lokalizacji naraz — mapa nie zamawia drugiego GPS-u\n  PASS  apka: stan nagrywania ma JEDNO źródło prawdy i nie kłamie po nawigacji\n  PASS  apka: nagranie bez wczytanej trasy ląduje jako SOLO, bez wydarzenia\n  PASS  apka: JEDEN punkt w polu je odsłania — nie trzeba w nim postać\n  PASS  §27: przycięcie końców bierze promień Z KONFIGURACJI, nie ze stałej w kodzie\n  FAIL  §27: skarb NA MECIE przejazdu zalicza się mimo przycięcia\n        promień domowy (50 m) mniejszy niż promień zaliczenia skarbu (50 m) — oczekiwano true, jest false\n  PASS  apka: nagranie krótsze niż 100 m jest ODRZUCONE, a nie po cichu policzone\n  PASS  strona przejazdu: obcy dostaje geometrię PRZYCIĘTĄ, właściciel pełną\n  PASS  strona przejazdu: kadr obcego liczy się z przyciętej geometrii, nie z pełnej\n  PASS  strona przejazdu: ukryty rowerzysta nie pokazuje przejazdu nikomu obcemu\n  PASS  strona przejazdu: reguła „kto jest publiczny\" ma JEDNO źródło\n  PASS  pobranie dla obcego: plik złożony z przyciętych punktów daje się sparsować\n  PASS  strona przejazdu: skarby i znane trasy liczą się z PÓL tego przejazdu\n  PASS  czas przejazdu: sekundy na „2 h 14 min\", a brak danych to NIE zero\n  PASS  strona przejazdu: „inne przejazdy tędy\" znajdują wspólny teren, a przypadkowe minięcie nie\n\nBŁĘDY: 54 przeszło, 2 nie przeszło (24974 ms)\n",
+                "duration_ms": 24974,
+                "name": "przejazdy_solo",
+                "passed": 54,
+                "failed": 2
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 14\n\n[push]\n  PASS  PushDevice: rejestracja jest zgodą, wyłączenie ją cofa bez kasowania wiersza\n  PASS  PushDevice: token unikalny globalnie — drugie konto na tym samym telefonie przejmuje go\n  PASS  PushDevice: nieznana platforma i pusty token są po cichu ignorowane\n  PASS  Push: sendToUser dopisuje do logu, gdy user ma aktywne urządzenie\n  PASS  Push: bez aktywnego urządzenia sendToUser nic nie dopisuje\n  PASS  Push: potwierdzony RSVP powiadamia organizatora, nie samego dołączającego\n  PASS  Push: organizator dołączający do WŁASNEGO wyjazdu nie dostaje powiadomienia o sobie\n  PASS  Push: prywatna wiadomość powiadamia DRUGĄ stronę, nie nadawcę\n  PASS  Push: wiadomość w kanale grupowym powiadamia członków oprócz nadawcy\n  PASS  PushNotifier: nowy jawny skarb powiadamia usera, który jeździł w tym regionie\n  PASS  PushNotifier: user, który NIE jeździł w tym regionie, nie dostaje powiadomienia\n  PASS  PushNotifier: ukryty skarb (poziom 0\/1) nie zdradza nazwy w treści push\n  PASS  PushNotifier: skarb starszy niż doba nie powiadamia (okno crona)\n  PASS  PushNotifier: skarb już znaleziony przez usera go nie alarmuje\n\nOK: 14 przeszło, 0 nie przeszło (343 ms)\n",
+                "duration_ms": 343,
+                "name": "push",
+                "passed": 14,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 16\n\n[regiony]\n  PASS  regiony: słownik ma dokładnie 16 aktywnych liści-województw\n  PASS  regiony: jeden heks należy do dokładnie jednego regionu (PK)\n  PASS  regiony: regionsForUser liczy po odkrytych heksach\n  PASS  regiony: brak referencji na dezaktywowane pozycje słownika\n  PASS  regiony: regionProgress liczy osobno moją i wspólne pokrycie\n  PASS  regiony: regionPotentials rankinguje wg nieodkrytych pól i skarbów\n  PASS  obrys: wierzchołki są dosuwane do środków heksów\n  PASS  obrys: narzędzie widzi WSZYSTKIE regiony, w tym zaimportowane województwa\n  PASS  obrys: wejście na cudzy teren jest RAPORTOWANE, nie przycinane\n  PASS  obrys: każdy zapis podnosi priorytet — na tym stoi „pierwszeństwo ma edytowany\"\n  PASS  obrys: mniej niż trzy pola to nie wielokąt\n  PASS  obrys: śmieci we współrzędnych są odrzucane, nie zapisywane\n  PASS  obrys: zapisany plik jest GeoJSON-em, który czyta backfill_regions.php\n  PASS  obrys: test „punkt w poligonie\" jest wspólny z importem\n  PASS  obrys: usunięcie zdejmuje region z pliku i zostawia resztę\n  PASS  obrys: brak pliku to pusta lista, nie błąd\n\nOK: 16 przeszło, 0 nie przeszło (5723 ms)\n",
+                "duration_ms": 5723,
+                "name": "regiony",
+                "passed": 16,
+                "failed": 0
+            },
+            {
+                "exit": 1,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 79\n\n[skarby]\n  PASS  QR: zaliczenie w promieniu daje punkty\n  PASS  QR: to samo zaliczenie drugi raz nie płaci\n  PASS  QR: poza promieniem nie zalicza\n  PASS  QR: brak lokalizacji NIE blokuje zaliczenia\n  PASS  QR: nieznany kod nie zdradza, czy skarb istnieje\n  PASS  Kolejka offline: skan bez zasięgu zalicza się po powrocie i odpowiada JSON-em\n  PASS  Kolejka offline: powtórna wysyłka zaległego skanu nie płaci drugi raz\n  PASS  Kolejka offline: JSON jest warunkowy na Accept — nie renderujemy pełnej strony w teście\n  PASS  GPS: jedno potwierdzenie zalicza wszystkie skarby w zasięgu\n  PASS  GPS: powtórzone kliknięcie nic nie dokłada\n  PASS  GPX: ślad w promieniu zalicza, poza promieniem nie\n  PASS  GPX: bez pól siatki nie rusza tablicy punktów\n  PASS  Metody nie sumują się: skan i ślad tego samego dnia to jedno znalezienie\n  PASS  Mapa: kod z naklejki NIE wychodzi w odpowiedzi\n  PASS  Ujawnienie 2: jawny skarb widać dokładnie i bez logowania\n  PASS  Ujawnienie 0 i 1: niewidoczne w polu, którego oglądający nie odkrył\n  PASS  Ujawnienie 0 i 1: w odkrytym polu widać, ale bez dokładnego miejsca\n  PASS  Znalazca widzi swój skarb w pełni, niezależnie od poziomu\n  PASS  Ukryty skarb nadal da się zaliczyć — o to w nim chodzi\n  PASS  Alerty: ukryty (poziom 0) wychodzi mimo nieodkrytego pola, ale bez dokładnej pozycji\n  PASS  Alerty: trop (poziom 1) niesie wskazówkę, tak jak w odkrytym polu\n  PASS  Alerty: już zdobyty przez pytającego nie wychodzi — nie ma czego alarmować\n  PASS  Alerty: jawny (poziom 2) ma dokładne współrzędne, tak jak na mapie\n  PASS  Alerty: opis jedzie do apki przy skarbie JAWNYM (notka przewodnika)\n  PASS  Alerty: opis ukrytego i tropu NIE wyjeżdża do telefonu — byłby spoilerem\n  PASS  Zaliczenie z pozycji niesie treść pod notkę przewodnika i wejście na pełny ekran\n  PASS  Zaliczenie z pozycji: poza promieniem nie zalicza nic\n  PASS  Apka: promień ZALICZENIA i promień ALERTU to dwie różne liczby\n  PASS  Zgłoszony punkt nie płaci żadną z trzech dróg\n  PASS  Zgłoszony punkt widać na mapie z zerową wartością\n  PASS  Próg potwierdzeń aktywuje punkt i dopiero wtedy zaczyna płacić\n  PASS  Ten sam głos drugi raz się nie liczy\n  PASS  Potwierdzenie z mapy wymaga bycia na miejscu\n  PASS  Poczekalnia pokazuje tylko zgłoszone, od najbliższych progu\n  PASS  Decyzja admina omija głosowanie\n  PASS  Limit otwartych zgłoszeń liczy tylko czekające\n  PASS  Rzadkość ustawia punkty wyjściowe, nie mnożnik\n  FAIL  Stawka z bazy nadpisuje plik i daje się cofnąć\n        po skasowaniu wraca wartość z pliku — oczekiwano \"30\", jest \"300\"\n  PASS  Statystyki społeczności liczą czekające, nie znalezione\n  PASS  Kolekcja pokazuje tylko kategorie, w których coś znaleziono\n  PASS  Znalezienie trafia do aktywności rowerzysty\n  PASS  Puls: partia skarbów z jednej doby to JEDEN wpis\n  PASS  Puls: pierwsze znalezienie dostaje wpis, kolejne już nie\n  PASS  Ikony kategorii to KLUCZE do Utils\\Icon, nie znaki\n  PASS  Utils\\Icon nie zawiera emoji ani uszkodzonych bajtów\n  PASS  Nazwy kategorii nie zawierają uszkodzonych bajtów\n  PASS  pęczki: pole z JEDNYM skarbem wraca jako skarb, nie jako pęczek\n  PASS  pęczki: dwa skarby w jednym polu dają pęczek dwójkę\n  PASS  warstwy: „nowe\" pomija zdobyte, „moje\" zostawia tylko zdobyte\n  PASS  warstwy: filtr działa PRZED grupowaniem, więc pęczek dwójka staje się pinezką\n  PASS  warstwy: gość nie ma czego filtrować i dostaje komplet\n  PASS  warstwy: `mineScope=community` liczy CUDZE znalezisko jako „odkryte\"\n  PASS  warstwy: `mineScope=community` działa BEZ konta pytającego\n  PASS  warstwy: `mineScope=community`, wariant „nieodkryte\" wymaga ZERA znalazców\n  PASS  warstwy: bez `mineScope` (domyślnie `viewer`) zachowanie sprzed Etapu 3 bez zmian\n  PASS  panel: szukanie łapie nazwę, kod i region\n  PASS  panel: filtry rozdzielają aktywne, zgłoszone i wycofane\n  PASS  panel: „nieznalezione\" pokazuje punkty, po które nikt nie pojechał\n  PASS  panel: lista jest stronicowana, a nie wysypana w całości\n  PASS  panel: kasowanie działa na punkcie, którego nikt nie znalazł\n  PASS  panel: znalezionego skarbu NIE da się skasować\n  PASS  panel: mapa panelu dostaje PRAWDZIWĄ pozycję, także skarbu ukrytego\n  PASS  panel mapy: lista „czekają\" daje ID, ale NIE współrzędne\n  PASS  panel mapy: znaleziony skarb znika z listy „czekają\"\n  PASS  dymek: skarb jawny niesie opis, rzadkość, promień i liczbę znalazców\n  PASS  dymek: skarb ukryty nie zdradza opisu ani rzadkości\n  PASS  Galeria: jawny skarb pokazuje zdjecia kazdemu, takze niezalogowanemu\n  PASS  Galeria: przy Tropie licznik NIE wychodzi, mimo ze pole jest odkryte\n  PASS  Galeria: znalazca widzi zdjecia ukrytego skarbu\n  PASS  Galeria: foundBy jest bramka dodawania zdjec\n  PASS  Galeria: kolejnosc trzyma sie po skasowaniu srodkowego zdjecia\n  PASS  Galeria: limit na osobe liczy sie per skarb, nie globalnie\n  PASS  Galeria: skasowanie skarbu zabiera jego zdjecia\n  PASS  Galeria: adresy w JSON niosa base_path i wariant, nie surowy wpis z bazy\n  PASS  trasa: lista pokazuje skarby leżące na jej polach, w kolejności wzdłuż śladu\n  PASS  trasa: skarb spoza trasy nie wchodzi na listę\n  PASS  trasa: UKRYTY skarb nie wychodzi gościowi ani nazwą, ani zdjęciem\n  PASS  trasa: kto odkrył pole, dostaje TROP — bez zdjęcia, opisu i prawdziwej nazwy\n  PASS  trasa: znalazca widzi swój skarb w pełni\n\nBŁĘDY: 78 przeszło, 1 nie przeszło (383 ms)\n",
+                "duration_ms": 383,
+                "name": "skarby",
+                "passed": 78,
+                "failed": 1
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 23\n\n[uzytkownicy]\n  PASS  Blokada zapisuje powód, datę i autora\n  PASS  Blokada bez powodu jest odrzucana\n  PASS  Blokada jest jednorazowa — druga nie nadpisuje pierwszej\n  PASS  Administratora nie da się zablokować z tego ekranu\n  PASS  Odblokowanie czyści komplet pól\n  PASS  Zablokowany user jest widoczny dla Models\\User i oznaczony\n  PASS  Prośba o usunięcie: złe albo brakujące hasło jest odrzucane, gdy konto je ma\n  PASS  Prośba o usunięcie: poprawne hasło blokuje konto i oznacza je do usunięcia\n  PASS  Prośba o usunięcie: konto bez hasła (logowanie społecznościowe) nie wymaga hasła\n  PASS  Prośba o usunięcie: drugi raz nic nie robi — konto już zablokowane\n  PASS  Prośba o usunięcie: filtr „do_usuniecia\" widzi ją, „zablokowani\" też, ale są rozróżnialne\n  PASS  Puste konto da się skasować\n  PASS  Konto Z HISTORIĄ nie da się skasować\n  PASS  Własnego konta i konta admina nie da się skasować\n  PASS  Podsumowanie treści nazywa to, co zablokowało kasowanie\n  PASS  Filtry listy trafiają w to, co obiecują\n  PASS  Szukanie działa po e-mailu i po imieniu\n  PASS  token aplikacji: wymienia się na właściwego użytkownika\n  PASS  token aplikacji: działa DOKŁADNIE RAZ\n  PASS  token aplikacji: wygasły nie loguje nikogo\n  PASS  token aplikacji: w bazie leży HASH, nie sam token\n  PASS  token aplikacji: śmieci i pusty ciąg nie logują\n  PASS  token aplikacji: dwa tokeny nie mieszają się między kontami\n\nOK: 23 przeszło, 0 nie przeszło (1643 ms)\n",
+                "duration_ms": 1643,
+                "name": "uzytkownicy",
+                "passed": 23,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 23\n\n[warstwy_mapy]\n  PASS  drzewo: pięć rodzin na starcie, każda z `kind`\n  PASS  drzewo: „Ślady\" idzie za KONTEKSTEM, nie stoi w miejscu (Etap 1b)\n  PASS  drzewo: `subject-private` IGNORUJE slug — własna mapa jest zawsze prywatna\n  PASS  drzewo: dzieci „Skarbów\" gasną dla gościa (`requiresLogin`)\n  PASS  drzewo: `rider` bez `isOwner` zostaje publiczny — obcy widz nigdy nie dostaje solo\n  PASS  drzewo: `rider` + `isOwner` daje WŁAŚCICIELOWI prywatny klucz `me`\n  PASS  tileKeyFor: `isOwner` dotyczy WYŁĄCZNIE tokenu `subject`, nie zmienia innych\n  PASS  drzewo: kontekst `rider` nie rozbija skarbów na dzieci NAWET dla zalogowanego\n  PASS  drzewo: `only` zawęża TYLKO top-level, dzieci zostają nietknięte\n  PASS  tileKeysFor: po jednym kluczu na warstwę `kind:tiles`, nic więcej\n  PASS  tileKeysFor: „Trasy\" w kontekście `all` to CAŁY katalog, nie niczyje ukończenia\n  PASS  tileKeyFor: `subject-done` bez slugu spada na prywatny klucz `kd-me`\n  PASS  filtersFor: opis dla JS niesie param rodzica i wartości dzieci\n  PASS  filtersFor: rodzina bez dzieci (rider) niesie pusty opis, nie brak wpisu\n  PASS  withQueryOverrides: `?klucz=0` gasi, każda inna wartość zostawia domyślny\n  PASS  flatten: płaska mapa klucz => on, z dziećmi włącznie\n  PASS  tileKeyFor: nieznany token nie wybucha, oddaje null\n  PASS  strona wydarzenia: warstwy mapy znają widza NIEZALEŻNIE od statusu wydarzenia\n  PASS  słownik warstw: KAŻDY token `source` jest rozpoznawany przez tileKeyFor\n  PASS  słownik warstw: każdy zadeklarowany `source` daje realny klucz kafla w drzewie\n  PASS  panel skarbów: warstwy kontekstowe TAK, węzeł „Skarby\" NIE\n  PASS  panel skarbów: kontrolka i stan warstw idą z JEDNEGO źródła\n  PASS  zgłoszenie skarbu: warstwy ze słownika + własna warstwa antyduplikatowa\n\nOK: 23 przeszło, 0 nie przeszło (16 ms)\n",
+                "duration_ms": 16,
+                "name": "warstwy_mapy",
+                "passed": 23,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 8\n\n[wartosc_znanych_tras]\n  PASS  Dłuższa trasa bez ręcznego nadpisania jest warta więcej niż krótsza\n  PASS  splitEqually dzieli sumę na identyczne części, resztę dokłada do ostatniej\n  PASS  splitEqually(0, N) i splitEqually(total, 0) nie wywracają się i nie dają ujemnych punktów\n  PASS  trailAwards dzieli total równo między progi z trailThresholds()\n  PASS  Ręczne nadpisanie w known_routes wygrywa z sugestią z długości\n  PASS  Trasa bez znanej długości wraca do wartości domyślnej, nie do zera\n  PASS  legacyRouteOverrideTotal scala stare kolumny bonus_points + completion_bonus w jeden total\n  PASS  Podgląd progów sumuje się DOKŁADNIE do total (nie w przybliżeniu)\n\nOK: 8 przeszło, 0 nie przeszło (4 ms)\n",
+                "duration_ms": 4,
+                "name": "wartosc_znanych_tras",
+                "passed": 8,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 65\n\n[widoki]\n  PASS  kafle: pozycje null są pomijane, a nie rysowane pusto\n  PASS  kafle: pusta lista nie zostawia pustej karty\n  PASS  kafle: treść od użytkownika jest ucieczkowana\n  PASS  kafle: liczba kolumn to liczba kafli, a w wariancie bocznym dwie\n  PASS  kafle: ikona pola i dopisek „z N\" wchodzą tam, gdzie trzeba\n  PASS  kafle: kafel wiodacy dostaje wlasna klase, reszta zostaje zwykla\n  PASS  kafle: bez flagi `lead` markup jest bajt w bajt jak przed jej dodaniem\n  PASS  awatar: wgrane zdjecie wygrywa z inicjalami\n  PASS  awatar: SKASOWANY plik to inicjaly, a nie ikona zepsutego obrazka\n  PASS  awatar: adres ZEWNETRZNY zostaje obrazkiem (nie mamy jak go sprawdzic)\n  PASS  awatar: bez zdjecia HTML jest taki sam jak przed zmiana\n  PASS  awatar: zdjecie nie psuje linku do profilu\n  PASS  adresy: View::url() sklada PELNY adres, a zewnetrznego nie rusza\n  PASS  lightbox: partial dokleja sie tylko RAZ na strone\n  PASS  lightbox: obsluguje oba rodzaje kafelka\n  PASS  lightbox: zadna galeria nie linkuje juz do miniatury\n  PASS  apka: pasek renderuje się WYŁĄCZNIE w trybie aplikacji\n  PASS  skorupy: jedna głowa dokumentu, dwa ciała\n  PASS  apka: stan nagrywania jest WIDOCZNY i da się go włączyć z ekranu mapy\n  PASS  arkusze: style apki nie jadą do przeglądarki\n  PASS  apka: belka górna bez nawigacji, menu konta i licznika wydarzeń\n  PASS  apka: pasek ma pięć slotów, Mapa jest wyniesionym środkiem, skanowanie przyciskiem\n  PASS  apka: gość dostaje logowanie zamiast cudzego profilu\n  PASS  apka: trwała sesja jest wpięta w OBU miejscach\n  PASS  apka: przycisk „Zrób zdjęcie\" stoi za bramką APP_IS_APP i celuje we właściwy input\n  PASS  most natywny: brak pluginu schodzi do przeglądarki, nie do ciszy\n  PASS  szuflada: panel skarbów na telefonie zwija się, a nie znika\n  PASS  panel przy mapie: obsługa dokładana KAŻDEMU panelowi, nie tylko skarbom\n  PASS  most: żadna strona nie woła geolokalizacji z pominięciem mostu\n  PASS  skaner: kod z naklejki przechodzi przez bramkę adresu\n  PASS  mapa: obie warstwy bronią się przed kadrem bez rozmiaru tak samo\n  PASS  podkład mapy: raster OpenStreetMap domyślnie, OpenFreeMap dalej dostępny\n  PASS  formularz trasy: DODAWANIE po błędzie oddaje to, co wpisano\n  PASS  formularz trasy: EDYCJA — wpisane wygrywa z tym, co w bazie\n  PASS  formularz trasy: zwykłe wejście dalej czyta z bazy\n  PASS  formularz trasy: trzymany plik GPX wraca tokenem, nie polem plikowym\n  PASS  formularz trasy: bez trzymanego pliku dodawanie WYMAGA pliku\n  PASS  formularz trasy: to, co wpisano, jest ucieczkowane\n  PASS  przejazdy: lista dla mapy niesie WSZYSTKO, czego brakowało panelowi\n  PASS  aktywność: ZNALEZIONE SKARBY są na osi czasu razem z przejazdami\n  PASS  aktywność: ukryty skarb NIE zdradza nazwy na mapie społeczności\n  PASS  przejazdy: mapa społeczności dokłada AUTORA, osobista go nie potrzebuje\n  PASS  warstwy: stan kontrolki czyta JEDNA funkcja, nie kopia w każdym widoku\n  PASS  warstwy: źródła kafli idą jedną mapą `sources`, a nie opcją na warstwę\n  PASS  apka: mapa nie pokazuje kontrolek zoomu ani pełnego ekranu\n  PASS  apka: mapa odkryć centruje się na człowieku, nie na prostokącie odkryć\n  PASS  zgłoszenie skarbu w apce: zdjęcie dochodzi do photo_url\n  PASS  zgłoszenie skarbu: limit mówi „nie\" PRZED wypełnieniem, nie po wysłaniu\n  PASS  most aparatu: pole jednoplikowe dostaje zdjęcie ZAMIAST, nie OPRÓCZ\n\nWarning: Undefined variable $profileUrl in C:\\xampp\\htdocs\\ridemore\\tests\\widoki_test.php on line 1207\n\nWarning: Undefined variable $currentUser in C:\\xampp\\htdocs\\ridemore\\tests\\widoki_test.php on line 1207\n  PASS  apka: pusty slug profilu nie prowadzi w 404 (a więc w fałszywy „brak połączenia\")\n  PASS  offline: wskaźnik zamiast blokady, tylko w apce\n  PASS  service worker: tylko apka, tylko biała lista, cudzych cache nie rusza\n  PASS  apka: dolny pasek ma jeden zestaw ikon i jedną typografię podpisów\n  PASS  apka: belka i nakładki mapy nie mają jak się rozjechać\n  PASS  apka: ekran startowy i ikony zrobione z logo\n  PASS  apka: start bez sieci ma co pokazać, a ekran awaryjny nie zgaduje przyczyny\n  PASS  service worker: ŻADEN dokument nie przechodzi przez fetch workera\n  PASS  apka: mapa nie płaci za panel, którego nie ma\n  PASS  monitor mapy: panel dla człowieka wszędzie, wysyłka na serwer tylko w dev\n  PASS  apka: mapa nie siedzi w środku Polski, czekając na GPS\n  PASS  apka: „Mapa\" na pasku nie przeładowuje mapy, na której już jesteś\n  PASS  mapy: KAŻDY ekran z kontrolką warstw ma podpięte przełączniki\n  PASS  mapy: wspólny binder czyta stan czytnikiem i gasi dzieci razem z rodzicem\n  PASS  mgła: siatka pól jest wyrównana z siatką serwera\n  PASS  mgła: siatka pojawia się dopiero, gdy pole coś znaczy, i omija odkryte\n\nOK: 65 przeszło, 0 nie przeszło (187 ms)\nPHP Warning:  Undefined variable $profileUrl in C:\\xampp\\htdocs\\ridemore\\tests\\widoki_test.php on line 1207\nPHP Warning:  Undefined variable $currentUser in C:\\xampp\\htdocs\\ridemore\\tests\\widoki_test.php on line 1207\n",
+                "duration_ms": 187,
+                "name": "widoki",
+                "passed": 65,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 3\n\n[wydajnosc_mapy]\n  PASS  hash pliku liczy się raz na wersję pliku, a nie raz na kafel\n  PASS  odczyty mapy zwalniają blokadę sesji — inaczej kafle stoją w kolejce\n  PASS  kafel prywatnego klucza nadal nie wolno cache'ować, głęboki zoom jawnego — wolno\n\nOK: 3 przeszło, 0 nie przeszło (318 ms)\n",
+                "duration_ms": 318,
+                "name": "wydajnosc_mapy",
+                "passed": 3,
+                "failed": 0
+            },
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 65\n\n[znane_trasy]\n  PASS  mapa: trasa, której NIKT nie przejechał, jest widoczna\n  PASS  mapa: trasa spoza kadru nie wchodzi do wyniku\n  PASS  mapa: trasa wyłączona znika z warstwy\n  PASS  mapa: punkty wracają w kolejności wzdłuż śladu\n  PASS  mapa: pola bez kolejności są pomijane i zgłaszane\n  PASS  pola: współrzędne osiowe zgadzają się z identyfikatorem\n  PASS  edycja: zmiana danych opisowych nie rusza slugu ani pól\n  PASS  edycja: kolumn spoza whitelisty nie da się podać\n  PASS  edycja: podmiana przebiegu zmienia pola, zachowuje id i slug\n  PASS  edycja: po podmianie przebiegu trasa dalej jest na mapie\n  PASS  panel: szukanie zawęża listę do pasujących tras\n  PASS  panel: szukanie działa też po adresie trasy\n  PASS  panel: stronicowanie tnie wynik i liczy strony\n  PASS  panel: numer strony poza zakresem daje pustkę, nie błąd\n  PASS  panel: sortowanie po dystansie idzie od najdłuższej\n  PASS  panel: nieznane sortowanie spada do domyślnego, nie do SQL-a\n  PASS  panel: filtry rozdzielają aktywne, wyłączone i bez punktów\n  PASS  panel: filtr „do przeliczenia\" znajduje trasę, która się nie rysuje\n  PASS  panel: liczniki zgadzają się z filtrami\n  PASS  panel: find() podaje KOD regionu, nie tylko jego id\n  PASS  kadr: boundsFor obejmuje wszystkie pola trasy\n  PASS  kadr: trasa bez pól nie udaje, że ma kadr\n  PASS  dymek: warstwa podaje nazwę, dystans i przewyższenie\n  PASS  dymek: przewyższenie NIEZNANE nie udaje zera\n  PASS  dymek: backfill dolicza przewyższenie z zapisanego pliku\n  PASS  dymek: trasa bez pliku nie wywraca backfillu\n  PASS  kafle: klucz `kr` zbiera aktywne trasy w stylu szlaku\n  PASS  kafle: zmiana trasy podbija epokę, czyli unieważnia kafle\n  PASS  kafle: trasa bez pliku na dysku nie wywraca zapisu\n  PASS  klik: punkt na trasie zwraca ją z nazwą i liczbami\n  PASS  klik: punkt daleko od trasy nie trafia w nic\n  PASS  klik: tolerancja rośnie z oddaleniem\n  PASS  klik: wyłączona trasa nie odpowiada na kliknięcie\n  PASS  kafle: renderer rysuje do najgłębszego zoomu, nie wywala się\n  PASS  kafle: obwódka daje WIĘCEJ nieprzezroczystych pikseli niż sam kolor główny\n  PASS  kafle: grupa BEZ klucza `casing` renderuje się bajtowo identycznie jak przed zmianą\n  PASS  kafle: ZAOKRĄGLONE ZŁĄCZENIA dokładają powierzchnię DOKŁADNIE na ostrych zakrętach (naprawa 2026-08-29)\n  PASS  kolory: obwódka ZNANEJ TRASY jest stała, niezależna od przydzielonego koloru\n  PASS  kafle: głębsze niż indeks nie trafiają na dysk\n  PASS  kafle: podmiana przebiegu kasuje kafle na WSZYSTKICH zoomach\n  PASS  kafle: unieważnianie obejmuje obie warstwy, nie tylko ślady\n  PASS  kolory: nowa trasa dostaje kolor z palety\n  PASS  kolory: trasa leżąca NA innej dostaje inny kolor\n  PASS  kolory: trasa obok (nie na) też dostaje inny kolor\n  PASS  kolory: dołożenie sąsiada NIE przemalowuje trasy już narysowanej\n  PASS  kolory: backfill pomija trasy, które kolor już mają\n  PASS  kafle: warstwa `kr` daje osobną grupę na trasę, każdą w swoim kolorze\n  PASS  profil: nowa trasa zapisuje profil wysokości z pliku\n  PASS  profil: podmiana pliku podmienia profil, a nie zostawia stary\n  PASS  profil: backfill dopisuje profil trasie, która go nie ma\n  PASS  profil: elevationProfile() dokłada szczyty i nie wywraca się na pustym\n  PASS  skarby: onRoute liczy skarby leżące na polach trasy\n  PASS  skarby: onRoute liczy ZNALEZIONE przez pytającego\n  PASS  kd-{slug}: nieukończona trasa nie wychodzi na kafel\n  PASS  kd-{slug}: CZĘŚCIOWO pokryta trasa dalej nie liczy się jako ukończona\n  PASS  kd-{slug}: trasa pokryta w 100% wychodzi na kafel, ta sama definicja co karta postępu\n  PASS  kd-{slug}: cudze ukończenie nie wychodzi na TWOIM kluczu\n  PASS  kd-{slug}: bramka widoczności — nieistniejący\/ukryty slug daje pustkę, nie błąd\n  PASS  kd-{slug}: edycja przebiegu trasy unieważnia kafel osoby, która ją ukończyła\n  PASS  kn-{slug}: nieukończona trasa WYCHODZI na kafel (lustro kd-)\n  PASS  kn-{slug}: CZĘŚCIOWO pokryta trasa dalej liczy się jako nieukończona\n  PASS  kn-{slug}: trasa pokryta w 100% NIE wychodzi na kafel\n  PASS  kn-{slug}: cudze ukończenie nie wypycha trasy z TWOJEGO klucza\n  PASS  kn-{slug}: bramka widoczności — nieistniejący\/ukryty slug daje pustkę, nie błąd\n  PASS  kd-\/kn-: KAŻDA aktywna trasa trafia do DOKŁADNIE JEDNEJ z tych dwóch warstw\n\nOK: 65 przeszło, 0 nie przeszło (2343 ms)\n",
+                "duration_ms": 2343,
+                "name": "znane_trasy",
+                "passed": 65,
+                "failed": 0
+            }
+        ],
+        "total": 447,
+        "passed": 444,
+        "failed": 3,
+        "ok": false
+    },
+    {
+        "ts": "2026-09-05T11:55:52+02:00",
+        "db": "ridemorebike2",
+        "php": "8.1.12",
+        "duration_ms": 151,
+        "suites": [
+            {
+                "exit": 0,
+                "output": "baza: ridemorebike2, zestawów: 1, testów: 16\n\n[dodawanie_skarbow]\n  PASS  Minimalne dane: nazwa + współrzędne wystarczą, reszta ma domyślne\n  PASS  Minimalne dane: opis, wskazówka i kategoria mogą zostać puste\n  PASS  Dwa skarby z minimalnymi danymi dostają różne kody\n  PASS  Wariant 1\/3 — COMMON: minimalne dane dostają stawkę zwykłego\n  PASS  Wariant 2\/3 — RARE: minimalne dane dostają stawkę rzadkiego\n  PASS  Wariant 3\/3 — EPIC: minimalne dane dostają stawkę epickiego\n  PASS  Wpisana stawka nadpisuje rzadkość — bez cichego mnożenia\n  PASS  Zaliczenie zapisuje znalezienie i jedną transakcję punktów\n  PASS  Punkty za skarb widać w rozbiciu wyników jako źródło TREASURE_FOUND\n  PASS  Wycofanie skarbu blokuje wszystkie trzy drogi zaliczenia\n  PASS  Wycofany skarb znika z mapy, ale zostaje w bazie\n  PASS  Wycofanie NIE kasuje już naliczonych punktów — rejestr jest niezmienny\n  PASS  Zgłoszenie ze zdjęciem: photo_url dochodzi do bazy\n  PASS  Zgłoszenie BEZ zdjęcia przechodzi — pole jest opcjonalne\n  PASS  Kontroler zgłoszenia PODAJE zdjęcie modelowi i bierze je z uploadu\n  PASS  Ekran zgłoszenia w apce: aparat, jedno zdjęcie i uprzedzenie o ukryciu\n\nOK: 16 przeszło, 0 nie przeszło (56 ms)\n",
+                "duration_ms": 56,
+                "name": "dodawanie_skarbow",
+                "passed": 16,
+                "failed": 0
+            }
+        ],
+        "total": 16,
+        "passed": 16,
+        "failed": 0,
+        "ok": true
+    }
+]
