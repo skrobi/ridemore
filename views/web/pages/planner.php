@@ -1,7 +1,8 @@
 <?php
 // views/web/pages/planner.php
-// ROUTE PLANNER, ETAP 1 — /planer. Szkielet statyczny; treść list/stats/mapy
-// dopisuje assets/js/planner.js (jeden moduł, nie 15 plików jak w history/).
+// ROUTE PLANNER, ETAP 1 — /planer. Szkielet statyczny; czysty model trasy
+// dostarcza assets/js/planner/route-model.js, a assets/js/planner.js spina go
+// z DOM-em, mapą i API.
 if (!defined('CORE_PATH')) { http_response_code(403); exit; }
 ?>
 <h1 style="margin:0 0 4px;"><?= __('Planer tras') ?></h1>
@@ -196,4 +197,5 @@ window.PLANNER_CONFIG = {
     },
 };
 </script>
+<script defer src="<?= Utils\View::asset('/assets/js/planner/route-model.js') ?>"></script>
 <script defer src="<?= Utils\View::asset('/assets/js/planner.js') ?>"></script>

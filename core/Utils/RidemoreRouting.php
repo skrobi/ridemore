@@ -17,7 +17,8 @@ namespace Utils;
 // ZASADY (od usera, nie do negocjacji w kodzie):
 //  • popularność daje BONUS, nigdy kary — droga bez danych Ridemore jest
 //    neutralna, a trasa bazowa OSRM zawsze jest wariantem;
-//  • twardy limit wydłużenia względem trasy bazowej (PARAMS['caps']);
+//  • twardy, płynny budżet wydłużenia względem trasy bazowej:
+//    kilka kilometrów na lokalny zjazd i powrót, potem proporcjonalnie;
 //  • OSM rozstrzyga, czy tędy da się jechać: korytarz, którego rowerowy OSRM
 //    nie umie przejechać od wejścia do wyjścia (legalRatio), odpada;
 //  • długi, spójny korytarz jest wart więcej niż krótkie kawałki
@@ -68,9 +69,16 @@ final class RidemoreRouting
         'bonusPerM'          => 0.2,     // metr korytarza o score 1,0 „kasuje" 0,2 m trasy
         'fullContinuityM'    => 3000.0,  // od tej długości korytarz liczy się w pełni
         'minGainM'           => 100.0,   // korytarz musi wygrać o tyle, żeby zmienić trasę
-        // Limit wydłużenia: [do ilu metrów trasy bazowej, dopuszczalne +%].
-        'caps'               => [[10000.0, 0.25], [50000.0, 0.15], [INF, 0.12]],
+        // Budżet zasobu (epsilon-constraint): co najmniej 4 km pozwala na
+        // lokalny zjazd i powrót, 12% skaluje go dla długiej trasy, 8 km
+        // chroni przed niekontrolowanym objazdem. Brak skoków na progach.
+        'detourRatio'        => 0.12,
+        'minExtraM'          => 4000.0,
         'maxExtraM'          => 8000.0,
+        // Histereza wyboru: przy kolejnym odcinku utrzymanie tego samego
+        // korytarza dostaje premię przejścia. Nowa droga nadal musi wygrać
+        // normalnym kosztem, ale planer nie porzuca trasy przez lokalny szum.
+        'continuityBonusM'   => 3000.0,
         // Połączenia.
         'detourFactor'       => 1.25,    // szacunek drogi z linii prostej (przed macierzą OSRM)
         'directionMin'       => 0.6,     // korytarz musi zbliżać do celu o ≥ 60% swojej długości
@@ -97,10 +105,10 @@ final class RidemoreRouting
      * @param ?string $self klucz właściciela pytającego (`u{id}`) — dla „Moich przejazdów"
      * @param callable $table fn(list $points, list $sources, list $destinations): ?array (RoutingProxy::table)
      * @param callable $legs  fn(list $waypoints): ?array (RoutingProxy::routeLegs)
-     * @param array{profile?:array,today?:string} $opts zasady profilu roweru
+     * @param array{profile?:array,today?:string,preferredKeys?:list<string>} $opts zasady profilu roweru
      *        (Models\BikeType::plannerRules; brak = PARAMS['defaultProfile']) i „dziś"
      *        dla świeżości (Y-m-d; w testach stałe)
-     * @return array{segment:?array,variant:array,degraded?:bool} segment null = zostaje trasa
+     * @return array{segment:?array,variant:array,continuityKeys?:list<string>,degraded?:bool} segment null = zostaje trasa
      *         bazowa; degraded = zabrakło odpowiedzi OSRM (wyniku nie wolno zapamiętać)
      */
     public static function route(
@@ -118,6 +126,7 @@ final class RidemoreRouting
     ): array {
         $p = self::PARAMS;
         $baseM = (float) $baseline['distanceM'];
+        $preferredKeys = array_fill_keys(array_map('strval', $opts['preferredKeys'] ?? []), true);
         $variant = [
             'chosen' => 'osrm', 'baselineM' => (int) round($baseM), 'chosenM' => (int) round($baseM),
             'extraM' => 0, 'corridors' => [], 'considered' => 0,
@@ -185,12 +194,20 @@ final class RidemoreRouting
             if ($scored === null) {
                 continue;
             }
-            if ($best === null || $scored['cost'] < $best['cost'] - 0.5
-                || (abs($scored['cost'] - $best['cost']) <= 0.5 && $scored['lenM'] < $best['lenM'])) {
+            $continues = false;
+            foreach ($v['parts'] as $u) {
+                if (isset($preferredKeys[$candidates[$u]['key']])) {
+                    $continues = true;
+                    break;
+                }
+            }
+            $scored['choiceCost'] = $scored['cost'] - ($continues ? $p['continuityBonusM'] : 0.0);
+            if ($best === null || $scored['choiceCost'] < $best['choiceCost'] - 0.5
+                || (abs($scored['choiceCost'] - $best['choiceCost']) <= 0.5 && $scored['lenM'] < $best['lenM'])) {
                 $best = $scored + ['parts' => $v['parts']];
             }
         }
-        if ($best === null || $best['cost'] > $baseCost - $p['minGainM']) {
+        if ($best === null || $best['choiceCost'] > $baseCost - $p['minGainM']) {
             return ['segment' => null, 'variant' => $variant];
         }
 
@@ -218,7 +235,11 @@ final class RidemoreRouting
                 'score'   => round($c['score'], 2),
             ];
         }
-        return ['segment' => $segment, 'variant' => $variant];
+        $continuityKeys = [];
+        foreach ($best['parts'] as $u) {
+            $continuityKeys[$candidates[$u]['key']] = true;
+        }
+        return ['segment' => $segment, 'variant' => $variant, 'continuityKeys' => array_keys($continuityKeys)];
     }
 
     // ------------------------------------------------------------------
@@ -228,14 +249,9 @@ final class RidemoreRouting
     /** Najdłuższa dopuszczalna trasa dla trasy bazowej o długości $baseM. */
     public static function maxLengthM(float $baseM): float
     {
-        $ratio = 0.0;
-        foreach (self::PARAMS['caps'] as [$upTo, $cap]) {
-            if ($baseM <= $upTo) {
-                $ratio = $cap;
-                break;
-            }
-        }
-        return min($baseM * (1 + $ratio), $baseM + self::PARAMS['maxExtraM']);
+        $p = self::PARAMS;
+        $extraM = max($p['minExtraM'], $baseM * $p['detourRatio']);
+        return $baseM + min($p['maxExtraM'], $extraM);
     }
 
     /** Bonus korytarza w metrach: długość × score × waga, pełny od fullContinuityM. */
@@ -633,6 +649,7 @@ final class RidemoreRouting
                     [$lo, $hi] = [min($i, $j), max($i, $j)];
                     $slice = array_slice($track['dense'], $track['idx'][$lo], $track['idx'][$hi] - $track['idx'][$lo] + 1);
                     $out[] = $best + [
+                        'key'     => (string) $line['hash'],
                         'source'  => $line['source'],
                         'label'   => $line['label'],
                         'entryPx' => $track['probes'][$i],

@@ -120,7 +120,7 @@ return array (
   'Odłączyć konto? Pobrane przejazdy zostaną.' => 'Disconnect the account? Fetched rides will stay.',
   'Opublikuj wydarzenie →' => 'Publish event →',
   'Pełny ekran' => 'Full screen',
-  'Planer sam wybierze sprawdzone odcinki Ridemore, jeśli nadłożą najwyżej 12–25% drogi (im dłuższa trasa, tym mniej). Wyłączone: tylko odcinki, którymi trasa i tak biegnie.' => 'The planner picks proven Ridemore sections on its own if they add at most 12–25% to the distance (less on longer routes). Off: only sections the route already follows.',
+  'Planer porównuje dystans, jakość i ciągłość trasy. Gdy już prowadzi korytarzem Ridemore, utrzymuje go między kolejnymi punktami i może zaakceptować kilka kilometrów dodatkowej drogi, jeśli OSRM potwierdzi przejezdny powrót.' => 'The planner compares distance, quality and route continuity. Once it follows a Ridemore corridor, it keeps it across consecutive waypoints and may accept a few extra kilometres if OSRM confirms a rideable return.',
   'Po drodze' => 'On the way',
   'Pobieramy: {nazwa}…' => 'Fetching: {nazwa}…',
   'Podaj datę wydarzenia.' => 'Enter the event date.',

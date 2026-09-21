@@ -4223,12 +4223,16 @@ linku/wariantów (świadomie odłożone przez panel). IDOR pilnowany w SQL
 (`WHERE user_id = :user_id`), zweryfikowane testem i live (obcy user dostaje `null`/404,
 nie cudze dane).
 
-**Frontend**: jeden moduł `assets/js/planner.js` (świadomie NIE 15 plików jak stary
-planner w `history/`) na `ridemoreCreateMap()` (ta sama fabryka bazowej mapy co
-reszta serwisu — bez warstwy mgły odkryć, która planerowi nie służy). Waypointy jako
-przeciągalne markery Leaflet, przeliczanie debounce'owane (300 ms), podpowiedź jako
-toast nad mapą, eksport GPX przez `Utils\Gpx::fromPoints()` (jedyny writer GPX-a
-w serwisie, bez zmian).
+**Frontend**: mały zestaw modułów bez bundlera. `assets/js/planner/route-model.js`
+jest czystym, niezależnym od DOM-u i Leafleta modelem waypointów, segmentów oraz
+kontekstu routingu (testowanym bezpośrednio w Node). `assets/js/planner.js` jest
+orkiestratorem UI na `ridemoreCreateMap()` (ta sama fabryka bazowej mapy co reszta
+serwisu — bez warstwy mgły odkryć, która planerowi nie służy). Waypointy są
+przeciągalnymi markerami Leaflet, a przeliczanie jest debounce'owane (300 ms).
+Eksport GPX idzie przez `Utils\Gpx::fromPoints()` (jedyny writer GPX-a w serwisie,
+bez zmian). Podział rozpoczęto od modelu, bo to stabilna granica dla kolejnych
+funkcji (np. historia operacji i warianty), bez odtwarzania rozdrobnienia starego
+planera z `history/`.
 
 **Zweryfikowane live** (login testowym userem, prawdziwe zapytania do OSRM i
 opentopodata.org): rysowanie trasy, zapis (z realnym przewyższeniem z API), wczytanie
@@ -4384,8 +4388,9 @@ artefaktem takich testów (zdarzenie wysłane na `document` → Leaflet robi
 
 **Model trasy i kolejność punktów (2026-09-18, zgłoszenie usera:
 „przeciągam odcinek A–B, a NOWY ląduje na końcu" + „istniejących punktów
-nie da się przesuwać").** Frontend, wyłącznie `assets/js/planner.js`
-i jedna reguła CSS — zero zmian po stronie serwera. Dwie właściwe
+nie da się przesuwać").** Frontend w `assets/js/planner/route-model.js`
+i `assets/js/planner.js` oraz jedna reguła CSS — zero zmian po stronie
+serwera. Dwie właściwe
 przyczyny, zmierzone na żywo prawdziwą myszą:
 
 1. Przeglądarka po `mouseup` dokłada `click` na wspólnym przodku miejsca
@@ -4402,8 +4407,8 @@ przyczyny, zmierzone na żywo prawdziwą myszą:
    w górę od przeciągalnego (niewidocznego) pola markera. „Złapanie
    punktu" przesuwało mapę, a klik w pinezkę dopisywał punkt na końcu.
 
-**Model** (`createRoute()` na początku `planner.js` — czysty, bez DOM-u
-i Leafletu; UI jest wyłącznie jego widokiem):
+**Model** (`RidemorePlannerRoute.create()` w `assets/js/planner/route-model.js`
+— czysty, bez DOM-u i Leafleta; UI jest wyłącznie jego widokiem):
 - `waypoints[i] = {id, lat, lng, type, label}` — indeks = kolejność
   przejazdu. `type` (start/via/end) wynika z pozycji, skarb zostaje
   `treasure`. `id` jest stałe — marker po nim znajduje swój bieżący indeks.
@@ -4445,8 +4450,8 @@ i Leafletu; UI jest wyłącznie jego widokiem):
   (niezmienione odcinki wracają z cache `RoutingProxy`).
 
 **Testy:** `php tests/run.php planner` — `tests/planner_kolejnosc_test.php`
-uruchamia PRAWDZIWY `planner.js` w Node (`tests/planner_kolejnosc.js`,
-wymaga `node` w PATH; bez DOM-u plik kończy się na modelu i wystawia
+uruchamia PRAWDZIWY `assets/js/planner/route-model.js` w Node
+(`tests/planner_kolejnosc.js`, wymaga `node` w PATH; moduł wystawia
 `RidemorePlannerRoute`) i sprawdza testy akceptacyjne 1–7 ze zgłoszenia na
 tablicy waypointów i na `routingPayload()`, wyrównanie odcinków,
 odrzucanie starych odpowiedzi, przypięcia po parach, limit 25.
@@ -4522,14 +4527,16 @@ kompromis** — OSRM zostaje silnikiem, bez własnego grafu.
   zwolnienie sesji w `/api/planer/oblicz`. Po zmianie trasa bazowa często
   SAMA jedzie po przejazdach usera (88–100% na dev).
 - **Przełącznik „Dołączaj dłuższe odcinki Ridemore” WŁ.** = warstwa
-  (`Utils\RidemoreRouting` + dane `Models\RidemoreCorridors`), na każdy
-  odcinek osobno: elipsa START–CEL z limitu wydłużenia (≤10 km +25%, ≤50 km
-  +15%, dłuższe +12%, max +8 km) → linie zaznaczonych źródeł → wsparcie wzdłuż
+  (`Utils\RidemoreRouting` + dane `Models\RidemoreCorridors`), liczona dla
+  kolejnych odcinków ze stanem wybranego korytarza: elipsa START–CEL z płynnego
+  budżetu wydłużenia (`min(8 km, max(4 km, 12% trasy bazowej))`) → linie
+  zaznaczonych źródeł → wsparcie wzdłuż
   linii (ślady w 30 m: ile osób, ile przejazdów — max 3 na osobę) →
   RidemoreScore w LOKALNEJ skali (P90 heksów okolicy; społeczność od 2 osób;
   znana trasa ≥ 0,8, mój przejazd ≥ 0,6) → korytarze ≥ 1 km → wejście/wyjście
   → do 8 wariantów → JEDNA macierz OSRM (`table`) → koszt = długość − bonus
-  (0,2 × score × długość, pełny od 3 km) → geometria zwycięzcy jednym
+  (0,2 × score × długość, pełny od 3 km) + histereza za utrzymanie
+  tego samego korytarza między waypointami → geometria zwycięzcy jednym
   zapytaniem (`routeLegs`). Popularność to bonus, nigdy kara; korytarz,
   którego rowerowy OSRM nie przejedzie od wejścia do wyjścia (> 1,3×), odpada.
   WYŁ. = samo przyciąganie, jak dotąd.
