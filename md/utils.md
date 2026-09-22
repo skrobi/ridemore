@@ -75,4 +75,4 @@ Bezstanowe klasy pomocnicze, wszystkie `public static`. `core/Core/*` opisane w
 
 ## Bezpieczeństwo/limity
 
-- [`RateLimiter`](../core/Utils/RateLimiter.php) — `tooMany(key, maxAttempts, windowSeconds)`: limit prób (np. logowanie), stan w `storage/ratelimit/*.json`.
+- [`RateLimiter`](../core/Utils/RateLimiter.php) — `tooMany(key, maxAttempts, windowSeconds)`: limit prób, stan w `storage/ratelimit/*.json` pod blokadą pliku. Login używa dwóch kluczy naraz (`login:ip`, `login:email`); rejestracja i reset hasła mają własne limity.

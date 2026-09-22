@@ -280,6 +280,18 @@ class AuthController
             return;
         }
 
+        // Dwie granice naraz: IP ogranicza credential stuffing po wielu
+        // kontach, e-mail — rozproszony brute force jednego konta. Liczymy
+        // wszystkie próby (także poprawną), żeby odpowiedź nie zdradzała,
+        // czy konto istnieje ani na którym etapie odpadło uwierzytelnienie.
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $normalizedEmail = strtolower($email);
+        if (RateLimiter::tooMany('login:ip:' . $ip, 30, 600)
+            || RateLimiter::tooMany('login:email:' . $normalizedEmail, 10, 600)) {
+            $render(__('Zbyt wiele prób logowania. Spróbuj ponownie za kilka minut.'));
+            return;
+        }
+
         $user = User::findByEmail($email);
         if (!$user) {
             // Stałe koszt password_verify, żeby brak konta nie odpowiadał zauważalnie szybciej.

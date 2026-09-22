@@ -3,12 +3,11 @@
 // Konfiguracja per środowisko. Wybór: zmienna środowiskowa APP_ENV (dev|prod),
 // domyślnie 'dev'. Na produkcji ustaw APP_ENV=prod w konfiguracji serwera.
 //
-// Hasła (DB_PASS_DEV/PROD, SMTP_PASS) czytane są z env z zachowaniem
-// dotychczasowych wartości jako fallback — nic się nie psuje, jeśli env nie
-// jest ustawione, ale docelowo na hostingu (np. panel cPanel > "Zmienne
-// środowiskowe" albo wpis w konfiguracji vhosta) powinny być ustawione
-// realne wartości, a fallbacki tutaj skasowane — trzymanie haseł produkcyjnych
-// wprost w pliku PHP jest niepotrzebnym ryzykiem (backup, dostęp do serwera).
+// Sekrety NIE mają wartości zapasowych w repozytorium. Przychodzą z env albo
+// z ignorowanego przez Git `config.local.php` (wzór: config.local.example.php).
+// Pusta wartość wyłącza opcjonalną integrację albo powoduje czytelny błąd przy
+// próbie użycia funkcji wymagającej sekretu — nigdy cichy powrót do wspólnego,
+// publicznie znanego klucza.
 $env = fn(string $key, string $fallback): string => (getenv($key) ?: $fallback) ?: $fallback;
 
 // Jedna skrzynka SMTP używana i na dev, i na prod — trzymana tu raz,
@@ -21,15 +20,17 @@ $env = fn(string $key, string $fallback): string => (getenv($key) ?: $fallback) 
 // testów próbuje wysłać maile na adresy z fixture'ów. Ta sama zasada,
 // co przy pushu, gdzie dev zostaje na driverze `log`.
 $smtp = [
-    'driver'     => $env('MAIL_DRIVER', 'smtp'),
-    'host'       => 'ridemore.bike',
-    'port'       => 465,
-    'encryption' => 'ssl',
-    'username'   => 'david@ridemore.bike',
-    'password'   => $env('SMTP_PASSWORD', 'Rozbujnik43!!'),
-    'from_email' => 'david@ridemore.bike',
-    'from_name'  => 'rideMore.Bike',
+    'driver'     => 'smtp',
+    'host'       => $env('SMTP_HOST', 'ridemore.bike'),
+    'port'       => (int) $env('SMTP_PORT', '465'),
+    'encryption' => $env('SMTP_ENCRYPTION', 'ssl'),
+    'username'   => $env('SMTP_USERNAME', 'david@ridemore.bike'),
+    'password'   => $env('SMTP_PASSWORD', ''),
+    'from_email' => $env('MAIL_FROM_EMAIL', 'david@ridemore.bike'),
+    'from_name'  => $env('MAIL_FROM_NAME', 'rideMore.Bike'),
 ];
+$mailDev  = array_replace($smtp, ['driver' => $env('MAIL_DRIVER', 'log')]);
+$mailProd = array_replace($smtp, ['driver' => $env('MAIL_DRIVER', 'smtp')]);
 
 // Logowanie społecznościowe (league/oauth2-client). Redirect URI wyliczany z
 // app_url per środowisko (patrz Utils\OAuthProvider). clientId jest publiczny —
@@ -39,7 +40,7 @@ $smtp = [
 $oauth = [
     'google' => [
         'clientId'     => $env('GOOGLE_CLIENT_ID', '133884512796-nkjne7pje2ctl5l5jmhnbooil7ae8fs0.apps.googleusercontent.com'),
-        'clientSecret' => $env('GOOGLE_CLIENT_SECRET', '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'),
+        'clientSecret' => $env('GOOGLE_CLIENT_SECRET', ''),
     ],
     'strava' => [
         'clientId'     => $env('STRAVA_CLIENT_ID', ''),
@@ -66,14 +67,12 @@ $oauth = [
 //   {app_url}/api/liczniki/{dostawca}/webhook
 $devices = [
     // KLUCZ DO SZYFROWANIA TOKENÓW WSZYSTKICH LICZNIKÓW (AES-256-GCM, patrz
-    // Models\DeviceConnection). Domyślna wartość jest ZGODNA z dawnym
-    // `garmin.token_key` — inaczej tokeny zapisane wcześniej przestałyby się
-    // odszyfrowywać (GCM nie odczyta ich innym kluczem). Na produkcji ustaw
-    // DEVICE_TOKEN_KEY w env.
-    'token_key' => $env('DEVICE_TOKEN_KEY', 'dev-garmin-token-key-ridemore'),
+    // Models\DeviceConnection). Musi być stabilny i pochodzić spoza repo.
+    // Rotacja wymaga ponownego połączenia liczników zapisanych starym kluczem.
+    'token_key' => $env('DEVICE_TOKEN_KEY', ''),
     'polar' => [
         'clientId'     => $env('POLAR_CLIENT_ID', '9037b50f-367d-426d-9343-19da5a4671d6'),
-        'clientSecret' => $env('POLAR_CLIENT_SECRET', '0d413ae6-6f05-4ab9-b465-9371b2a7c424'),
+        'clientSecret' => $env('POLAR_CLIENT_SECRET', ''),
         // AUTOMATYCZNY IMPORT (migr. 088). `signature_secret_key`, który Polar
         // oddaje JEDEN RAZ przy zakładaniu webhooka (`php polar_webhook.php`).
         // Bez niego przełącznik „dodawaj automatycznie" się nie pokazuje,
@@ -154,7 +153,7 @@ $translate = [
 ];
 
 $notifications = [
-    'unsubscribe_key' => $env('NOTIFICATIONS_UNSUBSCRIBE_KEY', 'dev-unsubscribe-key-ridemore'),
+    'unsubscribe_key' => $env('NOTIFICATIONS_UNSUBSCRIBE_KEY', ''),
 ];
 
 // ROUTE PLANNER, ETAP 1 (2026-09-17) — oba adresy to DARMOWE, PUBLICZNE
@@ -196,9 +195,9 @@ $configs = [
             'host' => $env('DB_HOST_DEV', '127.0.0.1'),
             'name' => $env('DB_NAME_DEV', 'ridemorebike2'),
             'user' => $env('DB_USER_DEV', 'skrobi'),
-            'pass' => $env('DB_PASS_DEV', 'kakoli102'),
+            'pass' => $env('DB_PASS_DEV', ''),
         ],
-        'mail' => $smtp,
+        'mail' => $mailDev,
         'oauth' => $oauth,
         'devices' => $devices,
         'push' => $push,
@@ -267,9 +266,10 @@ $configs = [
             // KLUCZ DO SZYFROWANIA TOKENÓW SESJI GARMINA (AES-256-GCM, patrz
             // Models\GarminAccount). Hasło do Garmina NIE JEST nigdzie zapisywane
             // — w bazie ląduje wyłącznie token, i to zaszyfrowany. Na dev
-            // fallback wystarcza; gdyby ta funkcja kiedykolwiek trafiła na
-            // serwer, GARMIN_TOKEN_KEY musi przyjść z env, nie stąd.
-            'token_key'       => $env('GARMIN_TOKEN_KEY', 'dev-garmin-token-key-ridemore'),
+            // klucz musi przyjść z env/config.local.php także na dev — konta
+            // podpinane lokalnie są prawdziwe i ich token nie może być szyfrowany
+            // publicznie znaną wartością z repozytorium.
+            'token_key'       => $env('GARMIN_TOKEN_KEY', ''),
         ],
     ],
     'prod' => [
@@ -285,9 +285,9 @@ $configs = [
             'host' => $env('DB_HOST_PROD', 'localhost'),
             'name' => $env('DB_NAME_PROD', 'rideyvwv_ridemore_v2'),
             'user' => $env('DB_USER_PROD', 'rideyvwv_skrobi'),
-            'pass' => $env('DB_PASS_PROD', 'Fvq[KCUfdTjp'),
+            'pass' => $env('DB_PASS_PROD', ''),
         ],
-        'mail' => $smtp,
+        'mail' => $mailProd,
         'oauth' => $oauth,
         'devices' => $devices,
         'push' => $push,

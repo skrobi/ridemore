@@ -155,6 +155,15 @@ class TrackController
         }
 
         $track = EditionTrack::find((int) $trackId);
+        if (!Csrf::check($_POST['csrf_token'] ?? null)) {
+            header('Location: ' . self::backUrl(
+                $slug,
+                (int) ($track['edition_id'] ?? 0),
+                $_POST['powrot'] ?? null
+            ));
+            exit;
+        }
+
         $user = Auth::user();
         $canManage = EventPermission::canEdit($user, $event->organizerId);
 

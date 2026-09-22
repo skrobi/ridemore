@@ -1,0 +1,6 @@
+# Lokalne sekrety i pliki tworzone przez runtime nigdy nie trafiają do repo.
+/core/config.local.php
+/error_log
+.env
+.env.*
+!.env.example

@@ -78,22 +78,21 @@ if (session_status() === PHP_SESSION_NONE) {
     // włączamy lekki (0,1% żądań), kasujący tylko wpisy starsze niż 30 dni.
     ini_set('session.gc_probability', '1');
     ini_set('session.gc_divisor', '1000');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
 
-    // Cookie remember_me (ustawiane w Auth::login() przy zaznaczonym
-    // "Zapamiętaj mnie") przekłada się na trwałe, 30-dniowe cookie sesji na
-    // każdym kolejnym żądaniu. Bez niego zostaje domyślne cookie sesyjne
-    // (ginące z zamknięciem przeglądarki) — zgodnie z odznaczonym wyborem.
-    // APP_IS_APP działa tu jak stale zaznaczone „Zapamiętaj mnie" — uzasadnienie
-    // przy definicji stałej wyżej.
-    if (isset($_COOKIE['remember_me']) || APP_IS_APP) {
-        session_set_cookie_params([
-            'lifetime' => $rememberSeconds,
-            'path'     => '/',
-            'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
-    }
+    // Bezpieczeństwo cookie jest ustawiane ZAWSZE, także dla zwykłej sesji.
+    // `remember_me` i APP_IS_APP sterują wyłącznie lifetime; wcześniej brak
+    // znacznika zostawiał Secure/HttpOnly/SameSite przypadkowym wartościom z
+    // php.ini hostingu.
+    $persistentSession = isset($_COOKIE['remember_me']) || APP_IS_APP;
+    session_set_cookie_params([
+        'lifetime' => $persistentSession ? $rememberSeconds : 0,
+        'path'     => '/',
+        'secure'   => \Core\Auth::secureCookie(),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     session_start();
 }
 

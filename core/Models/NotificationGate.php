@@ -300,7 +300,10 @@ final class NotificationGate
 
     private static function podpisWypisu(int $userId, string $flaga): string
     {
-        $sekret = APP_CONFIG['notifications']['unsubscribe_key'] ?? '';
+        $sekret = (string) (APP_CONFIG['notifications']['unsubscribe_key'] ?? '');
+        if ($sekret === '') {
+            throw new \RuntimeException('Brak klucza podpisującego linki wypisu (notifications.unsubscribe_key).');
+        }
         // Skrócony do 32 znaków — pełne 64 nie dokładają tu bezpieczeństwa,
         // a adres w stopce maila bywa łamany przez klienty pocztowe.
         return substr(hash_hmac('sha256', $userId . '|' . $flaga, $sekret), 0, 32);

@@ -519,7 +519,7 @@ t_test('apka: trwała sesja jest wpięta w OBU miejscach', function () {
     $auth      = (string) file_get_contents(CORE_PATH . '/Core/Auth.php');
 
     t_true(
-        (bool) preg_match('/if\s*\(\s*isset\(\$_COOKIE\[.remember_me.\]\)\s*\|\|\s*APP_IS_APP\s*\)/', $bootstrap),
+        str_contains($bootstrap, '$persistentSession = isset($_COOKIE[\'remember_me\']) || APP_IS_APP;'),
         'bootstrap traktuje apkę jak zaznaczone „Zapamiętaj mnie"'
     );
     t_true(
