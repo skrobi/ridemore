@@ -80,8 +80,8 @@ class Mailer
     }
 
     // Minimalny klient SMTP (bez zewnętrznych zależności) — EHLO/AUTH LOGIN/MAIL/RCPT/DATA
-    // przez SSL (port 465, "implicit TLS"). fsockopen zamiast stream_socket_client i luźniejsze
-    // parsowanie odpowiedzi — sprawdzona konfiguracja pod typowe SMTP hostingów współdzielonych.
+    // przez SSL (port 465, "implicit TLS"). Połączenie używa lokalnego kontekstu
+    // stream_socket_client z pełną weryfikacją certyfikatu i nazwy hosta.
     /**
      * Nagłówki jako tekst. Wartości są czyszczone z CR/LF — bez tego dowolna
      * wartość z zewnątrz (choćby adres wypisu z podmienionym parametrem)
@@ -103,19 +103,34 @@ class Mailer
 
     private static function sendSmtp(array $cfg, string $to, string $subject, string $html, array $headers = []): void
     {
-        // Domyślny kontekst z wyłączoną ścisłą weryfikacją certyfikatu — część
-        // hostingów ma certyfikaty, których PHP domyślnie nie zaakceptuje,
-        // co inaczej kończy się cichym niepowodzeniem połączenia.
-        stream_context_set_default([
+        foreach (['host', 'username', 'password', 'from_email'] as $required) {
+            if (trim((string) ($cfg[$required] ?? '')) === '') {
+                throw new \RuntimeException("Brak wymaganej konfiguracji SMTP: {$required}");
+            }
+        }
+
+        // Kontekst jest lokalny dla TEGO połączenia. Nie wolno zmieniać
+        // globalnego domyślnego kontekstu strumieni, bo osłabiłoby to także
+        // późniejsze połączenia HTTPS wykonywane w tym samym procesie PHP.
+        $context = stream_context_create([
             'ssl' => [
-                'verify_peer'       => false,
-                'verify_peer_name'  => false,
-                'allow_self_signed' => true,
+                'verify_peer'       => true,
+                'verify_peer_name'  => true,
+                'allow_self_signed' => false,
+                'peer_name'         => (string) $cfg['host'],
+                'SNI_enabled'       => true,
             ],
         ]);
 
         $transport = ($cfg['encryption'] ?? 'ssl') === 'ssl' ? 'ssl://' : '';
-        $socket = @fsockopen($transport . $cfg['host'], (int) $cfg['port'], $errno, $errstr, 30);
+        $socket = @stream_socket_client(
+            $transport . $cfg['host'] . ':' . (int) $cfg['port'],
+            $errno,
+            $errstr,
+            30,
+            STREAM_CLIENT_CONNECT,
+            $context
+        );
         if (!$socket) {
             throw new \RuntimeException("Nie udało się połączyć z serwerem SMTP: $errstr ($errno)");
         }

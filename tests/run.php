@@ -20,6 +20,12 @@
 // przypadek, a nie zabezpieczenie: pierwszy fixture z prawdziwym adresem
 // oznaczałby maila wysłanego do żywego człowieka z maszyny deweloperskiej.
 putenv('MAIL_DRIVER=log');
+// Sekrety testowe są jawnie lokalne dla procesu runnera. Kod produkcyjny nie
+// ma już publicznych fallbacków, a testy szyfrowania tokenów i podpisu wypisu
+// nadal potrzebują stabilnych kluczy, żeby sprawdzać round-trip.
+putenv('DEVICE_TOKEN_KEY=ridemore-tests-device-key');
+putenv('GARMIN_TOKEN_KEY=ridemore-tests-garmin-key');
+putenv('NOTIFICATIONS_UNSUBSCRIBE_KEY=ridemore-tests-unsubscribe-key');
 
 require __DIR__ . '/lib.php';
 

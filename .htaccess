@@ -36,6 +36,19 @@
   </IfModule>
 </FilesMatch>
 
+# Pliki tworzone przez runtime i lokalne pliki środowiskowe. Sam `.gitignore`
+# nie jest zabezpieczeniem HTTP: hosting może utworzyć `error_log` ponownie,
+# a istniejący plik omija front controller przez regułę `!-f` na dole.
+<FilesMatch "(^\.env(?:\..*)?$|^error_log$|\.log$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
 # Manifesty zależności — nie są tajemnicą, ale nie mają po co wychodzić
 # (zmierzone 2026-09-12: `/composer.json` oddawał 163 B). Lista bibliotek
 # z wersjami to gotowa odpowiedź na pytanie „co tu jest przestarzałe".

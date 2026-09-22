@@ -28,11 +28,11 @@ lokalnie, hosting współdzielony (cPanel) na prod.
 | Klasa | Rola | Kluczowe metody |
 |---|---|---|
 | [`Core\Router`](../core/Core/Router.php) | Dopasowanie tras, `stripBasePath` (zdejmuje `/ridemore` na dev, `` na prod). Liniowe, `{param}` → regex. Na 404 zwraca JSON (w dev z listą tras). | `get/post/dispatch`, `stripBasePath` |
-| [`Core\Auth`](../core/Core/Auth.php) | Sesja logowania, cache usera per-request. `login()` regeneruje id + obsługuje „Zapamiętaj mnie" (30 dni). **Konto zablokowane (migr. 058) jest wylogowywane w `user()`** — blokada działa też na sesjach, które trwały w chwili jej nałożenia; drugą bramkę ma `AuthController::login`. | `login/logout/check/user/requireLogin/requireAdmin` |
+| [`Core\Auth`](../core/Core/Auth.php) | Sesja logowania, cache usera per-request. `login()` regeneruje id + obsługuje „Zapamiętaj mnie" (30 dni). `secureCookie()` jest wspólną decyzją o fladze Secure: bezpośrednie HTTPS albo schemat z zaufanego `app_url` (reverse proxy bez ufania nagłówkom klienta). **Konto zablokowane (migr. 058) jest wylogowywane w `user()`** — blokada działa też na sesjach, które trwały w chwili jej nałożenia; drugą bramkę ma `AuthController::login`. | `login/logout/check/user/requireLogin/requireAdmin/secureCookie` |
 | [`Core\Database`](../core/Core/Database.php) | Singleton PDO. `ERRMODE_EXCEPTION`, `FETCH_ASSOC`, `EMULATE_PREPARES=false`. | `connection(): \PDO` |
 | [`Core\Csrf`](../core/Core/Csrf.php) | Token CSRF w sesji. `field()` = gotowy `<input hidden>`. | `token/check/field` |
 | [`Core\Session`](../core/Core/Session.php) | **Zwolnienie blokady sesji na ODCZYTACH** (2026-09-02). PHP trzyma plik sesji na wyłączność przez całe żądanie, więc kilkadziesiąt kafli jednego kadru stało w kolejce jedno za drugim (zmierzone: 5 kafli równolegle 0,97 s bez ciasteczka sesji, 3,10 s z nim). Woła to `TileController::show()` (po sprawdzeniu uprawnień) i `api/routes.php` dla **GET-ów** (po `Auth::user()`, bo wylogowanie konta zablokowanego to zapis do sesji). Po zwolnieniu `$_SESSION` nadal się CZYTA — nie wolno tylko polegać na ZAPISIE, dlatego żaden POST tego nie robi. | `release()` |
-| [`Core\Mailer`](../core/Core/Mailer.php) | Wysyłka maili SMTP (`Utils\MailTemplate` renderuje treść). Od Etapu 1c (2026-09-11) przyjmuje **dodatkowe nagłówki** — dokłada je `Models\Notifier` (`List-Unsubscribe`, RFC 8058); wartości są czyszczone z CR/LF, bo w SMTP pusta linia kończy blok nagłówków i zaczyna treść. Driver `log` też je wypisuje, żeby dało się je sprawdzić na dev. **Skrzynka jest prawdziwa TAKŻE na dev** — dlatego `tests/run.php` wymusza `MAIL_DRIVER=log` przed bootstrapem. | `sendTemplate(page, to, subject, data, headers = [])` |
+| [`Core\Mailer`](../core/Core/Mailer.php) | Wysyłka maili SMTP (`Utils\MailTemplate` renderuje treść). SMTP używa lokalnego kontekstu TLS z weryfikacją certyfikatu i nazwy hosta; brak hasła kończy się czytelnym błędem przed połączeniem. Od Etapu 1c (2026-09-11) przyjmuje **dodatkowe nagłówki** — dokłada je `Models\Notifier` (`List-Unsubscribe`, RFC 8058); wartości są czyszczone z CR/LF. Driver `log` też je wypisuje i jest domyślny na dev; produkcja domyślnie używa `smtp`. | `sendTemplate(page, to, subject, data, headers = [])` |
 | [`Core\Lang`](../core/Core/Lang.php) | **Język żądania i prefiks `/en/…`** (2026-09-16). Jedyne miejsce, które zna prefiks: `Router::stripBasePath` go zdejmuje, `View::url/absoluteUrl` dokleja. Polski bez prefiksu. Wysyłki do innych osób w `with()`. Szczegóły: `md/features.md` → Wielojęzyczność. | `current/set/with/splitPath/localizePath/alternates/switchUrl/t/plural/guess` |
 | [`Core\Push`](../core/Core/Push.php) | Push do apki mobilnej (Etap 8, 2026-08-28) — TEN SAM wzorzec co `Mailer`: driver `'log'`/`'fcm'` (`core/config.php['push']`), dev pisze do `storage/push.log`. FCM HTTP v1 w pełni (JWT RS256 własnym `openssl_sign`); APNs (iOS) świadomie tylko punkt rozszerzenia. Patrz `md/database.md` (`push_devices`). | `sendToUser(userId, title, body, data)` |
 
@@ -45,8 +45,10 @@ lokalnie, hosting współdzielony (cPanel) na prod.
 - Zwraca tablicę `['dev' => [...], 'prod' => [...]]`; `bootstrap` wybiera wg `APP_ENV`
   (env, domyślnie `dev`) i utrwala w stałej `APP_CONFIG`.
 - Klucze środowiska: `base_path` (`/ridemore` dev, `` prod), `app_url`, `db`, `mail`, `oauth`.
-- Sekrety: wzorzec `$env('KLUCZ', fallback)` — czyta z env, fallback w pliku. Docelowo
-  hasła/sekrety mają iść z env serwera, fallbacki skasować.
+- Sekrety: `$env('KLUCZ', '')` — wyłącznie env serwera albo ignorowany przez Git
+  `core/config.local.php` (wzór bez wartości: `core/config.local.example.php`).
+  Repo nie zawiera aktywnych fallbacków. Brak sekretu wyłącza opcjonalną integrację
+  albo zatrzymuje operację wymagającą DB/SMTP/HMAC/szyfrowania tokenu.
 - **`APP_IS_APP`** (2026-08-22) — trzecia stała obok `APP_ENV`/`APP_CONFIG`: czy żądanie
   przyszło z aplikacji mobilnej (Capacitor), rozpoznane po dopisku `ridemore-app`
   w User-Agencie. Apka ładuje TEN SAM serwis pod tym samym adresem, więc sesja, CSRF
@@ -90,6 +92,9 @@ lokalnie, hosting współdzielony (cPanel) na prod.
   `database`|`application`|`routing`); w `prod` maskuje i loguje do `error_log` hostingu.
 - Sesje: własny katalog `storage/sessions` + długi `gc_maxlifetime`, żeby cron hostingu
   nie kasował plików sesji zalogowanych (bug „po chwili wylogowuje" na prod).
+  Każda sesja — także bez „Zapamiętaj mnie" — ma jawne `HttpOnly`, `SameSite=Lax`
+  i `Secure` na HTTPS; remember/app zmieniają wyłącznie lifetime. Włączone są
+  `session.use_strict_mode` i `session.use_only_cookies`.
 - Analytics (gtag) i inne rzeczy tylko-prod bramkowane `APP_ENV === 'prod'` w layoucie.
 - Leaflet/Alpine z CDN — brak buildu, brak `npm`. Zmiany CSS/JS to edycja plików w `assets/`.
 
@@ -236,7 +241,9 @@ Apache, bo hosting bywa 2.2 albo 2.4): `storage/`, `tests/` (z wyjątkiem
 `dashboard.php`), `ai-engine/`, `app/`, `assets/uploads/` (tam blokada WYKONYWANIA
 PHP, nie odczytu) oraz — **od 2026-09-12** — `core/`, `migration/`, `md/`, `tasks/`.
 W głównym `.htaccess`: `FilesMatch` na skrypty CLI (`run_migrations`,
-`backfill_elevation_profiles`, `tiles`, `cron`) i na manifesty zależności.
+`backfill_elevation_profiles`, `tiles`, `cron`), manifesty zależności oraz
+pliki runtime/środowiska (`error_log`, `*.log`, `.env*`). Sam `.gitignore` nie
+broni pliku utworzonego ponownie przez hosting przed pobraniem przez HTTP.
 
 **Czego brakowało do 2026-09-12** (zmierzone `curl`-em, nie założone):
 `/migration/schema.sql` oddawał **89 703 B** pełnego schematu bazy, każda

@@ -13,6 +13,23 @@ class Auth
     // 30 dni — czas trzymania sesji przy zaznaczonym "Zapamiętaj mnie".
     private const REMEMBER_SECONDS = 60 * 60 * 24 * 30;
 
+    /**
+     * Czy cookie uwierzytelniające ma być oznaczone Secure.
+     *
+     * Na hostingu HTTPS może kończyć się przed PHP, więc samo
+     * `$_SERVER['HTTPS']` nie jest wystarczające. Nie ufamy za to bezwarunkowo
+     * `X-Forwarded-Proto` (nagłówek klienta bez allowlisty proxy); źródłem
+     * prawdy dla takiego wdrożenia jest skonfigurowany `app_url`.
+     */
+    public static function secureCookie(): bool
+    {
+        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            return true;
+        }
+
+        return strtolower((string) parse_url((string) (APP_CONFIG['app_url'] ?? ''), PHP_URL_SCHEME)) === 'https';
+    }
+
     public static function login(int $userId, bool $remember = false): void
     {
         // W APLIKACJI MOBILNEJ „Zapamiętaj mnie" jest zawsze zaznaczone, nawet
@@ -34,7 +51,7 @@ class Auth
         // cookie sesji na trwały (30 dni) i zostawia znacznik remember_me, który
         // bootstrap.php odczytuje PRZED session_start() na kolejnych żądaniach,
         // żeby ustawić te same parametry zanim sesja się w ogóle zacznie.
-        $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $secure = self::secureCookie();
         if ($remember) {
             setcookie(session_name(), session_id(), [
                 'expires'  => time() + self::REMEMBER_SECONDS,
@@ -78,7 +95,7 @@ class Auth
         self::$resolved = true;
 
         if (isset($_COOKIE['remember_me'])) {
-            $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+            $secure = self::secureCookie();
             setcookie('remember_me', '', [
                 'expires'  => time() - 3600,
                 'path'     => '/',
