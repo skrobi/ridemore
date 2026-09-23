@@ -10,6 +10,9 @@
 > Po akceptacji ten plik staje się kontraktem (status etapów w nagłówkach,
 > `tasks/README.md`), a `warstwa-routingu-ridemore.md` dostaje notę, które
 > jego etapy są zamrożone.
+>
+> **Aktualizacja 2026-09-23:** dopisana sekcja 14 — uwagi drugiego zespołu
+> (przegląd ekspercki) zestawione z kierunkiem z zadania i stanem kodu.
 
 **Zdanie, które rozstrzyga spory:** Ridemore nie rysuje trasy — pokazuje,
 którędy **warto** pojechać. OSRM mówi „którędy można”, dane Ridemore mówią
@@ -378,6 +381,8 @@ fałszywym OSRM (wzorzec `planner_routing_test.php`):
 | G11 | `/generuj` bez CSRF / bez logowania | 403 / 401. |
 | G12 | Pola usera brane z sesji | Parametr `userId` w żądaniu ignorowany (IDOR). |
 | G13 | Kreator (Node): stan → payload | Pętla bez celu, A→B z celem, walidacja dystansu, domyślny styl. |
+| G14 | Ostrzeżenie o nawierzchni | Tylko dla odcinków po znanych trasach ze znanym %; poza nimi brak zdania. |
+| G15 | Skarb: czas zjazdu i zdjęcie | Czas z macierzy OSRM; ukryty Skarb nie wychodzi ze zdjęciem (rozszerzenie G9). |
 | — | Istniejące 32 + 18 + 45 | Bez regresji. |
 | E* | (Etap E) BOT: 50 przejazdów różnych autorów tym samym śladem | Korytarz popularny; ten sam test pod jednym kluczem → niepopularny. Import BOT nie tworzy punktów, odkryć ani wpisów w Pulsie. |
 
@@ -391,9 +396,9 @@ wartość dla usera przy najmniejszej zmianie.
 
 | Etap | Zakres | Backend | Schemat |
 |---|---|---|---|
-| **A — Kreator A→B + karta wyniku** | Modal 4 pytań; tylko „Do celu”; styl → `sources`/`autoJoin`; karta wyniku z przewyższeniem. Prawa kolumna → „Zaawansowane”. | Tylko `/generuj` jako cienka nakładka na `sourceSegments()` + `ElevationLookup`. | — |
+| **A — Kreator A→B + karta wyniku** | Modal 4 pytań; tylko „Do celu”; styl → `sources`/`autoJoin`; karta wyniku z przewyższeniem, 1–2 ostrzeżeniami z danych, które mamy (14.2), i „tędy jeździło N osób”; drag & drop GPX. Prawa kolumna → „Zaawansowane”. | Tylko `/generuj` jako cienka nakładka na `sourceSegments()` + `ElevationLookup`. | — |
 | **B — Pętla** | „Pętla N km”; `RidemoreRouting::loop()`; „Inny wariant”. | `loop()`, `PARAMS['loop']`. | — |
-| **C — Skarby po drodze** | Propozycje zjazdu z realnym kosztem; „Dodaj po drodze”. | `treasureSuggestions()`. | — |
+| **C — Skarby po drodze** | Propozycje zjazdu z realnym kosztem (km + czas z macierzy), zdjęcie Skarbu przez `reveal()`; „Dodaj po drodze”. | `treasureSuggestions()`. | — |
 | **D — Odkrywczo** | Bonus nowych pól usera. | `discoveryBonusM()`, `userCells()`. | — |
 | **E — Dane BOT** *(po decyzjach z 6.4)* | Import bez skutków ubocznych, klucz autora, filtr aktywności, preagregacja wsparcia (dawne 2d), odwrócenie `tracks('all')` na zapytanie po kaflach. | Import CLI, `RidemoreCorridors`. | **Tak** — do decyzji. |
 | **F — Kalibracja** (dawne 2f) | Strojenie `PARAMS` na produkcji / danych BOT. | Tylko stałe. | — |
@@ -415,6 +420,92 @@ Etapu A; 2d → Etap E; 2f → Etap F; Etap 3 (silniki per typ) i V3 — zamroż
 - publiczne udostępnianie zaplanowanej trasy, warianty zapisane w bazie,
 - suwaki (siła Ridemore, maks. objazd) — jeśli kiedyś, to tylko w „Zaawansowane”.
 
+## 14. Uwagi drugiego zespołu (przegląd ekspercki, 2026-09-23)
+
+Drugi zespół (planowanie tras/bikepacking, UX/psychologia, kontrpanel)
+przygotował pełny katalog funkcji zainspirowany projektami Bike Trip
+Planner, Cycling Companion, Pathfinders, TrailTuner, rando-planner
+i MapillaryJS. Jego wniosek końcowy: **planer powinien ewoluować w „Trip
+Planner + Route Intelligence”**, z modułem wypraw wielodniowych jako Etap 1
+(P0), a własną przewagą Ridemore mają być popularność, Skarby, odkrywanie
+i społeczność.
+
+Poniżej każdą grupę uwag zestawiam z kierunkiem z zadania (§11–12: „nie
+budujemy teraz trip plannera”, „nie budujemy drugiego Komoota”) i ze stanem
+kodu. Zewnętrznych repozytoriów nie sprawdzałem — oceniam wyłącznie, co
+z tego Ridemore ma albo może policzyć na własnych danych.
+
+### 14.1 Gdzie oba zespoły się zgadzają — wchodzi do tego planu
+
+| Uwaga drugiego zespołu | Stan w Ridemore | Gdzie w planie |
+|---|---|---|
+| „Proponować, a nie zmuszać do konfiguracji”; preset + Advanced; choice overload | Zgodne z §3, §13–14 zadania | Kreator 4 pytań + „Zaawansowane” (sekcje 8, 10) |
+| 2–3 warianty trasy, nie więcej | Warstwa już ogranicza warianty | Wynik + ≤ 2 alternatywy („Inny wariant”) |
+| Maksymalny objazd jako mechanizm wewnętrzny | Jest: `RidemoreRouting::maxLengthM()` | Bez zmian, bez suwaka |
+| RidemoreScore / popularność jako rdzeń | Jest | Bez zmian; dane BOT — Etap E |
+| Profil roweru | Jest (`bike_type`, migr. 091) | „Czym?” w kreatorze |
+| Import GPX, eksport GPX, punkty pośrednie, multi-stop (do 25), łączenie istniejących tras, „dołącz do znanej trasy” | **Wszystko już jest** (`/api/planer/wgraj-gpx`, `/planer/{id}/gpx`, `route-model.js`, tryb bazy, warstwa) | Zostaje, przechodzi do „Zaawansowane” / „Edytuj punkty” |
+| Drag & drop GPX | Brak (jest tylko przycisk „Wgraj GPX”) | **Dopisane do Etapu A** — mała zmiana w samym frontendzie, ten sam endpoint |
+| Skarby blisko trasy, odległość, „warto zjechać 1,2 km”, automatyczne wyliczenie objazdu | Brak w planerze; dane i `reveal()` są | Etap C (sekcja 7.4) |
+| **Dodatkowy czas zjazdu do Skarbu** | `RoutingProxy::table()` już prosi o `annotations=distance,duration` | **Dopisane do Etapu C**: „odbij 2,4 km, ~9 min” |
+| **Zdjęcie Skarbu** w propozycji | Są `treasures.photo_url` i `treasure_photos`; zdjęcie zdejmuje `reveal()` | **Dopisane do Etapu C**, zawsze przez `reveal()` (spoiler = najsilniejszy wyciek, patrz `features.md`) |
+| „Chcę wiedzieć, czy dam radę” (kompetencja) | Dystans i czas są; przewyższenie tylko po zapisie | Karta wyniku z przewyższeniem (Etap A) |
+| „Chcę sam zdecydować” (autonomia) | Edycja punktów istnieje | „Edytuj punkty” po wygenerowaniu |
+| „Chcę jechać z innymi / czuć społeczność” (relacyjność) | `whyText()`: „liczba osób: N” | Karta wyniku: „tędy jeździło N osób” (tylko liczby zbiorcze, nigdy kto) |
+
+### 14.2 Route Intelligence — przyjęte częściowo, tylko na danych, które mamy
+
+Drugi zespół słusznie wskazuje, że wartość pojawia się, gdy planer
+**analizuje** gotową trasę. W MVP wchodzi tylko to, co da się policzyć
+uczciwie z obecnych danych, jako 1–3 zdania w karcie wyniku (nie osobny
+panel):
+
+| Ostrzeżenie | Z czego | Decyzja |
+|---|---|---|
+| Duże przewyższenie względem dystansu | `ElevationLookup::forRoute()` (suma ↑/↓) | **Etap A** — jedno zdanie, próg w `PARAMS` |
+| Dużo asfaltu dla MTB / terenu dla szosy | % nawierzchni **tylko na znanych trasach** (migr. 086) | **Etap A** — tylko dla odcinków po znanych trasach; poza nimi milczymy (nie wiemy) |
+| Stromy podjazd (maks. nachylenie) | `ElevationLookup` próbkuje ≤ 100 punktów — przy 60 km co ~600 m, za rzadko na nachylenie | **Odłożone** — wymaga gęstszego profilu wysokości (więcej zapytań do publicznego API) |
+| Długi odcinek po głównej drodze | Proxy prosi OSRM o `annotations=false`; FOSSGIS nie zwraca klasy drogi | **Odłożone** — brak danych |
+| Brak wody / sklepu / noclegu | Ridemore nie ma takich danych | **Odłożone** (14.3) |
+| Pogoda, wiatr, zachód słońca, zasięg e-bike | Brak danych | **Odłożone** |
+
+### 14.3 Gdzie zespoły się różnią — odłożone zgodnie z kierunkiem z zadania
+
+**Główny konflikt:** drugi zespół daje moduł **Trip** (wyprawa, podział na
+dni, automatyczny podział wg km + D+, ręczne granice dni, statystyki i GPX
+per dzień) jako **Etap 1, P0**. Zadanie w §11 wprost go wyklucza. Ten plan
+trzyma się zadania — decyzja należy do usera (punkt 4 niżej).
+
+Architektura tego planu **nie blokuje** modułu Trip w przyszłości. Wynik
+generatora to zwykła trasa (`waypoints` + `segments`, zapis w
+`planned_routes`), więc podział na dni będzie dodatkową warstwą nad gotowym
+przebiegiem i nie zmieni Ridemore Routing Layer. Wtedy trzeba będzie
+dołożyć gęstszy profil wysokości (to samo co przy stromych podjazdach, 14.2).
+
+| Grupa z katalogu drugiego zespołu | Dlaczego nie teraz | Warunek powrotu |
+|---|---|---|
+| Wyprawy wielodniowe, pacing, zmęczenie, GPX/FIT per dzień, data startu, zapis etapów | §11 zadania; odtwarza Bike Trip Planner / TrailTuner | Decyzja usera; po Etapach A–D |
+| Postoje i POI: woda, sklep, jedzenie, WC, serwis, camping, schronisko, hotel, punkt widokowy, zabytek, zamek | Ridemore nie ma tych danych. Jedyna droga to Overpass (serwis już używany do nawierzchni, ale z limitami i budżetem ~70 s na trasę) — **nowe źródło danych**, czego zadanie zabrania w §10; odtwarza Cycling Companion | Osobny moduł „Postoje” jako sugestie, po decyzji o Overpass |
+| Noclegi: automatyczny nocleg na końcu dnia, bivouac, Warmshowers, iOverlander | §11; zależy od modułu Trip i POI. Warmshowers — ograniczenia praw do danych (drugi zespół zgłasza to samo) | Po module Trip; Warmshowers/iOverlander tylko przez legalne mechanizmy |
+| Street View, Mapillary, zdjęcia 360°, wirtualny przejazd | §11 (wprost); Street View to koszt i warunki Google, Mapillary ma luki w pokryciu | Przyszły moduł „Podgląd” |
+| „Zdjęcia Ridemore” wzdłuż trasy | `event_photos` **nie mają współrzędnych**; lokalizację mają tylko zdjęcia Skarbów | Dziś tylko przez Skarby (14.1); reszta wymaga lokalizacji zdjęć |
+| Roadbook, eksport PDF/FIT, automatyczny opis dnia | §11 | Po module Trip |
+| Preferencje nawierzchni i dróg lokalnych/głównych jako **ustawienia** („ROZWIJAĆ”) | Publiczny OSRM FOSSGIS nie przyjmuje wag i ma jeden profil rowerowy — ustawienie niczego by nie zmieniło, czyli interfejs by kłamał. Dziś działa tylko przez korytarze Ridemore i typ roweru | Decyzja o własnym OSRM z profilami (dawne V3) |
+| Udostępnianie linkiem, publiczna wyprawa, wspólne planowanie, zaproszenia | `planned_routes` celowo prywatne (decyzja paneli, migr. 090) | Osobne zadanie z oceną prywatności (§27) |
+| AI itinerary, AI asystent, AI opis wyprawy | §11 (wprost) | Nie w horyzoncie |
+| Ocena atrakcyjności Skarbów, Skarby dopasowane do profilu | Brak danych o atrakcyjności (są potwierdzenia i liczba znalazców) | Po Etapie C, jeśli propozycje Skarbów się przyjmą |
+
+### 14.4 Wpływ na plan migracji
+
+- **Etap A**: + drag & drop GPX, + 1–2 ostrzeżenia z 14.2 w karcie wyniku,
+  + „tędy jeździło N osób”.
+- **Etap C**: + dodatkowy czas zjazdu, + zdjęcie Skarbu przez `reveal()`.
+- **Testy**: G14 — ostrzeżenie o nawierzchni tylko dla odcinków ze znanym
+  % nawierzchni (poza nimi brak zdania); G15 — propozycja Skarbu z czasem
+  z macierzy; ukryty Skarb nie wychodzi ze zdjęciem (rozszerzenie G9).
+- Poza tym bez zmian: Etapy B, D, E, F i lista odłożonych (sekcja 13)
+  zostają.
+
 ## Decyzje potrzebne od usera przed implementacją
 
 1. Akceptacja stylów **Szybko / Sprawdzone / Odkrywczo** (zamiast Szybko /
@@ -423,3 +514,8 @@ Etapu A; 2d → Etap E; 2f → Etap F; Etap 3 (silniki per typ) i V3 — zamroż
 2. Kolejność etapów A → D (czy pętla B ma iść przed kreatorem A).
 3. Dane BOT (6.4): pochodzenie i prawo do użycia; czy paczka ma identyfikator
    autora; czy BOT ma być na heatmapie; zgoda na zmianę schematu w Etapie E.
+4. **Konflikt z drugim zespołem (14.3):** czy zostajemy przy „nie budujemy
+   teraz trip plannera” (ten plan), czy moduł Trip ma wejść jako Etap 1 —
+   wtedy ten plan trzeba przebudować przed implementacją.
+5. Czy Overpass może stać się źródłem POI (woda/sklep/camping) w przyszłym
+   module „Postoje” — to nowe źródło danych, którego zadanie w §10 zabrania.
