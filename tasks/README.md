@@ -52,6 +52,10 @@ fizycznym telefonie.** Dopóki to się nie stanie, reszta jest wróżeniem.
   Faza 0 (rowerowy OSRM), Etap 1 (MVP) i Etapy 2a–2c (świeżość, profile,
   powód wyboru) zrobione; weryfikacja UI czeka na zalogowanie w przeglądarce;
   2d–2f zablokowane (dane z produkcji / decyzja o zmianie schematu).
+- **[`planer-uproszczona-architektura.md`](active/planer-uproszczona-architektura.md)** —
+  od 2026-09-23 **PROPOZYCJA, czeka na akceptację**: zmiana kierunku planera
+  („gdzie warto pojechać”, kreator 4 pytań, pętla, skarby po drodze, dane BOT).
+  Po akceptacji zamraża część etapów kontraktu wyżej.
 
 ### Odłożone
 
