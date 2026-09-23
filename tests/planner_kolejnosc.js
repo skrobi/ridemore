@@ -16,7 +16,10 @@ const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'plann
 const sandbox = {};
 vm.createContext(sandbox);
 vm.runInContext(source, sandbox, { filename: 'route-model.js' });
+// Kreator (Etap A) — ten sam sandbox, jak w przeglądarce oba pliki obok siebie.
+vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'planner', 'wizard.js'), 'utf8'), sandbox, { filename: 'wizard.js' });
 const Route = sandbox.RidemorePlannerRoute;
+const Wizard = sandbox.RidemorePlannerWizard;
 if (!Route || typeof Route.create !== 'function') {
     process.stdout.write(JSON.stringify({ error: 'route-model.js nie wystawił RidemorePlannerRoute.create' }));
     process.exit(1);
@@ -249,6 +252,51 @@ const out = {};
     for (let i = 0; i < 25; i++) r.insertWaypoint(r.waypoints.length, { lat: 50 + i * 0.001, lng: 20, label: 'P' + i });
     const extra = r.insertWaypoint(1, { lat: 51, lng: 21, label: 'NADMIAR' });
     out.limit = { returned: extra, count: r.waypoints.length, last: r.waypoints[24].label };
+}
+
+// --- Kreator: odpowiedzi → zapytanie do /api/planer/generuj ----------------
+{
+    const w = Wizard.create();
+    const empty = { missing: w.missing(), ready: w.isReady(), payload: w.payload('t') };
+    w.setPoint('start', { lat: '50.06', lng: 19.94 });
+    const afterStart = w.missing();
+    w.setPoint('end', { lat: 50.03, lng: 19.83 });
+    w.setProfile('gravel');
+    w.setStyle('fast');
+    const payload = JSON.parse(JSON.stringify(w.payload('tok')));
+    w.setStyle('odlot');
+    const badStyle = w.style;
+    w.setProfile('Rakieta!');
+    const badProfile = w.profile;
+    w.setPoint('end', { lat: 91, lng: 19 });
+    const badPoint = { end: w.end, missing: w.missing() };
+    let thrown = false;
+    try { w.setPoint('via', { lat: 50, lng: 20 }); } catch (e) { thrown = e instanceof RangeError || e.name === 'RangeError'; }
+    out.kreator = { empty, afterStart, payload, badStyle, badProfile, badPoint, thrown, styles: Wizard.STYLES.slice() };
+}
+
+// --- Wynik kreatora wczytany do modelu (planner.js → applyGenerated) -------
+{
+    const r = Route.create(25);
+    r.setContext({ sources: { known: true, community: true }, autoJoin: true, profile: 'gravel' });
+    r.replaceWaypoints([{ lat: 50.06, lng: 19.94, type: 'start' }, { lat: 50.03, lng: 19.83, type: 'end' }]);
+    const response = fakeRouting(r);
+    response.segments[0].ridemoreM = 700;
+    const applied = r.applyRouting(r.version, response);
+    const complete = r.isComplete();
+    // Ta sama odpowiedź z kontrolek „Zaawansowane” nie może wywołać przeliczenia.
+    const sameContext = r.setContext({ sources: { known: true, community: true }, autoJoin: true, profile: 'gravel' });
+    const stillComplete = r.isComplete();
+    // Ręczne wstawienie punktu po wygenerowaniu: dalej zwykły planer.
+    const inserted = r.insertBetween(r.waypoints[0].id, r.waypoints[1].id, { lat: 50.05, lng: 19.9 });
+    out.kreatorWynik = {
+        applied, complete, sameContext, stillComplete,
+        types: r.waypoints.map((w) => w.type),
+        inserted: !!inserted,
+        pendingAfterInsert: r.segments.map((s) => s.pending),
+        payloadSources: r.routingPayload().sources,
+        payloadJoin: r.routingPayload().autoJoin,
+    };
 }
 
 process.stdout.write(JSON.stringify(out));

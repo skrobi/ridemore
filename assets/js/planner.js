@@ -52,6 +52,24 @@
         treasureToggle: document.getElementById('plannerShowTreasures'),
         autoJoin: document.getElementById('plannerAutoJoin'),
         autoJoinHint: document.getElementById('plannerAutoJoinHint'),
+        mapBox: document.getElementById('plannerMap'),
+        insights: document.getElementById('plannerInsights'),
+        insightsList: document.getElementById('plannerInsightsList'),
+        insightsWarn: document.getElementById('plannerInsightsWarn'),
+        wizard: document.getElementById('plannerWizard'),
+        wizardForm: document.getElementById('plannerWizardForm'),
+        wizardOpen: document.getElementById('plannerWizardOpen'),
+        wizardClose: document.getElementById('plannerWizardClose'),
+        wizardManual: document.getElementById('plannerWizardManual'),
+        wizardLocate: document.getElementById('plannerWizardLocate'),
+        wizardStart: document.getElementById('plannerWizardStart'),
+        wizardEnd: document.getElementById('plannerWizardEnd'),
+        wizardBikes: document.getElementById('plannerWizardBikes'),
+        wizardError: document.getElementById('plannerWizardError'),
+        wizardGo: document.getElementById('plannerWizardGo'),
+        wizardPicking: document.getElementById('plannerWizardPicking'),
+        wizardPickingText: document.getElementById('plannerWizardPickingText'),
+        wizardPickingCancel: document.getElementById('plannerWizardPickingCancel'),
     };
     if (!els.canvas || typeof ridemoreCreateMap !== 'function') {
         return;
@@ -129,6 +147,16 @@
             }
             syncContext();
         });
+    }
+    // Kreator ustawia źródła za usera: programowa zmiana `checked` nie wywołuje
+    // 'change', więc warstwę kafli trzeba dołożyć/zdjąć tutaj.
+    function setSource(toggleEl, tileLayer, on) {
+        toggleEl.checked = !!on;
+        if (toggleEl.checked) {
+            map.addLayer(tileLayer);
+        } else {
+            map.removeLayer(tileLayer);
+        }
     }
     bindSource(els.srcKnown, knownRoutesTiles);
     bindSource(els.srcCommunity, communityTracksTiles);
@@ -346,7 +374,10 @@
         els.gpxFile.click();
     });
     els.gpxFile.addEventListener('change', function () {
-        var file = els.gpxFile.files && els.gpxFile.files[0];
+        uploadGpx(els.gpxFile.files && els.gpxFile.files[0]);
+    });
+
+    function uploadGpx(file) {
         if (!file) return;
         var form = new FormData();
         form.append('csrf_token', cfg.csrfToken);
@@ -363,6 +394,36 @@
             els.gpxBtn.disabled = false;
             showBaseError(__('Nie udało się wczytać pliku — spróbuj ponownie.'));
         });
+    }
+
+    // Plik GPX upuszczony na mapę = to samo co „Wgraj GPX” (uwaga drugiego
+    // zespołu: drag & drop). Błąd pokazuje się w „Zaawansowane”, więc je otwieramy.
+    function isFileDrag(e) {
+        return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0;
+    }
+    els.mapBox.addEventListener('dragover', function (e) {
+        if (!isFileDrag(e)) return;
+        e.preventDefault();
+        els.mapBox.classList.add('is-dropping');
+    });
+    els.mapBox.addEventListener('dragleave', function (e) {
+        if (e.target === els.mapBox || !els.mapBox.contains(e.relatedTarget)) {
+            els.mapBox.classList.remove('is-dropping');
+        }
+    });
+    els.mapBox.addEventListener('drop', function (e) {
+        if (!isFileDrag(e)) return;
+        e.preventDefault();
+        els.mapBox.classList.remove('is-dropping');
+        var file = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!file) return;
+        document.getElementById('plannerAdvanced').open = true;
+        if (!/\.gpx$/i.test(file.name)) {
+            showBaseError(__('To nie jest plik GPX.'));
+            return;
+        }
+        closeWizard();
+        uploadGpx(file);
     });
 
     // ------------------------------------------------------------------
@@ -734,6 +795,7 @@
     // ------------------------------------------------------------------
     map.on('click', function (e) {
         if (lineDrag) return;
+        if (wizardPickAt(e.latlng)) return;
         var wp = route.insertWaypoint(route.waypoints.length, { lat: e.latlng.lat, lng: e.latlng.lng });
         if (wp) onRouteChanged();
     });
@@ -753,6 +815,7 @@
     // Po KAŻDEJ zmianie punktów albo źródeł: od razu widok z modelu (zmienione
     // odcinki jako „pending"), potem przeliczenie.
     function onRouteChanged() {
+        hideInsights();
         render();
         scheduleRecompute();
     }
@@ -764,6 +827,40 @@
     function showRoutingError(message) {
         els.saveMsg.style.display = '';
         els.saveMsg.textContent = message || 'Usługa routingu chwilowo niedostępna — spróbuj ponownie.';
+    }
+
+    // Przewyższenie znamy tylko dla trasy z kreatora (liczone raz, przy
+    // generowaniu) — po ręcznej zmianie wraca „po zapisie”, jak dotąd.
+    function showStats(distanceKm, ascentM) {
+        var durationMin = Math.round(distanceKm / state.speedKmh * 60);
+        els.statsCard.style.display = '';
+        els.statDistance.innerHTML = distanceKm.toFixed(1).replace('.', ',') + '<small> km</small>';
+        els.statAscent.innerHTML = typeof ascentM === 'number'
+            ? String(ascentM) + '<small> m</small>'
+            : '<small>' + __('po zapisie') + '</small>';
+        els.statTime.innerHTML = Math.floor(durationMin / 60) + ':' + String(durationMin % 60).padStart(2, '0');
+        state.durationMin = durationMin;
+    }
+
+    function fillList(listEl, items) {
+        listEl.innerHTML = '';
+        (items || []).forEach(function (text) {
+            var li = document.createElement('li');
+            li.textContent = text;
+            listEl.appendChild(li);
+        });
+    }
+
+    // Zdania liczy serwer (PlannerController::summary) — z formami mnogimi
+    // i tłumaczeniem; tu tylko wstawiamy je jako tekst.
+    function showInsights(summary) {
+        fillList(els.insightsList, summary && summary.highlights);
+        fillList(els.insightsWarn, summary && summary.warnings);
+        els.insights.hidden = !els.insightsList.children.length && !els.insightsWarn.children.length;
+    }
+
+    function hideInsights() {
+        els.insights.hidden = true;
     }
 
     function scheduleRecompute() {
@@ -796,13 +893,7 @@
             if (!route.applyRouting(version, data)) return;
             els.saveMsg.style.display = 'none';
 
-            var durationMin = Math.round(data.distanceKm / state.speedKmh * 60);
-            els.statsCard.style.display = '';
-            els.statDistance.innerHTML = data.distanceKm.toFixed(1).replace('.', ',') + '<small> km</small>';
-            els.statAscent.innerHTML = '<small>po zapisie</small>';
-            els.statTime.innerHTML = Math.floor(durationMin / 60) + ':' + String(durationMin % 60).padStart(2, '0');
-            state.durationMin = durationMin;
-
+            showStats(data.distanceKm, null);
             render();
         }).catch(function () {
             if (version !== route.version) return;
@@ -856,6 +947,7 @@
         state.routeId = null;
         state.durationMin = null;
         els.statsCard.style.display = 'none';
+        hideInsights();
         els.name.value = '';
         els.gpxLink.style.display = 'none';
         els.saveMsg.style.display = 'none';
@@ -921,6 +1013,212 @@
         });
     }
 
+    // ------------------------------------------------------------------
+    // KREATOR „gdzie warto pojechać” (Etap A). Model odpowiedzi:
+    // assets/js/planner/wizard.js. Wynik z /api/planer/generuj to zwykłe
+    // punkty i odcinki — kreator ustawia TE SAME kontrolki co „Zaawansowane”
+    // (źródła, przełącznik, typ roweru), więc późniejsza ręczna edycja
+    // przelicza trasę w tym samym kontekście, w którym ją wygenerowano.
+    // ------------------------------------------------------------------
+    var wizard = root.RidemorePlannerWizard ? root.RidemorePlannerWizard.create() : null;
+    var wizardLayer = L.layerGroup().addTo(map);
+    var wizardPicking = null; // 'start' | 'end' | null
+    var wizardBusy = false;
+
+    function showWizardError(message) {
+        els.wizardError.textContent = message;
+        els.wizardError.hidden = !message;
+    }
+
+    function markWizardOptions() {
+        els.wizardBikes.querySelectorAll('[data-wizard-bike]').forEach(function (b) {
+            b.classList.toggle('active', b.dataset.wizardBike === wizard.profile);
+        });
+        els.wizardForm.querySelectorAll('[data-wizard-style]').forEach(function (b) {
+            b.classList.toggle('active', b.dataset.wizardStyle === wizard.style);
+        });
+    }
+
+    function drawWizardPoints() {
+        wizardLayer.clearLayers();
+        [['start', els.wizardStart], ['end', els.wizardEnd]].forEach(function (pair) {
+            var p = wizard[pair[0]];
+            pair[1].dataset.empty = p ? '0' : '1';
+            pair[1].textContent = p ? (p.label || (p.lat.toFixed(5) + ', ' + p.lng.toFixed(5))) : __('Nie wybrano');
+            if (p) {
+                L.circleMarker([p.lat, p.lng], {
+                    radius: 8, weight: 3, color: '#FFFFFF', fillOpacity: 1,
+                    fillColor: pair[0] === 'start' ? routeColor : INK, interactive: false,
+                }).addTo(wizardLayer);
+            }
+        });
+    }
+
+    function setWizardPoint(kind, latlng, label) {
+        var p = wizard.setPoint(kind, latlng);
+        if (p) p.label = label || '';
+        showWizardError('');
+        drawWizardPoints();
+    }
+
+    function openWizard() {
+        if (!wizard) return;
+        wizardPicking = null;
+        els.wizard.classList.remove('is-picking');
+        els.wizardPicking.hidden = true;
+        // Typ roweru z „Zaawansowane” jest punktem wyjścia — to ten sam wybór.
+        if (!wizard.profile) wizard.setProfile(state.profile);
+        markWizardOptions();
+        drawWizardPoints();
+        els.wizard.hidden = false;
+        els.wizardGo.focus();
+    }
+
+    function closeWizard() {
+        wizardPicking = null;
+        els.wizard.hidden = true;
+        els.wizard.classList.remove('is-picking');
+        wizardLayer.clearLayers();
+    }
+
+    function startPicking(kind) {
+        wizardPicking = kind;
+        els.wizardPickingText.textContent = kind === 'start'
+            ? __('Kliknij na mapie miejsce startu')
+            : __('Kliknij na mapie cel trasy');
+        els.wizard.classList.add('is-picking');
+        els.wizardPicking.hidden = false;
+    }
+
+    function stopPicking() {
+        wizardPicking = null;
+        els.wizard.classList.remove('is-picking');
+        els.wizardPicking.hidden = true;
+    }
+
+    // Wołane z map.on('click'): true = klik należał do kreatora.
+    function wizardPickAt(latlng) {
+        if (!wizardPicking) return false;
+        setWizardPoint(wizardPicking, { lat: latlng.lat, lng: latlng.lng });
+        stopPicking();
+        return true;
+    }
+
+    function applyGenerated(data) {
+        var ctx = data.context || {};
+        var src = ctx.sources || {};
+        cancelLineDrag();
+        clearTimeout(state.recomputeTimer);
+        setSource(els.srcMine, mineTracksTiles, src.mine);
+        setSource(els.srcKnown, knownRoutesTiles, src.known);
+        setSource(els.srcCommunity, communityTracksTiles, src.community);
+        els.autoJoin.checked = !!ctx.autoJoin;
+        state.base = null;
+        drawBase();
+        selectProfileButton(ctx.profile || null);
+        state.routeId = null;
+        els.gpxLink.style.display = 'none';
+        els.saveMsg.style.display = 'none';
+
+        route.setContext(currentContext());
+        route.replaceWaypoints(data.waypoints || []);
+        if (!route.applyRouting(route.version, data)) {
+            return false;
+        }
+        showStats(data.distanceKm, data.summary ? data.summary.ascentM : null);
+        showInsights(data.summary);
+        var coords = route.mergedCoords();
+        if (coords.length) {
+            map.fitBounds(coords, { padding: [40, 40] });
+        }
+        render();
+        return true;
+    }
+
+    if (wizard && els.wizard) {
+        els.wizardOpen.addEventListener('click', openWizard);
+        els.wizardClose.addEventListener('click', closeWizard);
+        els.wizardManual.addEventListener('click', closeWizard);
+        els.wizardPickingCancel.addEventListener('click', stopPicking);
+        els.wizard.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            if (wizardPicking) stopPicking(); else closeWizard();
+        });
+        els.wizardForm.querySelectorAll('[data-wizard-pick]').forEach(function (btn) {
+            btn.addEventListener('click', function () { startPicking(btn.dataset.wizardPick); });
+        });
+        els.wizardBikes.querySelectorAll('[data-wizard-bike]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                wizard.setProfile(btn.dataset.wizardBike);
+                markWizardOptions();
+            });
+        });
+        els.wizardForm.querySelectorAll('[data-wizard-style]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                wizard.setStyle(btn.dataset.wizardStyle);
+                markWizardOptions();
+            });
+        });
+        els.wizardLocate.addEventListener('click', function () {
+            if (!root.RM || !root.RM.native) {
+                showWizardError(__('Twoja przeglądarka nie udostępnia lokalizacji.'));
+                return;
+            }
+            els.wizardLocate.disabled = true;
+            root.RM.native.position({ highAccuracy: false }).then(function (pos) {
+                els.wizardLocate.disabled = false;
+                setWizardPoint('start', { lat: pos.lat, lng: pos.lon }, __('Moja lokalizacja'));
+                map.setView([pos.lat, pos.lon], Math.max(map.getZoom(), 12));
+            }, function (err) {
+                els.wizardLocate.disabled = false;
+                showWizardError(err && err.message ? err.message : __('Nie udało się ustalić pozycji.'));
+            });
+        });
+
+        els.wizardForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (wizardBusy) return;
+            var missing = wizard.missing();
+            if (missing.length) {
+                showWizardError(missing[0] === 'start' ? __('Wskaż, skąd chcesz jechać.') : __('Wskaż, dokąd chcesz jechać.'));
+                return;
+            }
+            wizardBusy = true;
+            var label = els.wizardGo.textContent;
+            els.wizardGo.disabled = true;
+            els.wizardGo.textContent = __('Szukam trasy…');
+            showWizardError('');
+            var done = function () {
+                wizardBusy = false;
+                els.wizardGo.disabled = false;
+                els.wizardGo.textContent = label;
+            };
+            fetch(cfg.api.generate, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(wizard.payload(cfg.csrfToken)),
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                done();
+                if (!data.success) {
+                    showWizardError(data.error || __('Nie udało się wyznaczyć trasy — spróbuj ponownie za chwilę.'));
+                    return;
+                }
+                if (!applyGenerated(data)) {
+                    showWizardError(__('Nie udało się wyznaczyć trasy — spróbuj ponownie za chwilę.'));
+                    return;
+                }
+                closeWizard();
+            }).catch(function () {
+                done();
+                showWizardError(__('Nie udało się wyznaczyć trasy — spróbuj ponownie za chwilę.'));
+            });
+        });
+    }
+
     route.setContext(currentContext());
     render();
+    // Pusty planer zaczyna od pytań; zapisana trasa (?id=) — od razu od mapy.
+    if (wizard && els.wizard && !cfg.existingRouteId) {
+        openWizard();
+    }
 })(typeof window !== 'undefined' ? window : this);

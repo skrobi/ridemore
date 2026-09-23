@@ -4570,3 +4570,49 @@ kompromis** — OSRM zostaje silnikiem, bez własnego grafu.
   `variant` zostaje przy odcinku w modelu JS. **Wygląd w przeglądarce
   niesprawdzony** (logowanie). Testy: 32 w `planner_routing_test.php`,
   profil + `variant` w `planner_kolejnosc_test.php`.
+
+**Kreator „gdzie warto pojechać” (Etap A, 2026-09-23, kontrakt
+`tasks/active/planer-uproszczona-architektura.md` — zmiana kierunku planera
+na „pokaż, którędy warto”, z uwagami drugiego zespołu).** Główna ścieżka
+planera to cztery pytania zamiast klikania punktów i źródeł:
+- **Modal nad mapą** (`#plannerWizard` w `views/web/pages/planner.php`):
+  Skąd? (`RM.native.position()` z `native.js` albo „Wskaż na mapie”), Dokąd?
+  (wskaż na mapie), Czym? (typy rowerów ze słownika `bike_type`), Jak?
+  (Sprawdzone / Szybko). „Wskaż na mapie” chowa kartę na jedno kliknięcie
+  (`.is-picking`, warstwa bez `pointer-events`; `map.on('click')` najpierw
+  pyta `wizardPickAt()`). Otwiera się sam na pustym planerze (nie przy `?id=`),
+  potem przyciskiem „Zaplanuj trasę”; „Wolę narysować sam” = dotychczasowy
+  planer.
+- **Model odpowiedzi** — czysty `assets/js/planner/wizard.js`
+  (`RidemorePlannerWizard`: punkty, typ roweru, styl z białej listy,
+  `missing()`, `payload()`), testowany w Node razem z `route-model.js`.
+- **Wynik** z `/api/planer/generuj` to zwykłe `waypoints` + `segments`:
+  `applyGenerated()` ustawia TE SAME kontrolki co „Zaawansowane” (źródła —
+  `setSource()` dokłada/zdejmuje też kafle, przełącznik warstwy, typ roweru),
+  potem `replaceWaypoints` + `applyRouting` na modelu. Ręczna edycja po
+  wygenerowaniu przelicza się więc w tym samym kontekście (`/oblicz`), bez
+  osobnego trybu.
+- **Karta wyniku** (`#plannerInsights` pod statystykami): zdania z
+  `PlannerController::summary()` (serwer, bo `__n` i tłumaczenia) — udział
+  sprawdzonych odcinków, „Po drodze: …”, „co najmniej N osób” (od 2),
+  ostrzeżenia (wspinaczka; znana trasa z asfaltem poniżej progu typu roweru).
+  Przewyższenie liczone raz przy generowaniu; pierwsza ręczna zmiana chowa
+  kartę, a „Wzniesienie” wraca do „po zapisie”.
+- **„Zaawansowane”** — dotychczasowe źródła, baza, przełącznik warstwy
+  i profil w jednym `<details>` (domyślnie zwiniętym); nic nie usunięte.
+- **Drag & drop GPX** — plik upuszczony na mapę idzie tą samą drogą co
+  „Wgraj GPX” (`uploadGpx()`); inny plik → komunikat w „Zaawansowane”.
+- **Mobile**: `.planner-layout` w kolumnie dostaje `align-items:stretch` —
+  przy `flex-start` mapa (bez treści w przepływie) zwijała się do zerowej
+  szerokości i na telefonie nie było widać ani mapy, ani kreatora.
+- **Zweryfikowane** w Chromium (Playwright) na lokalnej atrapie OSRM i API
+  wysokości — publiczne serwery są z tego środowiska niedostępne: kreator
+  otwiera się sam, wskazywanie punktów, szosa na znanej trasie z 40% asfaltu
+  (warstwa jej nie wybiera, karta ostrzega o kawałku, po którym OSRM i tak
+  jedzie), gravel (warstwa wybiera korytarz, 90%, „Po drodze”), Szybko
+  (źródła WYŁ.), edycja po wygenerowaniu, zapis, drag & drop (GPX i zły
+  plik), 401/403 na `/generuj`, strona EN, szerokość 390 px, konsola bez
+  błędów JS. **Z prawdziwym rowerowym OSRM niesprawdzone.**
+- **Testy:** `tests/planner_kreator_test.php` (walidacja `generate()` bez
+  sieci, style, `summary()`), 3 scenariusze kreatora w
+  `tests/planner_kolejnosc_test.php`.

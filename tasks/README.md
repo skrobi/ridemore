@@ -53,9 +53,11 @@ fizycznym telefonie.** Dopóki to się nie stanie, reszta jest wróżeniem.
   powód wyboru) zrobione; weryfikacja UI czeka na zalogowanie w przeglądarce;
   2d–2f zablokowane (dane z produkcji / decyzja o zmianie schematu).
 - **[`planer-uproszczona-architektura.md`](active/planer-uproszczona-architektura.md)** —
-  od 2026-09-23 **PROPOZYCJA, czeka na akceptację**: zmiana kierunku planera
-  („gdzie warto pojechać”, kreator 4 pytań, pętla, skarby po drodze, dane BOT).
-  Po akceptacji zamraża część etapów kontraktu wyżej.
+  od 2026-09-23 **kontrakt** (polecenie usera: „połącz całość w jedno
+  rozwiązanie i zacznij implementować”): planer „gdzie warto pojechać” —
+  kierunek z zadania + uwagi drugiego zespołu, Etapy A–K. **Etap A (kreator
+  + karta wyniku) zrobiony**, B–D otwarte, E/H/I zablokowane decyzjami usera.
+  Z prawdziwym OSRM niesprawdzony (sieć w środowisku agenta zablokowana).
 
 ### Odłożone
 

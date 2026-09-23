@@ -200,3 +200,42 @@ t_test('Widoczna pinezka punktu jest uchwytem markera (nie przepuszcza myszy do 
     t_false(str_contains($m[0], 'pointer-events:none'), 'bez pointer-events:none — inaczej złapanie punktu przesuwa mapę');
     t_false(str_contains($m[0], 'translate'), 'bez przesunięcia — pinezka ma leżeć na polu markera');
 });
+
+// --- Kreator (Etap A, tasks/active/planer-uproszczona-architektura.md) -----
+
+t_test('Kreator: bez startu i celu nie ma zapytania; payload niesie punkty, typ roweru i styl', function () {
+    $k = planner_kolejnosc_wynik()['kreator'];
+    t_same(['start', 'end'], $k['empty']['missing'], 'pusty kreator: brakuje startu i celu, w kolejności pytań');
+    t_false($k['empty']['ready'], 'pusty kreator nie jest gotowy');
+    t_null($k['empty']['payload'], 'bez odpowiedzi nie ma zapytania');
+    t_same(['end'], $k['afterStart'], 'po starcie brakuje tylko celu');
+    t_same([
+        'csrf_token' => 'tok',
+        'start' => ['lat' => 50.06, 'lng' => 19.94],
+        'end' => ['lat' => 50.03, 'lng' => 19.83],
+        'profile' => 'gravel',
+        'style' => 'fast',
+    ], $k['payload'], 'zapytanie do /api/planer/generuj (współrzędne jako liczby)');
+});
+
+t_test('Kreator: zły styl, typ roweru i punkt nie przechodzą', function () {
+    $k = planner_kolejnosc_wynik()['kreator'];
+    t_same('proven', $k['badStyle'], 'nieznany styl → domyślny „Sprawdzone”');
+    t_same('', $k['badProfile'], 'zły kod typu roweru → pusty (serwer weźmie pierwszy typ)');
+    t_null($k['badPoint']['end'], 'szerokość 91° → punkt wyczyszczony, nie zostaje stary');
+    t_same(['end'], $k['badPoint']['missing'], 'po złym punkcie znowu brakuje celu');
+    t_true($k['thrown'], 'nieznany rodzaj punktu to błąd w kodzie — wybucha');
+    t_same(['proven', 'fast'], $k['styles'], 'style w kreatorze = PlannerController::STYLES (bez „Odkrywczo” do Etapu D)');
+});
+
+t_test('Kreator: wynik z /api/planer/generuj ląduje w zwykłym modelu trasy i dalej się edytuje', function () {
+    $w = planner_kolejnosc_wynik()['kreatorWynik'];
+    t_true($w['applied'], 'odpowiedź przyjęta dla bieżącej wersji modelu');
+    t_true($w['complete'], 'trasa kompletna — da się ją od razu zapisać');
+    t_false($w['sameContext'], 'te same kontrolki co w kreatorze nie wywołują przeliczenia');
+    t_true($w['stillComplete'], 'trasa nadal kompletna');
+    t_same(['start', 'via', 'end'], $w['types'], 'ręcznie wstawiony punkt między START i CEL');
+    t_same([true, true], $w['pendingAfterInsert'], 'przeliczają się tylko przecięte odcinki');
+    t_same(['mine' => false, 'known' => true, 'community' => true], $w['payloadSources'], 'edycja liczy się z tymi samymi źródłami');
+    t_true($w['payloadJoin'], 'i z tą samą warstwą Ridemore');
+});

@@ -1,5 +1,11 @@
 # Warstwa routingu Ridemore — preferowanie sprawdzonych odcinków
 
+> **Od 2026-09-23 nadrzędny jest kontrakt
+> [`planer-uproszczona-architektura.md`](planer-uproszczona-architektura.md)**
+> (zmiana kierunku planera na „gdzie warto pojechać”). Tam przeszły: 1b →
+> weryfikacja jego Etapu A, 2d → Etap E, 2f → Etap F. Etap 3 (silniki per
+> typ roweru) i V3 — zamrożone: zostają w kodzie, bez rozbudowy.
+>
 > Kontrakt implementacyjny. Powstał z analizy i planu przedstawionego userowi
 > 2026-09-18 („Ridemore Routing Layer"); user zaakceptował go poleceniem
 > „realizuj po kolei fazy, zaimplementuj rozwiązania". Status każdego etapu

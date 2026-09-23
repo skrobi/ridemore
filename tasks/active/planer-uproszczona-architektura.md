@@ -1,18 +1,131 @@
 # Ridemore Planner – Simplified Architecture
 
-> **PROPOZYCJA — czeka na akceptację usera (2026-09-23).** Nic z tego nie jest
-> jeszcze zaimplementowane; w kodzie nie zmieniono ani linii. Dokument powstał
-> z analizy kodu (nie z pamięci ani z samej dokumentacji). Bazy danych nie dało
-> się odpytać z tego środowiska (brak MySQL), więc liczności danych pochodzą
-> z kontraktu `warstwa-routingu-ridemore.md` (pomiar na dev 2026-09-18), a
-> struktura — z migracji i modeli.
+> **KONTRAKT od 2026-09-23** — polecenie usera: „połącz całość w jedno
+> rozwiązanie i zacznij implementować”. Sekcja **0** poniżej to JEDNO
+> rozwiązanie (kierunek z zadania + uwagi drugiego zespołu) z etapami;
+> status każdego etapu stoi w jego nagłówku (`tasks/README.md`). Sekcje 1–14
+> zostają jako uzasadnienie decyzji i analiza kodu, z której wynikają.
 >
-> Po akceptacji ten plik staje się kontraktem (status etapów w nagłówkach,
-> `tasks/README.md`), a `warstwa-routingu-ridemore.md` dostaje notę, które
-> jego etapy są zamrożone.
->
-> **Aktualizacja 2026-09-23:** dopisana sekcja 14 — uwagi drugiego zespołu
-> (przegląd ekspercki) zestawione z kierunkiem z zadania i stanem kodu.
+> Analiza powstała z kodu, nie z pamięci. Liczności danych dev pochodzą
+> z kontraktu `warstwa-routingu-ridemore.md` (pomiar 2026-09-18).
+
+## 0. Jedno rozwiązanie
+
+**Rdzeń (kierunek z zadania):** Ridemore odpowiada „gdzie warto pojechać”.
+Użytkownik odpowiada na 4 pytania, a istniejąca warstwa routingu Ridemore
+(OSRM + dane Ridemore) wybiera trasę. Wynik to zwykła trasa planera —
+dalej działa edycja, zapis i GPX.
+
+**Uwagi drugiego zespołu wchodzą tam, gdzie wzmacniają ten rdzeń**
+(sekcja 14.1–14.2): proponowanie zamiast konfiguracji, 2–3 warianty,
+ostrzeżenia z danych, które mamy, Skarby z kosztem i czasem zjazdu,
+drag & drop GPX. **Moduły, które odtwarzają inne plannery** (wyprawy
+wielodniowe, POI, noclegi, podgląd zdjęć, social) są w tym samym planie jako
+późniejsze etapy G–K, każdy z warunkiem wejścia. Nie zmieniają warstwy
+routingu — dokładają się nad gotową trasą.
+
+**Przyjęte założenia** (user polecił implementację bez rozstrzygania
+punktów z listy decyzji na końcu; każde da się zmienić bez przepisywania):
+
+1. Style: **Szybko / Sprawdzone** od Etapu A, **Odkrywczo** dochodzi
+   w Etapie D (do tego czasu przycisk nie istnieje — nie obiecujemy czegoś,
+   czego nie liczymy). „Terenowo” = wybór Gravel/MTB, „Widokowo” odłożone.
+2. Kolejność: A → B → C → D.
+3. Moduł wypraw wielodniowych (Etap H) — zgodnie z §11 zadania nie teraz;
+   zablokowany decyzją usera (punkt 4 listy decyzji).
+4. Dane BOT (Etap E) i Overpass jako źródło POI (Etap I) — zablokowane
+   decyzjami usera (punkty 3 i 5).
+
+### Etap A — kreator „do celu” + karta wyniku — ZROBIONY 2026-09-23 (z prawdziwym OSRM niesprawdzony, patrz niżej)
+
+- Modal nad mapą: Skąd? (moja lokalizacja / wskaż na mapie), Dokąd?
+  (wskaż na mapie), Czym? (typy rowerów ze słownika), Jak? (Szybko /
+  Sprawdzone) → **Generuj trasę**. „Wolę narysować sam” = obecny planer.
+- `POST /api/planer/generuj` → `PlannerController::generate()`: cienka
+  nakładka na istniejące `sourceSegments()` (styl → źródła + warstwa),
+  odpowiedź w kształcie `/api/planer/oblicz` + `waypoints`, `context`,
+  `summary`.
+- Karta wyniku: dystans, przewyższenie (`ElevationLookup`, raz na
+  wygenerowaną trasę), czas, udział sprawdzonych odcinków, znane trasy po
+  drodze, „tędy jeździło N osób” (od 2 osób, tylko liczba), ostrzeżenia
+  z 14.2 (dużo wspinaczki; znana trasa z asfaltem poniżej progu profilu).
+  Po ręcznej zmianie trasy karta wraca do zwykłych statystyk.
+- Obecna prawa kolumna → `<details>` „Zaawansowane”; drag & drop GPX na mapę.
+- Testy: `generate()` — walidacja bez sieci; `summary()` — czysta funkcja
+  (udział, osoby, ostrzeżenia); model kreatora w Node.
+
+*Wykonanie (2026-09-23):*
+- Backend: `PlannerController::generate()` + `STYLES`/`DEFAULT_STYLE`,
+  `summary()` (czysta), `POST /api/planer/generuj` w `api/routes.php`;
+  `preferSegment()` dokłada `surface` do kawałków znanych tras (pod
+  ostrzeżenie). Bez zmian w warstwie routingu i w bazie.
+- Frontend: `assets/js/planner/wizard.js` (model), modal i karta wyniku
+  w `views/web/pages/planner.php`, spięcie w `assets/js/planner.js`
+  (`applyGenerated`, `wizardPickAt`, `uploadGpx` + drag & drop),
+  „Zaawansowane” jako `<details>`, style w `style.css`, teksty EN.
+- Poprawka przy okazji, bez której kreatora nie widać na telefonie:
+  `.planner-layout` w kolumnie (≤ 900 px) ma `align-items:stretch` —
+  wcześniej mapa zwijała się do zerowej szerokości.
+- Testy: `tests/planner_kreator_test.php` (12) + 3 scenariusze w
+  `planner_kolejnosc_test.php`. `php tests/run.php planner`: 91 przechodzi,
+  5 nie — te same 5 co przed zmianą (testy profili w
+  `planner_routing_test.php` podają profil jako tekst `'road'`/`'mtb'`,
+  a `RidemoreRouting::route()` od Etapu 3 oczekuje tablicy reguł; plus
+  przypadek 4). Cały zestaw: bez nowych błędów względem `HEAD`.
+- Na żywo: Chromium (Playwright) na lokalnej atrapie OSRM i API wysokości —
+  z tego środowiska publiczne serwery są zablokowane. Sprawdzone: kreator
+  otwiera się sam, wskazywanie punktów, szosa / gravel / szybko, karta
+  wyniku z ostrzeżeniami, edycja i zapis po wygenerowaniu, drag & drop,
+  401/403, EN, 390 px, konsola bez błędów JS.
+- **Otwarte:** przejście z prawdziwym rowerowym OSRM i prawdziwymi danymi
+  (jakość wyboru trasy, czasy odpowiedzi) — do zrobienia przez usera albo
+  w środowisku z dostępem do sieci.
+
+### Etap B — pętla „N km z punktu” — OTWARTY
+
+`RidemoreRouting::loop()` (sekcja 7.2), „Dokąd?” = Pętla 30/50/70/100 km,
+„Inny wariant”. Testy G1–G4.
+
+### Etap C — Skarby po drodze — OTWARTY
+
+Propozycje zjazdu z kosztem km + czas z macierzy OSRM, zdjęcie przez
+`reveal()`, „Dodaj po drodze” (sekcja 7.4, 14.1). Testy G9, G10, G15.
+
+### Etap D — Odkrywczo — OTWARTY
+
+Bonus za pola nieodkryte przez usera (`discovery_cells`), styl w kreatorze.
+Testy G7, G8, G12.
+
+### Etap E — dane BOT (~2 GB przejazdów) — OTWARTY, ZABLOKOWANY za decyzją usera (pkt 3)
+
+Sekcja 6.4: klucz autora, import bez punktów/odkryć/Pulsu, filtr aktywności,
+preagregacja wsparcia, zapytania po kaflach zamiast listy wszystkich plików.
+
+### Etap F — kalibracja stałych — OTWARTY, ZABLOKOWANY za danymi z produkcji
+
+Dawne 2f kontraktu warstwy routingu.
+
+### Etap G — Route Intelligence+ (drugi zespół) — OTWARTY, ZABLOKOWANY za Etapami A–D
+
+Gęstszy profil wysokości → ostrzeżenia o stromych podjazdach i nachyleniu
+(14.2). Bez nowych źródeł danych poza istniejącym API wysokości.
+
+### Etap H — wyprawa wielodniowa (drugi zespół, ich P0) — OTWARTY, ZABLOKOWANY za decyzją usera (pkt 4)
+
+Podział gotowej trasy na dni (km + D+), ręczne granice, statystyki i GPX per
+dzień. Warstwa nad `planned_routes`, bez zmian w routingu.
+
+### Etap I — Postoje i noclegi (drugi zespół) — OTWARTY, ZABLOKOWANY za decyzją usera (pkt 5)
+
+Woda / sklep / camping jako sugestie przy trasie — tylko jeśli Overpass
+zostanie zaakceptowany jako źródło. Warmshowers / iOverlander wyłącznie
+przez legalne mechanizmy.
+
+### Etap J — Podgląd trasy (Mapillary / Street View) — OTWARTY, ZABLOKOWANY za Etapami A–D i decyzją usera
+
+### Etap K — udostępnianie i wspólne planowanie — OTWARTY, ZABLOKOWANY za oceną prywatności (§27)
+
+---
 
 **Zdanie, które rozstrzyga spory:** Ridemore nie rysuje trasy — pokazuje,
 którędy **warto** pojechać. OSRM mówi „którędy można”, dane Ridemore mówią
@@ -506,7 +619,7 @@ dołożyć gęstszy profil wysokości (to samo co przy stromych podjazdach, 14.2
 - Poza tym bez zmian: Etapy B, D, E, F i lista odłożonych (sekcja 13)
   zostają.
 
-## Decyzje potrzebne od usera przed implementacją
+## Decyzje usera (otwarte — do czasu odpowiedzi obowiązują założenia z sekcji 0)
 
 1. Akceptacja stylów **Szybko / Sprawdzone / Odkrywczo** (zamiast Szybko /
    Terenowo / Widokowo / Odkrywczo) — „terenowo” przez typ roweru,
