@@ -47,6 +47,7 @@ use Models\TileCache;
 use Models\TileSource;
 use Models\Treasure;
 use Utils\ElevationLookup;
+use Utils\Format;
 use Utils\Gpx;
 use Utils\RidemoreRouting;
 use Utils\RouteSnap;
@@ -97,6 +98,23 @@ class PlannerController
     // zapytanie routingowe) — liczymy go z tej samej domyślnej prędkości co
     // reszta MVP (25 km/h, jak profil "szosa").
     private const ASSUMED_SPEED_MPS = 25_000 / 3600;
+
+    // KREATOR (Etap A). Styl jazdy = wybór źródeł i warstwy za użytkownika:
+    //  • fast   — czysty rowerowy OSRM, bez danych Ridemore;
+    //  • proven — znane trasy + przejazdy społeczności z warstwą Ridemore
+    //             (te same źródła, które ręczny planer ma domyślnie zaznaczone;
+    //             „Moje przejazdy” WYŁ. — kreator ma prowadzić tam, gdzie warto,
+    //             nie tam, gdzie user już był).
+    // „Odkrywczo” dochodzi w Etapie D — do tego czasu nie ma go tu wcale.
+    public const STYLES = [
+        'fast'   => ['sources' => ['mine' => false, 'known' => false, 'community' => false], 'autoJoin' => false],
+        'proven' => ['sources' => ['mine' => false, 'known' => true, 'community' => true], 'autoJoin' => true],
+    ];
+    public const DEFAULT_STYLE = 'proven';
+    private const MIN_GENERATE_M = 200.0;        // start i cel bliżej niż to — nie ma czego planować
+    private const SUMMARY_MIN_PIECE_M = 500.0;   // krótszy kawałek znanej trasy nie trafia do karty wyniku
+    private const CLIMB_WARN_M_PER_KM = 15.0;    // „dużo wspinaczki” od 15 m przewyższenia na km
+    private const CLIMB_WARN_MIN_KM = 5.0;       // krótka trasa z jednym podjazdem to nie ostrzeżenie
 
     /** Strona plannera — /planer (wymaga logowania: prywatny szkicownik usera). */
     public static function index(): void
@@ -218,6 +236,172 @@ class PlannerController
             'segments'    => $segments,
             'distanceKm'  => round(array_sum(array_column($segments, 'distanceM')) / 1000, 1),
             'durationMin' => (int) round(array_sum(array_column($segments, 'durationS')) / 60),
+        ];
+    }
+
+    /**
+     * KREATOR „GDZIE WARTO POJECHAĆ” (Etap A, tasks/active/planer-uproszczona-
+     * architektura.md). Użytkownik nie klika punktów ani źródeł — odpowiada na
+     * pytania (skąd, dokąd, czym, jak), a styl jazdy wybiera za niego źródła
+     * i warstwę Ridemore. Liczy to TA SAMA ścieżka co ręczny planer
+     * (`sourceSegments()`), więc odpowiedź ma kształt `/api/planer/oblicz`
+     * plus `waypoints` i `context` — przeglądarka wczytuje wynik do zwykłego
+     * modelu trasy i dalej działa edycja, zapis i GPX.
+     *
+     * Przewyższenie liczy się tu RAZ na wygenerowaną trasę (nie przy każdym
+     * przeciągnięciu punktu — ta sama zasada oszczędzania publicznego API co
+     * przy zapisie); zapis tej samej geometrii trafi potem w cache.
+     */
+    public static function generate(array $body): array
+    {
+        $start = self::sanitizeWaypointsForRouting([$body['start'] ?? null])[0] ?? null;
+        if ($start === null) {
+            return ['success' => false, 'error' => __('Wskaż, skąd chcesz jechać.')];
+        }
+        $end = self::sanitizeWaypointsForRouting([$body['end'] ?? null])[0] ?? null;
+        if ($end === null) {
+            return ['success' => false, 'error' => __('Wskaż, dokąd chcesz jechać.')];
+        }
+        if (RouteSnap::haversineM($start['lat'], $start['lng'], $end['lat'], $end['lng']) < self::MIN_GENERATE_M) {
+            return ['success' => false, 'error' => __('Start i cel leżą za blisko siebie.')];
+        }
+
+        $style = is_string($body['style'] ?? null) && isset(self::STYLES[$body['style']]) ? $body['style'] : self::DEFAULT_STYLE;
+        $bike = self::bikeFor($body['profile'] ?? null);
+        $context = self::STYLES[$style];
+        $waypoints = [$start, $end];
+
+        $segments = self::sourceSegments($waypoints, $context['sources'], $context['autoJoin'], $bike);
+        if ($segments === null) {
+            return ['success' => false, 'error' => __('Nie udało się wyznaczyć trasy — spróbuj ponownie za chwilę.')];
+        }
+
+        $coords = [];
+        foreach ($segments as $segment) {
+            foreach ($segment['coords'] as $i => $c) {
+                if ($i === 0 && $coords) {
+                    continue; // granica odcinków
+                }
+                $coords[] = $c;
+            }
+        }
+
+        return [
+            'success'     => true,
+            'waypoints'   => [
+                ['lat' => $start['lat'], 'lng' => $start['lng'], 'type' => 'start', 'label' => ''],
+                ['lat' => $end['lat'], 'lng' => $end['lng'], 'type' => 'end', 'label' => ''],
+            ],
+            'context'     => ['style' => $style, 'profile' => $bike['code']] + $context,
+            'segments'    => $segments,
+            'distanceKm'  => round(array_sum(array_column($segments, 'distanceM')) / 1000, 1),
+            'durationMin' => (int) round(array_sum(array_column($segments, 'durationS')) / 60),
+            'summary'     => self::summary($segments, ElevationLookup::forRoute($coords), $bike['rules'], $style),
+        ];
+    }
+
+    /**
+     * Karta wyniku kreatora — czysta funkcja (bez bazy i sieci), żeby dało się
+     * ją sprawdzić testem. Mówi TYLKO to, co wynika z danych, które mamy:
+     *  • udział odcinków Ridemore i znane trasy po drodze (kawałki `ridemore`),
+     *  • ile osób jechało wybranym korytarzem — liczba, nigdy kto, i dopiero
+     *    od progu warstwy (`minCommunityRiders`), bo jedna osoba to nie
+     *    „sprawdzony odcinek”,
+     *  • ostrzeżenia: dużo wspinaczki (suma z API wysokości) i znana trasa
+     *    z asfaltem poniżej progu typu roweru — nawierzchnię znamy WYŁĄCZNIE na
+     *    znanych trasach, więc poza nimi nic nie mówimy (brak danych ≠ „OK”).
+     *
+     * @param list<array> $segments jak z sourceSegments()
+     * @param ?array{ascentM:int,descentM:int} $elevation null = API wysokości nie odpowiedziało
+     * @param array{minAsphaltPct:?int} $rules Models\BikeType::plannerRules
+     * @return array{distanceKm:float,ascentM:?int,descentM:?int,ridemorePct:int,riders:?int,knownRoutes:list<array{name:string,km:float}>,highlights:list<string>,warnings:list<string>}
+     */
+    public static function summary(array $segments, ?array $elevation, array $rules, string $style = self::DEFAULT_STYLE): array
+    {
+        $distanceM = 0.0;
+        $ridemoreM = 0.0;
+        $riders = 0;
+        $known = [];   // nazwa => metry
+        $unfit = [];   // nazwa => [metry, % asfaltu]
+        $minAsphalt = $rules['minAsphaltPct'] ?? null;
+        foreach ($segments as $segment) {
+            $distanceM += (float) $segment['distanceM'];
+            $ridemoreM += (float) ($segment['ridemoreM'] ?? 0);
+            foreach ($segment['variant']['corridors'] ?? [] as $corridor) {
+                if (($corridor['source'] ?? '') === 'community') {
+                    $riders = max($riders, (int) $corridor['riders']);
+                }
+            }
+            foreach ($segment['ridemore'] ?? [] as $piece) {
+                if (($piece['source'] ?? '') !== 'known' || !is_string($piece['label'] ?? null)) {
+                    continue;
+                }
+                $lenM = RouteSnap::lineLengthM(array_slice($segment['coords'], $piece['from'], $piece['to'] - $piece['from'] + 1));
+                $name = $piece['label'];
+                $known[$name] = ($known[$name] ?? 0.0) + $lenM;
+                $asphalt = $piece['surface']['asphalt'] ?? null;
+                if ($minAsphalt !== null && $asphalt !== null && (int) $asphalt < (int) $minAsphalt) {
+                    $unfit[$name] = [($unfit[$name][0] ?? 0.0) + $lenM, (int) $asphalt];
+                }
+            }
+        }
+
+        $distanceKm = round($distanceM / 1000, 1);
+        $pct = $distanceM > 0 ? (int) round(min(100.0, $ridemoreM / $distanceM * 100)) : 0;
+        $riders = $riders >= RidemoreRouting::PARAMS['minCommunityRiders'] ? $riders : null;
+        arsort($known);
+        $knownRoutes = [];
+        foreach (array_slice($known, 0, 3, true) as $name => $m) {
+            if ($m >= self::SUMMARY_MIN_PIECE_M) {
+                $knownRoutes[] = ['name' => (string) $name, 'km' => round($m / 1000, 1)];
+            }
+        }
+
+        $highlights = [];
+        if ($style === 'fast') {
+            $highlights[] = __('Najkrótsza droga rowerowa — bez preferowania odcinków Ridemore.');
+        } elseif ($pct > 0) {
+            $highlights[] = __('{pct}% trasy po sprawdzonych odcinkach Ridemore.', ['pct' => $pct]);
+        } else {
+            $highlights[] = __('W okolicy nie ma jeszcze sprawdzonych odcinków Ridemore — trasa jedzie zwykłymi drogami rowerowymi.');
+        }
+        if ($knownRoutes) {
+            $highlights[] = __('Po drodze: {routes}.', ['routes' => implode(', ', array_map(
+                static fn(array $r): string => $r['name'] . ' (' . Format::distance($r['km']) . ')',
+                $knownRoutes
+            ))]);
+        }
+        if ($riders !== null) {
+            $highlights[] = __n(
+                $riders,
+                'Tym korytarzem jechała co najmniej {n} osoba z Ridemore.',
+                'Tym korytarzem jechały co najmniej {n} osoby z Ridemore.',
+                'Tym korytarzem jechało co najmniej {n} osób z Ridemore.'
+            );
+        }
+
+        $warnings = [];
+        $ascent = isset($elevation['ascentM']) ? (int) $elevation['ascentM'] : null;
+        if ($ascent !== null && $distanceKm >= self::CLIMB_WARN_MIN_KM && $ascent / $distanceKm >= self::CLIMB_WARN_M_PER_KM) {
+            $warnings[] = __('Dużo wspinaczki: {m} m w górę na {km}.', ['m' => $ascent, 'km' => Format::distance($distanceKm)]);
+        }
+        foreach ($unfit as $name => [$m, $asphalt]) {
+            if ($m >= self::SUMMARY_MIN_PIECE_M) {
+                $warnings[] = __('{km} po trasie „{name}”, która ma tylko {pct}% asfaltu.', [
+                    'km' => Format::distance(round($m / 1000, 1)), 'name' => $name, 'pct' => $asphalt,
+                ]);
+            }
+        }
+
+        return [
+            'distanceKm'  => $distanceKm,
+            'ascentM'     => $ascent,
+            'descentM'    => isset($elevation['descentM']) ? (int) $elevation['descentM'] : null,
+            'ridemorePct' => $pct,
+            'riders'      => $riders,
+            'knownRoutes' => $knownRoutes,
+            'highlights'  => $highlights,
+            'warnings'    => $warnings,
         ];
     }
 
@@ -588,12 +772,20 @@ class PlannerController
         $pieces = [];
         foreach ($assembled['pieces'] as $p) {
             $ridemoreM += RouteSnap::lineLengthM(array_slice($coords, $p['from'], $p['to'] - $p['from'] + 1));
-            $pieces[] = [
+            $piece = [
                 'source' => $local[$p['line']]['source'],
                 'label'  => $local[$p['line']]['label'],
                 'from'   => $p['from'],
                 'to'     => $p['to'],
             ];
+            // Nawierzchnia znanej trasy (publiczna, jak na jej stronie) — pod
+            // ostrzeżenie w karcie wyniku kreatora (summary()). Warstwa sama nie
+            // wybiera znanej trasy niezgodnej z profilem, ale przyciąganie
+            // wkleja każdą, wzdłuż której OSRM i tak jedzie.
+            if ($piece['source'] === 'known' && isset($local[$p['line']]['surface'])) {
+                $piece['surface'] = $local[$p['line']]['surface'];
+            }
+            $pieces[] = $piece;
         }
         $osmShare = $route['distanceM'] > 0 ? max(0.0, $distanceM - $ridemoreM) / $route['distanceM'] : 0.0;
 

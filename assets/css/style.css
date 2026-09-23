@@ -4629,6 +4629,66 @@ body.is-app .lang-banner{bottom:calc(84px + env(safe-area-inset-bottom));}
 .planner-profile-btn.active span{color:var(--accent-dark);}
 .planner-hint{font-size:11px;color:var(--ink-mute);}
 
+/* KREATOR (Etap A, tasks/active/planer-uproszczona-architektura.md) — karta
+   nad mapą; w trybie „Wskaż na mapie” karta znika, a mapa dostaje klik
+   (warstwa nie łapie wtedy zdarzeń, tylko pasek z podpowiedzią). */
+.planner-wizard{position:absolute;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;
+  padding:16px;background:rgba(21,32,26,.28);}
+.planner-wizard[hidden]{display:none;}
+.planner-wizard.is-picking{background:none;pointer-events:none;align-items:flex-start;}
+.planner-wizard.is-picking .planner-wizard__card{display:none;}
+.planner-wizard__card{width:100%;max-width:440px;max-height:100%;overflow-y:auto;box-sizing:border-box;margin:0;
+  background:var(--paper);border:1px solid var(--hair-strong);border-radius:12px;padding:18px 18px 16px;
+  box-shadow:0 12px 36px rgba(21,32,26,.22);display:flex;flex-direction:column;gap:14px;}
+.planner-wizard__head{display:flex;align-items:center;gap:10px;}
+.planner-wizard__head h2{margin:0;font-size:19px;flex:1;}
+.planner-wizard__x{flex:0 0 30px;height:30px;border-radius:50%;border:1px solid var(--hair-strong);background:var(--paper);
+  color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
+.planner-wizard__x .icon{width:12px;height:12px;}
+.planner-wizard__q{border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;min-width:0;}
+.planner-wizard__q legend{padding:0;margin-bottom:7px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--ink-mute);}
+.planner-wizard__row{display:flex;flex-wrap:wrap;gap:7px;}
+.planner-wizard__opt{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 8px;
+  border:1.5px solid var(--hair-strong);border-radius:var(--radius);background:var(--paper);font-family:inherit;
+  font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer;}
+.planner-wizard__opt:hover{border-color:var(--accent);color:var(--accent-dark);}
+.planner-wizard__opt.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);}
+.planner-wizard__opt:disabled{opacity:.55;cursor:default;}
+.planner-wizard__opt .icon{width:15px;height:15px;flex:0 0 auto;}
+.planner-wizard__style{flex-direction:column;align-items:flex-start;text-align:left;gap:2px;padding:10px 11px;}
+.planner-wizard__style b{font-size:13.5px;color:var(--ink);}
+.planner-wizard__style small{font-size:11.5px;font-weight:500;color:var(--ink-mute);line-height:1.35;}
+.planner-wizard__style.active b{color:var(--accent-dark);}
+.planner-wizard__val{font-family:var(--f-m);font-size:12px;color:var(--accent-dark);}
+.planner-wizard__val[data-empty="1"]{color:var(--ink-mute);}
+.planner-wizard__error{font-size:12.5px;color:#B3382C;}
+.planner-wizard__error[hidden]{display:none;}
+.planner-wizard__foot{display:flex;align-items:center;gap:10px;}
+.planner-wizard__foot .btn{width:auto;flex:1;padding:12px 14px;}
+.planner-wizard__manual{background:none;border:none;padding:6px 2px;font-family:inherit;font-size:12.5px;font-weight:700;
+  color:var(--ink-soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.planner-wizard__picking{pointer-events:auto;display:flex;align-items:center;gap:12px;margin-top:4px;padding:10px 14px;
+  background:var(--paper);border:1px solid var(--accent);border-radius:999px;font-size:13px;font-weight:700;color:var(--ink);
+  box-shadow:0 6px 18px rgba(21,32,26,.18);}
+.planner-wizard__picking[hidden]{display:none;}
+.planner-wizard__picking button{background:none;border:none;color:var(--accent-dark);font-weight:700;font-size:12.5px;
+  cursor:pointer;font-family:inherit;padding:0;}
+.planner-wizard-open{display:flex;align-items:center;justify-content:center;gap:8px;}
+.planner-wizard-open .icon{width:16px;height:16px;}
+.planner-map.is-dropping::after{content:"";position:absolute;inset:0;z-index:1050;pointer-events:none;
+  border:3px dashed var(--accent);border-radius:12px;background:rgba(44,107,79,.08);}
+.planner-advanced__body{border-top:1px solid var(--hair);padding:12px;display:flex;flex-direction:column;gap:12px;}
+.planner-insights{border-top:1px solid var(--hair);padding:10px 14px 4px;}
+.planner-insights[hidden]{display:none;}
+.planner-insights ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.planner-insights li{font-size:12.5px;line-height:1.45;color:var(--ink-soft);padding-left:14px;position:relative;}
+.planner-insights__list li::before{content:"";position:absolute;left:0;top:.5em;width:6px;height:6px;border-radius:50%;background:var(--accent);}
+.planner-insights__warn{margin-top:6px !important;}
+.planner-insights__warn li{color:#8A4B12;}
+.planner-insights__warn li::before{content:"!";position:absolute;left:1px;top:0;font-weight:800;color:#B3382C;}
+.planner-insights ul:empty{display:none;}
+
 /* ŹRÓDŁA TRASY (2026-09-18) — jedno miejsce wyboru: zaznaczenie = widać na mapie
    i planer prowadzi po tym. Status „Aktualna baza" u góry jest JEDYNYM miejscem,
    które mówi, z czego planer korzysta (data-mode: none | sources | route | gpx). */
@@ -4758,7 +4818,9 @@ body.is-app .lang-banner{bottom:calc(84px + env(safe-area-inset-bottom));}
 .planner-map-pin.via .bubble .in{color:var(--ink);}
 
 @media(max-width:900px){
-  .planner-layout{flex-direction:column;}
+  /* stretch: mapa nie ma treści w przepływie (płótno i kreator są absolute),
+     więc przy flex-start zwijała się w kolumnie do zerowej szerokości. */
+  .planner-layout{flex-direction:column;align-items:stretch;}
   .planner-sidebar{width:100%;flex:none;max-height:none;}
   .planner-map{height:min(52vh,480px);}
 }

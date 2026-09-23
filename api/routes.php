@@ -1471,6 +1471,28 @@ $router->post('/api/planer/oblicz', function () {
     echo json_encode(PlannerController::calculate($body), JSON_UNESCAPED_UNICODE);
 });
 
+// KREATOR „gdzie warto pojechać” (Etap A, tasks/active/planer-uproszczona-
+// architektura.md) — ta sama obudowa co /oblicz: logowanie, CSRF, zwolnienie
+// sesji na czas czekania na rowerowy OSRM i API wysokości.
+$router->post('/api/planer/generuj', function () {
+    $user = Auth::user();
+    if ($user === null) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => __('Zaloguj się, żeby zaplanować trasę.')]);
+        return;
+    }
+    $body = json_decode((string) file_get_contents('php://input'), true);
+    $body = is_array($body) ? $body : [];
+    if (!Csrf::check($body['csrf_token'] ?? null)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => __('Sesja wygasła — odśwież stronę.')]);
+        return;
+    }
+    Core\Session::release();
+    @set_time_limit(120);
+    echo json_encode(PlannerController::generate($body), JSON_UNESCAPED_UNICODE);
+});
+
 $router->post('/api/planer/zapisz', function () {
     $user = Auth::user();
     if ($user === null) {

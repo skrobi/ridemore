@@ -7,7 +7,7 @@ if (!defined('CORE_PATH')) { http_response_code(403); exit; }
 ?>
 <h1 style="margin:0 0 4px;"><?= __('Planer tras') ?></h1>
 <p style="margin:0 0 4px;color:var(--ink-soft);font-size:14px;">
-    <?= __('Kliknij na mapie, żeby ustawić START, kolejne kliknięcia dodają punkty. Ridemore pokaże znane trasy i skarby po drodze.') ?>
+    <?= __('Powiedz, skąd i dokąd chcesz jechać — Ridemore wybierze drogę, którą warto pojechać. Wolisz sam? Klikaj punkty na mapie.') ?>
 </p>
 
 <div class="planner-layout" id="plannerLayout">
@@ -21,9 +21,85 @@ if (!defined('CORE_PATH')) { http_response_code(403); exit; }
                 <p><?= __('Kolejne kliknięcia dodają punkty pośrednie i cel.') ?></p>
             </div>
         </div>
+
+        <?php /* KREATOR (Etap A, tasks/active/planer-uproszczona-architektura.md):
+                 cztery pytania zamiast klikania punktów i źródeł. Przykrywa mapę,
+                 ale jej nie zastępuje — „Wskaż na mapie” chowa kartę na czas
+                 jednego kliknięcia. Wynik ląduje w zwykłym planerze. */ ?>
+        <div class="planner-wizard" id="plannerWizard" hidden>
+            <form class="planner-wizard__card" id="plannerWizardForm" role="dialog" aria-labelledby="plannerWizardTitle" novalidate>
+                <div class="planner-wizard__head">
+                    <h2 id="plannerWizardTitle"><?= __('Gdzie warto pojechać?') ?></h2>
+                    <button type="button" class="planner-wizard__x" id="plannerWizardClose" aria-label="<?= htmlspecialchars(__('Zamknij')) ?>"><?= Utils\Icon::render('close') ?></button>
+                </div>
+
+                <fieldset class="planner-wizard__q">
+                    <legend><?= __('Skąd?') ?></legend>
+                    <div class="planner-wizard__row">
+                        <button type="button" class="planner-wizard__opt" id="plannerWizardLocate"><?= Utils\Icon::render('pin') ?><?= __('Moja lokalizacja') ?></button>
+                        <button type="button" class="planner-wizard__opt" data-wizard-pick="start"><?= Utils\Icon::render('map') ?><?= __('Wskaż na mapie') ?></button>
+                    </div>
+                    <div class="planner-wizard__val" id="plannerWizardStart" data-empty="1"><?= __('Nie wybrano') ?></div>
+                </fieldset>
+
+                <fieldset class="planner-wizard__q">
+                    <legend><?= __('Dokąd?') ?></legend>
+                    <div class="planner-wizard__row">
+                        <button type="button" class="planner-wizard__opt" data-wizard-pick="end"><?= Utils\Icon::render('map') ?><?= __('Wskaż cel na mapie') ?></button>
+                    </div>
+                    <div class="planner-wizard__val" id="plannerWizardEnd" data-empty="1"><?= __('Nie wybrano') ?></div>
+                </fieldset>
+
+                <fieldset class="planner-wizard__q">
+                    <legend><?= __('Czym?') ?></legend>
+                    <div class="planner-wizard__row" id="plannerWizardBikes">
+                        <?php foreach ($bikeTypes as $bikeType): ?>
+                        <button type="button" class="planner-wizard__opt" data-wizard-bike="<?= htmlspecialchars($bikeType['code']) ?>"><?= htmlspecialchars($bikeType['name']) ?></button>
+                        <?php endforeach; ?>
+                    </div>
+                </fieldset>
+
+                <fieldset class="planner-wizard__q">
+                    <legend><?= __('Jak chcesz pojechać?') ?></legend>
+                    <div class="planner-wizard__row planner-wizard__row--styles">
+                        <button type="button" class="planner-wizard__opt planner-wizard__style" data-wizard-style="proven">
+                            <b><?= __('Sprawdzone') ?></b><small><?= __('Tam, gdzie jeżdżą rowerzyści Ridemore') ?></small>
+                        </button>
+                        <button type="button" class="planner-wizard__opt planner-wizard__style" data-wizard-style="fast">
+                            <b><?= __('Szybko') ?></b><small><?= __('Najkrótsza droga rowerowa') ?></small>
+                        </button>
+                    </div>
+                </fieldset>
+
+                <div class="planner-wizard__error" id="plannerWizardError" role="alert" hidden></div>
+
+                <div class="planner-wizard__foot">
+                    <button type="button" class="planner-wizard__manual" id="plannerWizardManual"><?= __('Wolę narysować sam') ?></button>
+                    <button type="submit" class="btn" id="plannerWizardGo"><?= __('Generuj trasę') ?></button>
+                </div>
+            </form>
+
+            <div class="planner-wizard__picking" id="plannerWizardPicking" hidden>
+                <span id="plannerWizardPickingText"></span>
+                <button type="button" id="plannerWizardPickingCancel"><?= __('Anuluj') ?></button>
+            </div>
+        </div>
     </div>
 
     <div class="planner-sidebar">
+
+        <button type="button" class="btn planner-wizard-open" id="plannerWizardOpen"><?= Utils\Icon::render('route') ?><?= __('Zaplanuj trasę') ?></button>
+
+        <?php /* ZAAWANSOWANE (Etap A): dotychczasowe sterowanie planerem — źródła,
+                 baza, przełącznik warstwy, profil — zostaje w całości, ale nie jest
+                 już ścieżką podstawową. Kreator ustawia te same kontrolki za usera. */ ?>
+        <details class="planner-cfg planner-advanced" id="plannerAdvanced">
+            <summary>
+                <?= Utils\Icon::render('settings') ?>
+                <?= __('Zaawansowane') ?>
+                <svg class="ic chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="planner-advanced__body">
 
         <?php /* ŹRÓDŁA TRASY (2026-09-18): jedno miejsce wyboru — zaznaczenie źródła
                  pokazuje je na mapie I oddaje planerowi jako preferowane odcinki.
@@ -130,6 +206,9 @@ if (!defined('CORE_PATH')) { http_response_code(403); exit; }
             </div>
         </details>
 
+            </div>
+        </details>
+
         <div class="card" id="plannerWaypointsCard">
             <div class="planner-empty" id="plannerEmpty">
                 <?= Utils\Icon::render('route') ?>
@@ -157,6 +236,13 @@ if (!defined('CORE_PATH')) { http_response_code(403); exit; }
                     <div class="planner-stat-val" id="plannerStatTime">—</div>
                     <div class="planner-stat-lbl"><?= __('Czas') ?></div>
                 </div>
+            </div>
+            <?php /* Karta wyniku kreatora — zdania z PlannerController::summary();
+                     znika przy pierwszej ręcznej zmianie trasy (dotyczy trasy,
+                     którą wygenerowano, nie tej po edycji). */ ?>
+            <div class="planner-insights" id="plannerInsights" hidden>
+                <ul class="planner-insights__list" id="plannerInsightsList"></ul>
+                <ul class="planner-insights__warn" id="plannerInsightsWarn"></ul>
             </div>
         </div>
 
@@ -188,6 +274,7 @@ window.PLANNER_CONFIG = {
     api: {
         layers: <?= json_encode(Utils\View::url('/api/planer/warstwy')) ?>,
         calculate: <?= json_encode(Utils\View::url('/api/planer/oblicz')) ?>,
+        generate: <?= json_encode(Utils\View::url('/api/planer/generuj')) ?>,
         save: <?= json_encode(Utils\View::url('/api/planer/zapisz')) ?>,
         load: <?= json_encode(Utils\View::url('/api/planer/')) ?>,
         gpx: <?= json_encode(Utils\View::url('/planer/')) ?>,
@@ -198,4 +285,5 @@ window.PLANNER_CONFIG = {
 };
 </script>
 <script defer src="<?= Utils\View::asset('/assets/js/planner/route-model.js') ?>"></script>
+<script defer src="<?= Utils\View::asset('/assets/js/planner/wizard.js') ?>"></script>
 <script defer src="<?= Utils\View::asset('/assets/js/planner.js') ?>"></script>
