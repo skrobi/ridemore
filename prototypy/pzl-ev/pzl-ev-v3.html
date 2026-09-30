@@ -995,11 +995,39 @@ function p1sBranch(n,org,depth){
   const tg = ch.length? `<button class="tg" data-a="ntog" data-x="n:${n[0]}" data-open="${open?1:0}" aria-label="${open?'Zwiń':'Rozwiń'} ${n[0]}">${open?'▾':'▸'}</button>` : '<span class="tg blank"></span>';
   return `<li><div class="trow" style="padding-left:${depth*14}px">${tg}${p1sRow(n,org,8)}</div>${open?`<ul class="mt">${ch.map(c=>p1sBranch(c,org,depth+1)).join('')}</ul>`:''}</li>`;
 }
-function p1sOrg(org,forceOpen){
+function p1sOrg(org,forceOpen,depth=0){
   const o=orgInfo(org); if(!o) return '';
   const open=forceOpen || nodeOpen(org,org,true), ch=kidsOf(org)[org]||[];
-  return `<li><div class="trow"><button class="tg" data-a="ntog" data-x="p:${org}" data-open="${open?1:0}" aria-label="${open?'Zwiń':'Rozwiń'} ${org}">${open?'▾':'▸'}</button>${p1sRow(o.nodes[0],org,8)}</div>
-    ${open?`<ul class="mt">${ch.map(n=>p1sBranch(n,org,1)).join('')}</ul>`:''}</li>`;
+  return `<li><div class="trow" style="padding-left:${depth*14}px"><button class="tg" data-a="ntog" data-x="p:${org}" data-open="${open?1:0}" aria-label="${open?'Zwiń':'Rozwiń'} ${org}">${open?'▾':'▸'}</button>${p1sRow(o.nodes[0],org,8)}</div>
+    ${open?`<ul class="mt">${ch.map(n=>p1sBranch(n,org,depth+1)).join('')}</ul>`:''}</li>`;
+}
+/* Drzewo P1S wg kategoryzacji z tabeli WBS (PZLPROD.LOG.WBS; łączenie z raportem: PSPNR = pspnr_sap, hierarchia elementów: PARENT):
+   Z_KAT_ZBIORCZA → Z_KATEGORIA → Z_OPIS (albo nazwa ze słownika „Grupy kategorii”) → PROJORG → elementy.
+   Kategoria jest w każdym wierszu WBS; PROJORG grupujemy wg jego wiersza (STUFE 1).
+   PROJORG „w mapowaniu” = PROJORG projektów EV + cele i propozycje elementów CES (wg filtra Projekt). */
+function catKeys(org){ const k=catOf(org), a=k?k.kz:'∅', b=k?k.kat:'∅', c=k?k.grp:'∅'; return ['k1:'+a, 'k2:'+a+'|'+b, 'k3:'+a+'|'+b+'|'+c]; }
+function mapOrgs(){
+  const z=S.mp.z, xs=allCes().filter(x=>z==='all'||zOfCes(x)===z).map(x=> x.r.t ? nodeOf(x.r.t)?.org : x.prop);
+  const sc = z==='all' ? Object.values(S.zakresy).flatMap(v=>v.p1s) : z==='none' ? [] : (S.zakresy[z]?.p1s||[]);
+  return [...new Set([...sc, ...xs].filter(Boolean))];
+}
+function p1sCatTree(){
+  const mp=S.mp, orgs=mapOrgs(), cnt={}, T=new Map();
+  for(const x of allCes()) if(x.r.t){ const o=nodeOf(x.r.t)?.org; if(o) cnt[o]=(cnt[o]||0)+1; }
+  const auto=new Set([selTarget(), mp.pend?.target, mp.selP1s].filter(Boolean).map(c=>nodeOf(c)?.org));
+  const put=(m,k,v)=>m.has(k)? m.get(k) : m.set(k,v).get(k);
+  for(const o of orgs){ const k=catOf(o);
+    put(put(put(T,k?k.kz:null,new Map()),k?k.kat:null,new Map()),k?k.grp:null,{ov:k?.ov, opis:k?.opis, orgs:[]}).orgs.push(o); }
+  const stat=os=>`${os.length} PROJORG · ${sum(os.map(o=>cnt[o]||0))} el. CES`;
+  const branch=(key,label,os,depth,inner)=>{ const open=os.some(o=>auto.has(o)) || (key in mp.open ? !!mp.open[key] : true);
+    return `<li><div class="trow" style="padding-left:${depth*14}px"><button class="tg" data-a="ntog" data-x="${esc(key)}" data-open="${open?1:0}" aria-label="${open?'Zwiń':'Rozwiń'}">${open?'▾':'▸'}</button><span class="zl">${label} <span class="muted small">${stat(os)}</span></span></div>${open?`<ul class="mt">${inner()}</ul>`:''}</li>`; };
+  const byName=m=>[...m].sort((x,y)=> x[0]===null? 1 : y[0]===null? -1 : String(x[0]).localeCompare(String(y[0]),'pl'));
+  const orgList=(os,depth)=>os.sort((x,y)=>(scopeOfOrg(x)?.code||'~').localeCompare(scopeOfOrg(y)?.code||'~')||x.localeCompare(y)).map(o=>p1sOrg(o,false,depth)).join('');
+  return byName(T).map(([kz,A])=>{ const osA=[...A.values()].flatMap(B=>[...B.values()].flatMap(c=>c.orgs));
+    if(kz===null) return branch('k1:∅','<b>Bez kategorii w WBS</b> <span class="muted small">(brak w próbce danych)</span>',osA,0,()=>orgList(osA,1));
+    return branch('k1:'+kz,`<b>${esc(kz)}</b>`,osA,0,()=>byName(A).map(([kat,B])=>{ const osB=[...B.values()].flatMap(c=>c.orgs);
+      return branch('k2:'+kz+'|'+kat,esc(kat),osB,1,()=>byName(B).map(([g,c])=>
+        branch('k3:'+kz+'|'+kat+'|'+g, c.ov?`<span title="nazwa grupy zamiast Z_OPIS „${esc(c.opis)}”">✎ <b>${esc(g)}</b></span>`:esc(g), c.orgs,2,()=>orgList(c.orgs,3))).join('')); }).join('')); }).join('');
 }
 function p1sCatalog(pick,noInput){ // pick: wybór PROJORG w kreatorze (checkboxy) zamiast celów mapowania
   const mp=S.mp, q=mp.pq.trim(), orgLine = org => pick ? pickRow(org) : p1sOrg(org,false);
@@ -1201,10 +1229,6 @@ function vMapa(){
   }).join('');
   const qGroups={}; for(const x of unm) (qGroups[x.pd] ||= []).push(x);
   const props=proposals(V.items);
-  const zOpen=id=>!mp.open['zc:'+id];
-  const outOrgs=[...new Set(all.filter(x=>x.r.t).map(x=>nodeOf(x.r.t)?.org).filter(o=>o && !scopeOfOrg(o)))];
-  const zGroup=(id,label,orgs)=>`<li><div class="trow"><button class="tg" data-a="mtog" data-x="zc:${id}" aria-label="${zOpen(id)?'Zwiń':'Rozwiń'} ${esc(label)}">${zOpen(id)?'▾':'▸'}</button><span class="zl"><b>${esc(label)}</b> <span class="muted small">${orgs.length} PROJORG</span></span></div>
-        ${zOpen(id)?`<ul class="mt">${orgs.map(o=>p1sOrg(o,false)).join('')}</ul>`:''}</li>`;
   const chip=(k,l)=>`<button data-a="mfil" data-x="${k}" aria-pressed="${mp.f===k}" ${k==='all'?'':`title="${esc(MSTL[k])}"`}>${k==='all'?l:mpill(k)} <b class="num">${k==='all'?tot:(V.counts[k]||0)}</b></button>`;
   return `
   <div class="head"><div><div class="eyebrow">${back}ADMIN</div><h1>Mapowanie CES ↔ P1S</h1>
@@ -1235,8 +1259,9 @@ function vMapa(){
     </section>
     <section class="panel"><h3>P1S</h3>${p1sInput()}
       ${mp.pq.trim().length>=3 ? `${p1sCatalog(false,true)}<button class="btn small" data-a="pqClear">Wyczyść wyszukiwanie</button>` : `
-      <div class="eyebrow">Projekty EV i ich PROJORG</div>
-      <ul class="mt scroll">${Object.values(S.zakresy).map(z=>zGroup(z.id,z.code,z.p1s)).join('')}${outOrgs.length?zGroup('none','Poza projektami EV',outOrgs):''}</ul>
+      <div class="eyebrow">W mapowaniu · Z_KAT_ZBIORCZA › Z_KATEGORIA › Z_OPIS › PROJORG</div>
+      <p class="muted small">Kategoryzacja z tabeli WBS P1S. PROJORG projektów EV oraz cele i propozycje elementów CES${mp.z==='all'?'':' – wg filtra Projekt'}.</p>
+      <ul class="mt scroll">${p1sCatTree()||'<li class="muted">Brak PROJORG dla filtra projektu.</li>'}</ul>
       <details class="cat" ${mp.cp?.length?'open':''}><summary>Katalog P1S · ${nf(P1S_TOTAL)} projektów · Z_KAT_ZBIORCZA → Z_KATEGORIA → Z_OPIS</summary>${p1sCatalog(false,true)}</details>`}
     </section>
   </div>
@@ -1690,7 +1715,7 @@ const A={
     bump('katgr', x+' → „'+name+'”'+(old?' (poprzednio „'+old.v.name+'”)':'')); mmsg('ok',`Grupa „${name}” zapisana dla ${x} (stan #${S.dbRev}). Elementy CES zmapowane do ${x} są teraz pod tą nazwą.`); save(); render(); },
   grpDel:x=>{ const r=active(S.dicts.katgr).find(r=>r.v.p1s===x); if(!r) return; r.vt=YESTERDAY; bump('katgr','Usunięto nazwę grupy dla '+x); mmsg('ok',`Usunięto nazwę grupy dla ${x} – wraca Z_OPIS z P1S.`); save(); render(); },
   ppage:x=>{ const c=S.mp.cp[2], pg=(S.mp.page[c]||0)+Number(x); S.mp.page[c]=Math.max(0,Math.min(pg,Math.ceil(CAT[c].cnt/25)-1)); render(); },
-  preveal:x=>{ const mp=S.mp, org=nodeOf(x)?.org||x, z=scopeOfOrg(org); mp.pq=''; mp.open['p:'+org]=true; mp.open['zc:'+(z?z.id:'none')]=false; render(); document.querySelector(`[data-drop="${x}"]`)?.scrollIntoView({block:'center'}); },
+  preveal:x=>{ const mp=S.mp, org=nodeOf(x)?.org||x; mp.pq=''; if(!mapOrgs().includes(org)) mp.z='all'; mp.open['p:'+org]=true; for(const k of catKeys(org)) mp.open[k]=true; render(); document.querySelector(`[data-drop="${x}"]`)?.scrollIntoView({block:'center'}); },
   goMapZ:x=>{ Object.assign(S.mp,{z:x||'all', f:'UNMAPPED', q:'', pend:null, selCes:null, selP1s:null, msg:null, cpage:0}); go({name:'mapa'}); },
   apage:x=>{ S.adm.pg=Math.max(0,(S.adm.pg||0)+Number(x)); render(); },
   wunpick:x=>{ S.wiz.p1s=S.wiz.p1s.filter(o=>o!==x); render(); },

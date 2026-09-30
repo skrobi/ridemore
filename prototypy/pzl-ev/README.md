@@ -24,8 +24,9 @@ Model wynikający z raportu mapowań SAP↔CES:
 - **WBS CES spoza raportu dziedziczy automatycznie** odpowiednik swojego projektu CES (`project_sap`) – status INHERITED.
 - **Korekty globalne** (potrzeby finansów) – z historią, mają pierwszeństwo przed raportem: korekta elementu (OVERRIDE) albo korekta projektu CES (nowy cel dla jego WBS spoza raportu). Zmiana względem raportu wymaga uzasadnienia. Usunięcie korekty przywraca raport / dziedziczenie.
 - Statusy: REPORT → INHERITED → OVERRIDE → UNMAPPED (brak w raporcie i brak odpowiednika projektu CES).
-- Kategoria P1S nie jest przypisywana w mapowaniu – dochodzi z WBS P1S po połączeniu (`wbs_sap`).
-- Widok: CES (projekty i elementy) | Do przypisania | drzewo P1S rozwijane poziomami (projekty EV + „Poza projektami EV”), atrybuty SAP z raportu w panelu elementu, rejestr korekt.
+- Kategoria P1S nie jest przypisywana w mapowaniu – dochodzi z WBS P1S po połączeniu (`PSPNR` = `pspnr_sap`).
+- Widok: CES (projekty i elementy) | Do przypisania | drzewo P1S, atrybuty SAP z raportu w panelu elementu, rejestr korekt.
+- Drzewo P1S wg kategoryzacji z tabeli WBS (`PZLPROD.LOG.WBS`): Z_KAT_ZBIORCZA → Z_KATEGORIA → Z_OPIS (albo nazwa ze słownika „Grupy kategorii”, ✎) → PROJORG → elementy. Pokazuje PROJORG „w mapowaniu”: projekty EV oraz cele i propozycje elementów CES, zawężane filtrem Projekt; PROJORG bez kategorii – grupa „Bez kategorii w WBS”. Łączenie z raportem: `PSPNR` = `pspnr_sap`; hierarchia elementów docelowo wg `PARENT`.
 - Dane: AC-LH8 z fragmentu raportu (11 z 20 projektów CES, bez kategorii – nie ma jej w próbce), reszta przykładowa z raportem dopisanym do danych v2.
 
 ## Otwarte decyzje
@@ -34,3 +35,4 @@ Model wynikający z raportu mapowań SAP↔CES:
 - Przebieg przypina stan słowników – czy ma też przypinać stan raportu mapowań (raport zmienia się w bazie).
 - Czy korekta projektu CES ma móc przenieść także jego WBS z raportu (dziś: tylko WBS spoza raportu).
 - Panel „Koszty wg kategorii P1S” na stronie projektu – zostaje czy też „nie ten etap”.
+- Kategoria jest w każdym wierszu WBS; drzewo grupuje PROJORG wg jego wiersza (STUFE 1). Do potwierdzenia: czy elementy jednego PROJORG mogą mieć różne kategorie.
