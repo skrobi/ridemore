@@ -444,7 +444,6 @@ const DEFS = {
   kalendarz:{name:'Kalendarz okresów', cols:[{k:'okres',l:'Okres',t:'text'},{k:'od',l:'Od',t:'date'},{k:'do',l:'Do',t:'date'},{k:'zam',l:'Termin zamknięcia',t:'date'}], key:['okres'], rules:[['od','do']]},
   kursy:{name:'Kursy USD/PLN', cols:[{k:'okres',l:'Okres',t:'text'},{k:'kurs',l:'USD/PLN',t:'num',min:0.01,d:4}], key:['okres']},
   prefiksy:{name:'Prefiksy plików RABIT', cols:[{k:'prefix',l:'Prefiks nazwy pliku',t:'text'},{k:'src',l:'Kod źródła',t:'text'},{k:'opis',l:'Opis',t:'text',opt:true}], key:['prefix']},
-  zrodla:{name:'Wymagane źródła projektów', cols:[{k:'proj',l:'Projekt P1S (PROJORG)',t:'list',src:'p1sorg'},{k:'src',l:'Kod źródła',t:'list',src:'srccodes'}], key:['proj','src']},
   wp:{name:'WP i CAM', cols:[{k:'wp',l:'WP',t:'text'},{k:'p1s',l:'Element P1S',t:'list',src:'scopeNodes'},{k:'cam',l:'CAM',t:'list',src:'people'},{k:'cat',l:'Cost Category',t:'list',src:'cats'}], key:['wp'], uniq:['p1s']},
   harm:{name:'Harmonogram i budżet', cols:[{k:'wp',l:'WP',t:'list',src:'scopeWp'},{k:'bac',l:'BAC [h]',t:'num',min:0},{k:'start',l:'Start',t:'date'},{k:'finish',l:'Koniec',t:'date'}], key:['wp'], rules:[['start','finish']]},
   katgr:{name:'Grupy kategorii', cols:[{k:'p1s',l:'Element P1S',t:'p1s'},{k:'name',l:'Nazwa grupy (zastępuje Z_OPIS)',t:'text'}], key:['p1s']},
@@ -506,11 +505,6 @@ function seed(){
     1401,'T. Mazur','01.09.2026 11:02','Kurs 2026-09');
   d.prefiksy = mkDict('prefiksy','config',[['ACTUALS_CES_','ACTUALS_CES','Koszty rzeczywiste CES'],['COMMIT_CES_','COMMIT_CES','Zobowiązania CES'],['HOURS_CES_','HOURS_CES','Godziny CES'],['ETC_CES_','ETC_CES','ETC z CES'],['ETC_PAF_','ETC_PAF','ETC PAF'],['FORECAST_PAF_','FORECAST_PAF','Prognoza PAF']].map(([p,c,o])=>Row({prefix:p,src:c,opis:o},'2026-06-01','M. Zielińska','01.06.2026')),
     1410,'M. Zielińska','08.09.2026 13:40','Dodano prefiks ETC_CES_');
-  const req = {S70I:['ACTUALS_CES','HOURS_CES','FORECAST_PAF'], F16:['ACTUALS_CES','HOURS_CES'], PULA:['ACTUALS_CES']};
-  const zr = [];
-  for(const z of Object.values(s.zakresy)) for(const o of z.p1s) for(const c of req[z.id]) zr.push(Row({proj:o, src:c},'2026-06-01','M. Zielińska','01.06.2026'));
-  zr.push(Row({proj:'WW-2603', src:'ETC_CES'},'2026-09-08','P. Górski','08.09.2026'));
-  d.zrodla = mkDict('zrodla','config', zr, 1415,'P. Górski','08.09.2026 14:02','WW-2603 wymaga ETC_CES');
   const revs = {S70I:[1420,'M. Zielińska','02.09.2026 10:31'], F16:[1405,ME_S,'28.08.2026 15:12'], PULA:[1411,'P. Górski','08.09.2026 09:50']};
   for(const [zid,list] of Object.entries(WPS)){
     const [rv,by,at]=revs[zid], vf = zid==='F16'?'2026-07-14':'2026-06-02';
@@ -610,8 +604,6 @@ function bump(id, txt){
 function opts(src, d){
   if(src==='people') return PEOPLE;
   if(src==='cats') return ['Labor','Material','Subcontract'];
-  if(src==='p1sorg') return Object.keys(P1S_ORG);
-  if(src==='srccodes') return [...new Set(active(S.dicts.prefiksy).map(r=>r.v.src))];
   if(src==='scopeNodes') return S.zakresy[d.scope].p1s.flatMap(o=>P1S_ORG[o].nodes.map(n=>n[0]));
   if(src==='scopeWp') return active(S.dicts[d.scope+':wp']).map(r=>r.v.wp);
   return [];
@@ -649,15 +641,10 @@ function addRule(kind, ces, p1s, why=''){ const r={id:rid(), kind, ces, p1s, why
 
 /* ---------- import RABIT ---------- */
 function srcOf(name){ let best=null; for(const r of active(S.dicts.prefiksy)){ if(name.toUpperCase().startsWith(r.v.prefix.toUpperCase()) && (!best || r.v.prefix.length>best.v.prefix.length)) best=r; } return best? best.v.src : null; }
-function importedSrc(){ const m={}; for(const [n,f] of Object.entries(S.imp.imported)){ const s=srcOf(n); if(s && (!m[s] || f.at>m[s].at)) m[s]={at:f.at, name:n}; } return m; }
-function completeness(){
-  const imp=importedSrc(), by={};
-  for(const r of active(S.dicts.zrodla)) (by[r.v.proj] ||= []).push(r.v.src);
-  return Object.entries(by).map(([proj,srcs])=>({proj, z:scopeOfOrg(proj), srcs:srcs.map(s=>({s, ok:!!imp[s], at:imp[s]?.at})), ok:srcs.every(s=>imp[s])}));
-}
+/* Przebieg przypina wszystkie zaimportowane pliki RABIT: jedna paczka może obejmować wiele projektów (np. całe PWC),
+   a zakres danych wyznaczają elementy P1S projektu (i elementy CES do nich przypisane), nie pliki. */
 function pinFiles(zid){
-  const z=S.zakresy[zid], need=new Set(active(S.dicts.zrodla).filter(r=>z.p1s.includes(r.v.proj)).map(r=>r.v.src));
-  return Object.entries(S.imp.imported).filter(([n])=>need.has(srcOf(n))).map(([n,f])=>({name:n, src:srcOf(n), sha:f.sha, at:f.at, rows:f.rows}));
+  return Object.entries(S.imp.imported).filter(([n])=>srcOf(n)).map(([n,f])=>({name:n, src:srcOf(n), sha:f.sha, at:f.at, rows:f.rows}));
 }
 function newerData(r){ return (r.files||[]).filter(f=>S.imp.imported[f.name] && S.imp.imported[f.name].sha!==f.sha); }
 
@@ -740,7 +727,7 @@ function renderNav(){
   if(sec==='admin'){
     const un=unmapped().length;
     h = `<div class="grp">Słowniki</div>` + it('nav','slowniki','Przegląd słowników',cur('slowniki'))
-      + ['stawki','kursy','kalendarz','katgr','prefiksy','zrodla'].map(d=>it('dict',d,esc(dname(d)),cur('dict',d),'','sub')).join('')
+      + ['stawki','kursy','kalendarz','katgr','prefiksy'].map(d=>it('dict',d,esc(dname(d)),cur('dict',d),'','sub')).join('')
       + `<div class="sep"></div>` + it('nav','import','Import RABIT',cur('import'),`<span class="count">${esc(S.imp.history[0].id)}</span>`)
       + it('nav','mapa','Mapowanie CES↔P1S',cur('mapa'), un?`<span class="count crit" title="${un} WBS CES bez mapowania">${un}</span>`:'')
       + `<div class="sep"></div>` + it('nav','info','O aplikacji',cur('info'));
@@ -759,8 +746,6 @@ function renderNav(){
 /* ---------- PULPIT: tabela projektów + krótka lista „Wymaga uwagi” ---------- */
 function attention(){
   const att=[];
-  const inc=completeness().filter(c=>!c.ok);
-  if(inc.length) att.push({lvl:'warn', tag:'RABIT', txt:'Niekompletne źródła: '+inc.map(c=>c.proj+' (brak '+c.srcs.filter(s=>!s.ok).map(s=>s.s).join(', ')+')').join('; '), a:'nav', x:'import'});
   const orphan=unmapped().filter(x=>!x.prop || !scopeOfOrg(x.prop));
   if(orphan.length) att.push({lvl:'crit', tag:'MAPOWANIE', txt:`${orphan.length} WBS CES bez mapowania i bez projektu, koszt ${nf(sum(orphan.map(x=>x.cost)))} PLN`, a:'goMapZ', x:'none'});
   for(const z of Object.values(S.zakresy)){
@@ -835,8 +820,6 @@ function readiness(z){
   for(const id of dictIdsOf(z)) items.push(active(S.dicts[id]).length? {ok:true, txt:dname(id)+': wypełniony'} : {ok:false, lvl:'crit', txt:dname(id)+': pusty'});
   const cams=camsOf(z.id);
   items.push(cams.length? {ok:true, txt:'WP mają CAM: '+cams.length+' osób'} : {ok:false, lvl:'warn', txt:'Brak WP z CAM – pliki CAM nie powstaną'});
-  const inc=completeness().filter(c=>z.p1s.includes(c.proj) && !c.ok);
-  items.push(inc.length? {ok:false, lvl:'warn', txt:'Niekompletne źródła RABIT: '+inc.map(c=>c.proj).join(', ')} : {ok:true, txt:'Źródła RABIT kompletne'});
   items.push(z.isNew? {ok:false, lvl:'warn', txt:'Dostęp CAM do folderu CAM\\…\\Zwrocone – zgłoszenie do IT w toku'} : {ok:true, txt:'CAM mają dostęp do folderu CAM\\…\\Zwrocone'});
   return {items, blocked: missing.length>0 || !z.p1s.length};
 }
@@ -850,14 +833,13 @@ function runCard(r){
 function vZakres(id){
   const z=S.zakresy[id]; if(!z) return vZakresy();
   const rd=readiness(z), runs=runsOf(id), okN=rd.items.filter(i=>i.ok).length;
-  const srcs=[...new Set(active(S.dicts.zrodla).filter(r=>z.p1s.includes(r.v.proj)).map(r=>r.v.src))];
   const act=runs.filter(r=>runState(r).s!=='done'), old=runs.filter(r=>runState(r).s==='done');
   const list = S.view.all ? runs : act.concat(old.slice(0,2)), t40=!!S.runs[runId(id,'weekly','2026-09',40)];
   const mapped=scopeCes(id), su=scopeUnm(id);
   return `
   <div class="head"><div><div class="eyebrow"><a href="#" data-a="nav" data-x="zakresy">Projekty</a> / ${esc(z.code)}</div><h1>${esc(z.code)} · ${esc(z.name)}</h1>
     <p class="sub">${esc(TYPES[z.type].label)} · ${z.pool?'pula projektów · ':''}utworzony ${esc(z.created)}</p></div></div>
-  <div class="facts"><span>Projekty P1S: ${z.p1s.map(p=>`<span class="tag">${p}</span>`).join(' ')||'—'}</span><span>WP: <b>${wpsOf(id).length}</b></span><span>CAM: <b>${camsOf(id).length}</b></span><span>Źródła RABIT: <b>${srcs.length}</b> <span class="muted small">(${srcs.join(', ')})</span></span></div>
+  <div class="facts"><span>Projekty P1S: ${z.p1s.map(p=>`<span class="tag">${p}</span>`).join(' ')||'—'}</span><span>WP: <b>${wpsOf(id).length}</b></span><span>CAM: <b>${camsOf(id).length}</b></span></div>
   ${rd.blocked?`<div class="note crit">Przebiegu nie można uruchomić: słowniki projektu są puste. Uzupełnij je w Konfiguracji poniżej.</div>`:''}
   <section class="stack"><h2>Przebiegi tego projektu</h2>
     ${list.map(runCard).join('')||'<p class="muted">Jeszcze nie uruchomiono żadnego przebiegu.</p>'}
@@ -891,7 +873,7 @@ function vSlowniki(){
   return `<div class="head"><div><div class="eyebrow">ADMIN</div><h1>Słowniki</h1><p class="sub">Wszystkie słowniki są w bazie i edytuje się je tutaj. Każdy zapis jest walidowany i zostaje w historii (ważny od / do, kto, kiedy).</p></div></div>
   <div class="note info">Baza <span class="mono">${esc(DB_PATH)}</span> · aktualny stan <b class="mono">#${S.dbRev}</b>. Przebieg przypina stan i kopiuje go do MS SQL.</div>
   <section class="panel"><h2>Globalne</h2><div class="tbl-wrap"><table>${head}<tbody>${['stawki','kalendarz','kursy','katgr'].map(row).join('')}</tbody></table></div></section>
-  <section class="panel"><h2>Konfiguracja importu RABIT</h2><div class="tbl-wrap"><table>${head}<tbody>${['prefiksy','zrodla'].map(row).join('')}</tbody></table></div></section>
+  <section class="panel"><h2>Konfiguracja importu RABIT</h2><div class="tbl-wrap"><table>${head}<tbody>${['prefiksy'].map(row).join('')}</tbody></table></div></section>
   <section class="panel"><h2>Słowniki projektów</h2><p class="muted small">Każdy projekt ma własne słowniki. Liczby to aktywne wiersze – kliknij, aby edytować.</p>
     <div class="tbl-wrap"><table><thead><tr><th>Projekt</th><th class="r">WP i CAM</th><th class="r">Harmonogram</th><th class="r">Stawki CAS</th><th>Gotowość</th></tr></thead><tbody>
     ${Object.values(S.zakresy).map(z=>{ const miss=dictIdsOf(z).filter(id=>!rowsOf(id)).length; return `<tr><td><a href="#" data-a="zakres" data-x="${z.id}"><b>${esc(z.code)}</b></a></td><td class="r">${cnt(z.id+':wp')}</td><td class="r">${cnt(z.id+':harm')}</td><td class="r">${cnt(z.id+':cas')}</td><td>${miss?pill('crit',miss+' puste'):pill('ok','✓')}</td></tr>`; }).join('')}
@@ -912,7 +894,7 @@ function impFolderTable(){
     ${Object.values(res).includes('unrec')?`<div class="note warn">Plik nierozpoznany nie jest importowany. Jeśli to nowy raport, dopisz prefiks w <a href="#" data-a="dict" data-x="prefiksy">Słowniki → Prefiksy plików RABIT</a>; zaimportuje się przy kolejnym uruchomieniu.</div>`:''}`;
 }
 function vImport(){
-  const im=S.imp, last=im.history[0], canImport=im.dl && !im.res, comp=completeness();
+  const im=S.imp, last=im.history[0], canImport=im.dl && !im.res;
   const lastNew=im.lastNew.rows.map(c=>allCes().find(x=>x.c===c)).filter(Boolean), newUn=lastNew.filter(x=>x.r.s==='UNMAPPED').length;
   return `
   <div class="head"><div><div class="eyebrow">ADMIN</div><h1>Import RABIT</h1>
@@ -922,16 +904,10 @@ function vImport(){
     <p class="mono small muted" style="overflow-wrap:anywhere">Folder: ${esc(RABIT_UNC)}</p>
     ${impFolderTable()}
     <p class="muted small">Plik bez zmian (nazwa, rozmiar, data) jest pomijany. WebDAV nie pobierze pliku &gt; 50 MB – taki plik zapisuje się ręcznie. Tożsamość pliku to hash SHA-256.</p></section>
-  <div class="grid g2">
-    <section class="panel"><h2>Kompletność źródeł</h2>
-      <div class="tbl-wrap"><table><thead><tr><th>Projekt P1S</th><th>Projekt</th><th>Źródła</th><th>Stan</th></tr></thead><tbody>
-      ${comp.map(c=>`<tr><td class="mono">${c.proj}</td><td>${c.z?esc(c.z.code):'<span class="muted">—</span>'}</td><td>${c.srcs.map(s=>`<span class="tag" style="${s.ok?'':'color:var(--crit);border-color:var(--crit)'}">${s.ok?'✓':'✗'} ${s.s}</span>`).join(' ')}</td><td>${c.ok?pill('ok','komplet'):pill('warn','niekompletny')}</td></tr>`).join('')}
-      </tbody></table></div></section>
-    <section class="panel"><h2>Nowe WBS CES z importu ${esc(im.lastNew.id)}</h2>
+  <section class="panel"><h2>Nowe WBS CES z importu ${esc(im.lastNew.id)}</h2>
       ${lastNew.length?`<div class="tbl-wrap"><table><thead><tr><th>WBS CES</th><th>Wynik mapowania</th><th>Cel</th></tr></thead><tbody>
       ${lastNew.map(x=>`<tr><td class="mono">${x.c}</td><td>${mpill(x.r.s)}</td><td class="mono">${x.r.t||'—'}</td></tr>`).join('')}</tbody></table></div>
       ${newUn?`<div class="row"><button class="btn primary" data-a="goMapZ" data-x="all">Przypisz ${newUn} UNMAPPED → Mapowanie</button></div>`:''}`:'<p class="muted">Import nie przyniósł nowych elementów WBS.</p>'}</section>
-  </div>
   <section class="panel"><h2>Historia importów</h2>
     <div class="tbl-wrap"><table><thead><tr><th>Import</th><th>Kiedy</th><th>Kto</th><th class="r">Zaimportowane</th><th class="r">Duplikaty</th><th class="r">Pominięte</th><th class="r">Nierozpoznane</th><th class="r">Błędy</th></tr></thead><tbody>
     ${im.history.map(h=>`<tr><td class="mono">${h.id}</td><td class="num">${h.at}</td><td>${esc(h.who)}</td><td class="r">${h.imp}</td><td class="r">${h.dup}</td><td class="r">${h.skip}</td><td class="r">${h.unrec}</td><td class="r">${h.err}</td></tr>`).join('')}
@@ -1372,12 +1348,11 @@ function vWizard(){
 /* ---------- NOWY PRZEBIEG (modal) ---------- */
 function vNewRun(){
   const m=S.modal, z=S.zakresy[m.zid], weekly=m.kind==='weekly', id=runId(z.id,m.kind,'2026-09',40), exists=!!S.runs[id];
-  const inc=completeness().filter(c=>z.p1s.includes(c.proj) && !c.ok), su=scopeUnm(z.id), dc=dictComplete(z);
+  const su=scopeUnm(z.id), dc=dictComplete(z);
   const checks=[
     {ok:!exists, txt: exists? `Przebieg ${id} już istnieje – jeden przebieg na projekt i ${weekly?'tydzień':'okres'}` : `Brak przebiegu ${weekly?'T40':'zamknięcia 2026-09'} dla ${z.code}`},
     {ok:true, txt:`Wersja aplikacji ${APP_VER}, schemat bazy ${SCHEMA_VER} zgodny`},
     {ok:dc, txt: dc?'Słowniki projektu kompletne':'Słowniki projektu niekompletne'},
-    inc.length? {ok:true, warn:true, txt:'Niekompletne źródła RABIT: '+inc.map(c=>c.proj).join(', ')} : {ok:true, txt:'Źródła RABIT projektu kompletne'},
     su.length? {ok:true, warn:true, txt:`${su.length} WBS CES UNMAPPED z propozycją w tym projekcie (${nf(sum(su.map(x=>x.cost)))} PLN) – do przypisania w ADMIN → Mapowanie CES↔P1S`} : {ok:true, txt:'Brak elementów UNMAPPED wskazujących to przeliczenie'},
     weekly? {ok:true, txt:'Raport produkcyjny odświeżony 29.09.2026 05:12 (vAHDD)'} : {ok:true, warn:true, txt:'Okres 2026-09 trwa do 30.09. W demo można zacząć wcześniej.'}
   ];
@@ -1447,13 +1422,12 @@ function issueList(r){
 const STAGE = {
   data(r,st,z){
     const files = st==='done' && r.files ? r.files : pinFiles(z.id);
-    const comp = completeness().filter(c=>z.p1s.includes(c.proj)), su=scopeUnm(z.id);
+    const su=scopeUnm(z.id);
     const li=S.imp.history[0];
-    return `<p class="muted">Dane pochodzą ze wspólnego importu (<a href="#" data-a="nav" data-x="import">ADMIN → Import RABIT</a>, ostatni <span class="mono">${esc(li.id)}</span> · ${esc(li.at)} · ${esc(li.who)}). Etap wybiera wiersze projektów P1S projektu i koszty CES zmapowane do tych projektów, a potem przypina pliki.</p>
+    return `<p class="muted">Dane pochodzą ze wspólnego importu (<a href="#" data-a="nav" data-x="import">ADMIN → Import RABIT</a>, ostatni <span class="mono">${esc(li.id)}</span> · ${esc(li.at)} · ${esc(li.who)}). Etap przypina zaimportowane pliki i wybiera z nich wiersze elementów P1S projektu oraz koszty CES przypisane do tych elementów – plik może obejmować wiele projektów.</p>
     <div class="tbl-wrap"><table><thead><tr><th>Plik</th><th>Źródło</th><th>Import</th><th class="r">Wiersze</th><th>SHA-256</th></tr></thead><tbody>
     ${files.map(f=>`<tr><td class="mono">${esc(f.name)}</td><td><span class="tag">${f.src}</span></td><td class="num">${esc(f.at)}</td><td class="r">${nf(f.rows)}</td><td class="mono">${f.sha.slice(0,12)}…</td></tr>`).join('')}</tbody></table></div>
-    <ul class="checks">${comp.map(c=>c.ok?`<li><span class="ic ok">✓</span><span>${c.proj}: źródła kompletne (${c.srcs.map(s=>s.s).join(', ')})</span></li>`:`<li><span class="ic warn">!</span><span>${c.proj}: brak importu ${c.srcs.filter(s=>!s.ok).map(s=>s.s).join(', ')} (ostrzeżenie; docelowo blokada)</span></li>`).join('')}
-      ${su.length?`<li><span class="ic warn">!</span><span>${su.length} WBS CES UNMAPPED z propozycją w tym projekcie (${nf(sum(su.map(x=>x.cost)))} PLN) – <a href="#" data-a="goMapZ" data-x="${z.id}">przypisz w ADMIN → Mapowanie</a></span></li>`:''}
+    <ul class="checks">${su.length?`<li><span class="ic warn">!</span><span>${su.length} WBS CES UNMAPPED z propozycją w tym projekcie (${nf(sum(su.map(x=>x.cost)))} PLN) – <a href="#" data-a="goMapZ" data-x="${z.id}">przypisz w ADMIN → Mapowanie</a></span></li>`:''}
       <li><span class="ic ok">✓</span><span>Daty księgowania w okresie ${r.period}</span></li></ul>
     ${st==='done'?`<div class="note ok">Przypięto ${files.length} plików. Nowy import w trakcie przebiegu pokaże informację i decyzję: kontynuuj albo przelicz od etapu Dane projektu.</div>`:`<div class="row">${actBtn(r,'doData','Przypnij dane projektu')}</div>`}`;
   },
