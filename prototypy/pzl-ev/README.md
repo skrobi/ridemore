@@ -39,6 +39,12 @@ Model wynikający z raportu mapowań SAP↔CES:
 - Podsumowanie = baza analityczna: drzewo (kategoria → PROJORG → element P1S) połączone z WP, CAM, BAC, datami i liczbą elementów CES z mapowania; braki (element z kosztami bez WP, WP bez budżetu), zestawienie wg CAM, eksport xlsx.
 - Excel: biblioteka SheetJS z cdnjs, ładowana dopiero przy pierwszym użyciu; pobieranie plików przez capability `downloads` (widz potwierdza zapis).
 
+## Zmiany v3 – słownik Cost Category
+- Globalny słownik „Cost Category”: element kosztowy z kosztów rzeczywistych (ACTUALS_CES) → Opis, Obszar, Cost Category (33 pozycje, np. `0051105550` PZL Mat Consump → Direct Materials, `0092212550` PZL Machining (W30) → Manufacturing › Manufacturing and QA labor). `0057100000` Proj Sttlmnt Bill jest bez kategorii.
+- Projekt ma słownik „Cost Category – zmiany w projekcie” (opcjonalny): zmienia lub dodaje pozycje, ma pierwszeństwo przed globalnym. Strona zmian pokazuje słownik efektywny projektu i braki względem kosztów projektu. Przykład: F16 – `0057120550` PZL Travel → Other Direct Cost.
+- Oba słowniki: edycja w aplikacji z historią oraz Excel (pobierz / wczytaj z podglądem różnic); numer elementu kosztowego zapisany w Excelu jako liczba jest uzupełniany zerami do 10 znaków. W kreatorze – opcjonalny arkusz „Cost Category (projekt)”.
+- Przebieg przypina oba słowniki. Walidacja: element kosztowy z kosztów projektu, którego nie ma w słowniku (globalnym ani projektu) – błąd blokujący z przyciskiem „Dodaj do Cost Category projektu”; element w słowniku bez kategorii – ostrzeżenie. Przykład: F16 T40 – `0057713550`.
+
 ## Otwarte decyzje
 - NO_P1S (odpięcie pojedynczego WBS) – nadal odłożone (M14).
 - Czy nazwa grupy ma być per okres; czy grupy jako lista wyboru zamiast wolnego tekstu.
@@ -48,3 +54,5 @@ Model wynikający z raportu mapowań SAP↔CES:
 - Kategoria jest w każdym wierszu WBS; drzewo grupuje PROJORG wg jego wiersza (STUFE 1). Do potwierdzenia: czy elementy jednego PROJORG mogą mieć różne kategorie.
 - Zakres z grupy: czy nowe PROJORG, które później pojawią się w zaznaczonej grupie, mają wchodzić do projektu automatycznie (prototyp: tak – przynależność liczona z grupy).
 - Baza analityczna także na stronie projektu (po zmianie słowników), nie tylko w kreatorze.
+- Kolumna „Cost Category” w słowniku „WP i CAM” ma dziś stałe wartości Labor / Material / Subcontract – czy ma przyjmować kategorie ze słownika Cost Category (np. Engineering labor, Direct Materials)?
+- Brak elementu kosztowego w Cost Category – dziś błąd blokujący (jak brak stawki); czy wystarczy ostrzeżenie.
