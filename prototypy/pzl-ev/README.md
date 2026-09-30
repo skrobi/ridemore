@@ -31,6 +31,14 @@ Model wynikający z raportu mapowań SAP↔CES:
 - Usunięty słownik „Wymagane źródła projektów” (i wszystko, co z niego korzystało: kompletność źródeł w Imporcie RABIT, na Pulpicie, w gotowości projektu i przy nowym przebiegu). Zakres danych projektu wynika z jego węzła / PROJORG w drzewie P1S (a z nich – potrzebne elementy WBS/PSP), a paczka z RABIT może obejmować wiele projektów (np. całe PWC). Przebieg przypina wszystkie zaimportowane pliki i wybiera z nich wiersze elementów projektu. Konfiguracja importu = tylko „Prefiksy plików RABIT”.
 - Dane: AC-LH8 z fragmentu raportu (11 z 20 projektów CES, bez kategorii – nie ma jej w próbce), reszta przykładowa z raportem dopisanym do danych v2.
 
+## Zmiany v3 – kreator projektu
+- Kroki: Podstawowe → Projekty P1S → Słowniki projektu → Foldery → Podsumowanie (krok CAM usunięty – CAM jest w słowniku „WP i CAM”).
+- Zakres projektu z drzewa P1S rozwijanego w dół: Z_KAT_ZBIORCZA → Z_KATEGORIA → Z_OPIS → PROJORG (strony po 25). Checkbox na każdym poziomie – można zaznaczyć kilka grup z różnych poziomów i pojedyncze PROJORG; grupa obejmuje wszystkie swoje PROJORG i ich elementy WBS/PSP. Zastępuje „Program indywidualny / pula”. PROJORG należący do innego projektu jest pomijany (pojedynczo wskazany PROJORG ma pierwszeństwo przed grupą; wśród grup – projekt utworzony wcześniej). Zapis: `sel` (grupy) + `p1s` (pojedyncze PROJORG).
+- Słowniki projektu (WP i CAM, Harmonogram i budżet, dla CAS także Stawki CAS) wczytywane z Excela: jeden plik z arkuszami (szablon) albo osobne pliki / CSV; kolumny po nagłówkach; walidacja jak przy zapisie (element P1S w zakresie i nie w innym projekcie, jeden WP na element, Cost Category, CAM spoza listy – ostrzeżenie, WP w harmonogramie musi być w „WP i CAM”, liczby, daty, Start ≤ Koniec). Słownik z błędami nie zostanie zapisany. Szablon do pobrania ma elementy P1S z zakresu.
+- Po utworzeniu słownik projektu można pobrać jako Excel i wczytać ponownie: podgląd +nowe / ~zmienione / −usunięte, zapis z historią (zamknięcie starych wierszy).
+- Podsumowanie = baza analityczna: drzewo (kategoria → PROJORG → element P1S) połączone z WP, CAM, BAC, datami i liczbą elementów CES z mapowania; braki (element z kosztami bez WP, WP bez budżetu), zestawienie wg CAM, eksport xlsx.
+- Excel: biblioteka SheetJS z cdnjs, ładowana dopiero przy pierwszym użyciu; pobieranie plików przez capability `downloads` (widz potwierdza zapis).
+
 ## Otwarte decyzje
 - NO_P1S (odpięcie pojedynczego WBS) – nadal odłożone (M14).
 - Czy nazwa grupy ma być per okres; czy grupy jako lista wyboru zamiast wolnego tekstu.
@@ -38,3 +46,5 @@ Model wynikający z raportu mapowań SAP↔CES:
 - Czy korekta projektu CES ma móc przenieść także jego WBS z raportu (dziś: tylko WBS spoza raportu).
 - Panel „Koszty wg kategorii P1S” na stronie projektu – zostaje czy też „nie ten etap”.
 - Kategoria jest w każdym wierszu WBS; drzewo grupuje PROJORG wg jego wiersza (STUFE 1). Do potwierdzenia: czy elementy jednego PROJORG mogą mieć różne kategorie.
+- Zakres z grupy: czy nowe PROJORG, które później pojawią się w zaznaczonej grupie, mają wchodzić do projektu automatycznie (prototyp: tak – przynależność liczona z grupy).
+- Baza analityczna także na stronie projektu (po zmianie słowników), nie tylko w kreatorze.

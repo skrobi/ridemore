@@ -274,6 +274,9 @@ body.dragging .dropzone{border-color:var(--crit);color:var(--crit)}
 .ktree tr.un td{color:var(--crit)}
 .bar{display:block;height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden} .bar i{display:block;height:100%;background:var(--stale);border-radius:4px}
 .small{font-size:.85rem}
+.wck{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:5px;cursor:pointer;flex:1;min-width:0}
+.wck:hover{background:var(--surface-2)} .wck input{margin-top:3px} .wck.dis{opacity:.6}
+.atree tr.l1 td{background:var(--surface-2)} .atree tr.l2 td{background:color-mix(in srgb,var(--surface-2) 45%,transparent)} .atree .tg{min-height:0;width:18px;display:inline-grid}
 .lk.ov{background:var(--info-soft);color:var(--info)} .lk.more{background:var(--surface-2);color:var(--muted)}
 </style>
 
@@ -488,9 +491,9 @@ function seed(){
   const s = {dbRev:1432, clock:9*60+5, view:{name:'pulpit'}, wiz:null, modal:null, events:[], runs:{},
     mp:{selCes:null, selP1s:null, open:{}, q:'', f:'all', z:'all', msg:null, cp:[], page:{}, pq:'', cpage:0, pend:null, props:false, manual:false, mc:'', mpc:''}, adm:{q:''}, pul:{q:'',sort:'code',dir:1,all:false}};
   s.zakresy = {
-    S70I:{id:'S70I', code:'S70i', name:'S-70i – kontrakt SAC', type:'SAC', pool:false, p1s:['AC-I39','AC-I40'], created:'02.06.2026 · M. Zielińska'},
-    F16:{id:'F16', code:'F16', name:'F-16 – pakiety strukturalne', type:'CAS', pool:false, p1s:['AF-F16A','AF-F16B','AF-F16C'], created:'14.07.2026 · A. Wiśniewska'},
-    PULA:{id:'PULA', code:'PULA-WEW', name:'Pula projektów wewnętrznych', type:'WEW', pool:true, p1s:['WW-2601','WW-2602','WW-2603'], created:'01.08.2026 · P. Górski'}
+    S70I:{id:'S70I', code:'S70i', name:'S-70i – kontrakt SAC', type:'SAC', sel:[], p1s:['AC-I39','AC-I40'], created:'02.06.2026 · M. Zielińska'},
+    F16:{id:'F16', code:'F16', name:'F-16 – pakiety strukturalne', type:'CAS', sel:[], p1s:['AF-F16A','AF-F16B','AF-F16C'], created:'14.07.2026 · A. Wiśniewska'},
+    PULA:{id:'PULA', code:'PULA-WEW', name:'Pula projektów wewnętrznych', type:'WEW', sel:[], p1s:['WW-2601','WW-2602','WW-2603'], created:'01.08.2026 · P. Górski'}
   };
   const d = {};
   const st26 = [['W-101',142.5,38],['W-205',156,41],['W-310',149.8,40],['W-402',171.2,44],['W-415',138.9,36],['W-520',128.4,33]];
@@ -604,7 +607,7 @@ function bump(id, txt){
 function opts(src, d){
   if(src==='people') return PEOPLE;
   if(src==='cats') return ['Labor','Material','Subcontract'];
-  if(src==='scopeNodes') return S.zakresy[d.scope].p1s.flatMap(o=>P1S_ORG[o].nodes.map(n=>n[0]));
+  if(src==='scopeNodes') return zOrgs(S.zakresy[d.scope]).flatMap(o=>orgInfo(o).nodes.map(n=>n[0]));
   if(src==='scopeWp') return active(S.dicts[d.scope+':wp']).map(r=>r.v.wp);
   return [];
 }
@@ -632,10 +635,20 @@ function resolve(pd, w){
 }
 function allCes(){ return S.ces.flatMap(p=>p.wbs.map(w=>({...w, pd:p.pd, pname:p.name, prop:p.prop, r:resolve(p.pd,w.c)}))); }
 function unmapped(){ return allCes().filter(x=>x.r.s==='UNMAPPED'); }
-function scopeOfOrg(org){ return Object.values(S.zakresy).find(z=>z.p1s.includes(org)); }
-function scopeCes(zid){ const z=S.zakresy[zid]; return allCes().filter(x=>x.r.t && z.p1s.includes(nodeOf(x.r.t)?.org)); }
-function scopeUnm(zid){ const z=S.zakresy[zid]; return unmapped().filter(x=>x.prop && z.p1s.includes(x.prop)); }
-function noWp(zid){ const z=S.zakresy[zid], has=new Set(wpsOf(zid).map(v=>v.p1s)); return z.p1s.flatMap(o=>P1S_ORG[o].nodes).filter(n=>n[3] && !has.has(n[0])).map(n=>({c:n[0], n:n[1], prog:n[3]})); }
+/* Zakres projektu = zaznaczenia w drzewie P1S (kreator): z.sel – całe grupy kategorii WBS (Z_KAT_ZBIORCZA [› Z_KATEGORIA [› Z_OPIS]]),
+   z.p1s – pojedyncze PROJORG. PROJORG wskazany pojedynczo ma pierwszeństwo przed grupą; wśród grup – projekt utworzony wcześniej. */
+function rawCat(org){ const o=orgInfo(org); return (o && CAT[o.px]) || null; }
+function pathHas(p,c){ return !!c && p[0]===c.kz && (p.length<2||p[1]===c.kat) && (p.length<3||p[2]===c.opis); }
+function selHas(sel,org){ const c=rawCat(org); return !!c && (sel||[]).some(p=>pathHas(p,c)); }
+function scopeOfOrg(org){ const zs=Object.values(S.zakresy); return zs.find(z=>z.p1s.includes(org)) || zs.find(z=>selHas(z.sel,org)); }
+const zHas=(z,org)=>!!org && scopeOfOrg(org)===z;
+function zOrgs(z){ return [...new Set([...z.p1s, ...Object.keys(P1S_ORG).filter(o=>selHas(z.sel,o))])].filter(o=>zHas(z,o)); }
+function pathCount(p){ return sum(CATS.filter(c=>pathHas(p,{kz:c[0],kat:c[1],opis:c[2]})).map(c=>c[4])); }
+function selCount(sel,orgs){ return sum((sel||[]).map(pathCount)) + orgs.filter(o=>!selHas(sel,o)).length; }
+const zCount = z => selCount(z.sel, z.p1s);
+function scopeCes(zid){ const z=S.zakresy[zid]; return allCes().filter(x=>x.r.t && zHas(z,nodeOf(x.r.t)?.org)); }
+function scopeUnm(zid){ const z=S.zakresy[zid]; return unmapped().filter(x=>x.prop && zHas(z,x.prop)); }
+function noWp(zid){ const z=S.zakresy[zid], has=new Set(wpsOf(zid).map(v=>v.p1s)); return zOrgs(z).flatMap(o=>orgInfo(o).nodes).filter(n=>n[3] && !has.has(n[0])).map(n=>({c:n[0], n:n[1], prog:n[3]})); }
 function wpOfNode(){ const m={}; for(const z of Object.values(S.zakresy)) for(const v of wpsOf(z.id)) m[v.p1s]=v.wp; return m; }
 function addRule(kind, ces, p1s, why=''){ const r={id:rid(), kind, ces, p1s, why, vf:TODAY, vt:null, by:ME_S, at:'29.09.2026'}; S.map.rules.push(r); return r; }
 
@@ -794,8 +807,8 @@ function vPulpit(){
 function vZakresy(){
   return `<div class="head"><div><h1>Projekty</h1><p class="sub">Projekt (zakres) = program albo pula projektów liczona razem (M8). Obejmuje projekty P1S; koszty CES trafiają do niego przez mapowanie.</p></div>
     <button class="btn primary" data-a="wizard">+ Nowy projekt</button></div>
-  <div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Nazwa</th><th>Typ</th><th>Projekty P1S</th><th class="r">WP</th><th class="r">CAM</th><th>Aktywny przebieg</th></tr></thead><tbody>
-  ${Object.values(S.zakresy).map(z=>{const a=activeRuns(z.id)[0];return `<tr class="click" data-a="zakres" data-x="${z.id}"><td><b>${esc(z.code)}</b></td><td>${esc(z.name)}</td><td>${esc(TYPES[z.type].label)}</td><td class="mono small">${z.p1s.join(', ')||'—'}</td><td class="r">${wpsOf(z.id).length}</td><td class="r">${camsOf(z.id).length}</td><td>${a?pill(runState(a).s, runLabel(a)):'<span class="muted">—</span>'}</td></tr>`}).join('')}
+  <div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Nazwa</th><th>Typ</th><th>Zakres P1S</th><th class="r">WP</th><th class="r">CAM</th><th>Aktywny przebieg</th></tr></thead><tbody>
+  ${Object.values(S.zakresy).map(z=>{const a=activeRuns(z.id)[0];return `<tr class="click" data-a="zakres" data-x="${z.id}"><td><b>${esc(z.code)}</b></td><td>${esc(z.name)}</td><td>${esc(TYPES[z.type].label)}</td><td class="small">${selChips(z.sel||[],z.p1s,false)||'—'}</td><td class="r">${wpsOf(z.id).length}</td><td class="r">${camsOf(z.id).length}</td><td>${a?pill(runState(a).s, runLabel(a)):'<span class="muted">—</span>'}</td></tr>`}).join('')}
   </tbody></table></div>
   <section class="panel"><h2>Przebiegi (wspólne)</h2><p class="muted small">Okres jest wspólny dla wszystkich projektów; każdy projekt ma w nim własny przebieg.</p>
     <div class="tbl-wrap"><table><thead><tr><th>Przebieg</th><th class="r">Projekty z przebiegiem</th><th>Stan</th></tr></thead><tbody>
@@ -816,12 +829,12 @@ function vOkres(key){
 }
 function readiness(z){
   const items=[], missing=dictIdsOf(z).filter(id=>!active(S.dicts[id]).length);
-  items.push(z.p1s.length? {ok:true, txt:'Projekty P1S: '+z.p1s.join(', ')} : {ok:false, lvl:'crit', txt:'Projekt nie ma projektów P1S'});
+  items.push(zCount(z)? {ok:true, txt:'Zakres P1S: '+nf(zCount(z))+' PROJORG'} : {ok:false, lvl:'crit', txt:'Projekt nie ma zakresu P1S'});
   for(const id of dictIdsOf(z)) items.push(active(S.dicts[id]).length? {ok:true, txt:dname(id)+': wypełniony'} : {ok:false, lvl:'crit', txt:dname(id)+': pusty'});
   const cams=camsOf(z.id);
   items.push(cams.length? {ok:true, txt:'WP mają CAM: '+cams.length+' osób'} : {ok:false, lvl:'warn', txt:'Brak WP z CAM – pliki CAM nie powstaną'});
   items.push(z.isNew? {ok:false, lvl:'warn', txt:'Dostęp CAM do folderu CAM\\…\\Zwrocone – zgłoszenie do IT w toku'} : {ok:true, txt:'CAM mają dostęp do folderu CAM\\…\\Zwrocone'});
-  return {items, blocked: missing.length>0 || !z.p1s.length};
+  return {items, blocked: missing.length>0 || !zCount(z)};
 }
 function stIcon(s){ return s==='done'?'✓':s==='error'?'✗':s==='stale'?'↺':['action','ready','running'].includes(s)?'⏳':'·'; }
 function runCard(r){
@@ -838,8 +851,8 @@ function vZakres(id){
   const mapped=scopeCes(id), su=scopeUnm(id);
   return `
   <div class="head"><div><div class="eyebrow"><a href="#" data-a="nav" data-x="zakresy">Projekty</a> / ${esc(z.code)}</div><h1>${esc(z.code)} · ${esc(z.name)}</h1>
-    <p class="sub">${esc(TYPES[z.type].label)} · ${z.pool?'pula projektów · ':''}utworzony ${esc(z.created)}</p></div></div>
-  <div class="facts"><span>Projekty P1S: ${z.p1s.map(p=>`<span class="tag">${p}</span>`).join(' ')||'—'}</span><span>WP: <b>${wpsOf(id).length}</b></span><span>CAM: <b>${camsOf(id).length}</b></span></div>
+    <p class="sub">${esc(TYPES[z.type].label)} · utworzony ${esc(z.created)}</p></div></div>
+  <div class="facts"><span>Zakres P1S: ${selChips(z.sel||[],z.p1s,false)||'—'} <span class="muted small">· ${nf(zCount(z))} PROJORG</span></span><span>WP: <b>${wpsOf(id).length}</b></span><span>CAM: <b>${camsOf(id).length}</b></span></div>
   ${rd.blocked?`<div class="note crit">Przebiegu nie można uruchomić: słowniki projektu są puste. Uzupełnij je w Konfiguracji poniżej.</div>`:''}
   <section class="stack"><h2>Przebiegi tego projektu</h2>
     ${list.map(runCard).join('')||'<p class="muted">Jeszcze nie uruchomiono żadnego przebiegu.</p>'}
@@ -986,7 +999,7 @@ function p1sOrg(org,forceOpen,depth=0){
 function catKeys(org){ const k=catOf(org), a=k?k.kz:'∅', b=k?k.kat:'∅', c=k?k.grp:'∅'; return ['k1:'+a, 'k2:'+a+'|'+b, 'k3:'+a+'|'+b+'|'+c]; }
 function mapOrgs(){
   const z=S.mp.z, xs=allCes().filter(x=>z==='all'||zOfCes(x)===z).map(x=> x.r.t ? nodeOf(x.r.t)?.org : x.prop);
-  const sc = z==='all' ? Object.values(S.zakresy).flatMap(v=>v.p1s) : z==='none' ? [] : (S.zakresy[z]?.p1s||[]);
+  const sc = z==='all' ? Object.values(S.zakresy).flatMap(zOrgs) : z==='none' ? [] : (S.zakresy[z]? zOrgs(S.zakresy[z]) : []);
   return [...new Set([...sc, ...xs].filter(Boolean))];
 }
 function p1sCatTree(){
@@ -1286,15 +1299,163 @@ function rulesTable(){
 }
 
 /* ---------- KREATOR PRZELICZENIA ---------- */
-const WSTEPS=['Podstawowe','Projekty i WP','Słowniki','CAM','Foldery','Podsumowanie'];
-function newWiz(){ return {step:0, code:'M28', name:'M28 – modernizacja', type:'WEW', pool:false, p1s:['M28-01','M28-02'], cesR:{}, busy:false, progress:[]}; }
-function pickRow(org){ const w=S.wiz, o=orgInfo(org), z=scopeOfOrg(org);
-  return `<li><label class="chk ${z?'dis':''}"><input type="checkbox" data-wp="${org}" ${w.p1s.includes(org)?'checked':''} ${z?'disabled':''}><span><span class="mono">${org}</span> · ${esc(o.name)} <span class="tag">${esc(catLabel(catOf(org)))}</span>${z?` <span class="muted small">należy do ${esc(z.code)}</span>`:''}</span></label></li>`; }
+const WSTEPS=['Podstawowe','Projekty P1S','Słowniki projektu','Foldery','Podsumowanie'];
+function newWiz(){ return {step:0, code:'M28', name:'M28 – modernizacja', type:'WEW', sel:[], p1s:['M28-01','M28-02'], open:{}, page:{}, imp:{}, busy:false, progress:[]}; }
+const eqP=(a,b)=>a.length===b.length && a.every((x,i)=>x===b[i]);
+const preP=(a,b)=>a.length<=b.length && a.every((x,i)=>x===b[i]); // a jest przodkiem (albo równe) b
+const wInScope=(w,org)=> w.p1s.includes(org) || selHas(w.sel,org);
+function pickRow(org){ const w=S.wiz, o=orgInfo(org), z=scopeOfOrg(org), grp=selHas(w.sel,org);
+  return `<li><label class="chk ${z||grp?'dis':''}"><input type="checkbox" data-wp="${org}" ${w.p1s.includes(org)||grp?'checked':''} ${z||grp?'disabled':''}><span><span class="mono">${org}</span> · ${esc(o.name)} <span class="tag">${esc(catLabel(catOf(org)))||'bez kategorii w WBS'}</span>${z?` <span class="muted small">należy do ${esc(z.code)}</span>`:grp?' <span class="muted small">w zaznaczonej grupie</span>':''}</span></label></li>`; }
 function wDicts(w){ return ['wp','harm'].concat(w.type==='CAS'?['cas']:[]); }
+/* Drzewo wyboru: Z_KAT_ZBIORCZA → Z_KATEGORIA → Z_OPIS → PROJORG (strony po 25). Checkbox na każdym poziomie, rozwijanie w dół. */
+function wizTree(){
+  const w=S.wiz, T=new Map();
+  for(const [kz,kat,opis,px] of CATS){ const A=T.get(kz)||T.set(kz,new Map()).get(kz); (A.get(kat)||A.set(kat,[]).get(kat)).push([opis,px]); }
+  const node=(path,depth,kids)=>{ const key=path.join('|'), open=!!w.open[key];
+    const self=w.sel.some(p=>eqP(p,path)), anc=w.sel.some(p=>p.length<path.length && preP(p,path)), on=self||anc;
+    const part=!on && (w.sel.some(p=>p.length>path.length && preP(path,p)) || w.p1s.some(o=>pathHas(path,rawCat(o))));
+    const taken=Object.keys(P1S_ORG).filter(o=>pathHas(path,rawCat(o)) && scopeOfOrg(o));
+    return `<li><div class="trow" style="padding-left:${depth*18}px"><button class="tg" data-a="wtog" data-x="${esc(key)}" aria-label="${open?'Zwiń':'Rozwiń'} ${esc(path.at(-1))}">${open?'▾':'▸'}</button>
+      <label class="wck"><input type="checkbox" data-wsel="${esc(key)}" ${on?'checked':''} ${anc?'disabled':''} ${part?'data-indet="1"':''}><span>${depth===0?`<b>${esc(path.at(-1))}</b>`:esc(path.at(-1))} <span class="muted small">${nf(pathCount(path))} PROJORG</span>${anc?' <span class="muted small">· w zaznaczonej grupie</span>':''}${on&&taken.length?` <span class="x">· ${taken.map(o=>o+' → '+scopeOfOrg(o).code).join(', ')} – należy do innego projektu, pominięty</span>`:''}</span></label></div>
+      ${open?`<ul class="mt">${kids()}</ul>`:''}</li>`; };
+  const leaves=(px,depth)=>{ const c=CAT[px], pg=w.page[px]||0, pages=Math.ceil(c.cnt/25);
+    return orgsPage(px,pg).map(o=>wOrgRow(o,depth)).join('')+(pages>1?`<li><div class="row small" style="padding-left:${depth*18+22}px"><button class="btn small" data-a="wpage" data-x="${px}|-1" ${pg?'':'disabled'} aria-label="Poprzednia strona">‹</button><span class="num">${nf(pg*25+1)}–${nf(Math.min((pg+1)*25,c.cnt))} z ${nf(c.cnt)}</span><button class="btn small" data-a="wpage" data-x="${px}|1" ${pg<pages-1?'':'disabled'} aria-label="Następna strona">›</button></div></li>`:''); };
+  let h=[...T].map(([kz,A])=>node([kz],0,()=>[...A].map(([kat,L])=>node([kz,kat],1,()=>L.map(([opis,px])=>node([kz,kat,opis],2,()=>leaves(px,3))).join(''))).join(''))).join('');
+  const nocat=Object.keys(P1S_ORG).filter(o=>!rawCat(o));
+  if(nocat.length){ const open=!!w.open['∅'];
+    h+=`<li><div class="trow"><button class="tg" data-a="wtog" data-x="∅" aria-label="${open?'Zwiń':'Rozwiń'} bez kategorii">${open?'▾':'▸'}</button><span class="zl"><b>Bez kategorii w WBS</b> <span class="muted small">${nocat.length} PROJORG · wybór pojedynczo</span></span></div>${open?`<ul class="mt">${nocat.map(o=>wOrgRow(o,1)).join('')}</ul>`:''}</li>`; }
+  return h;
+}
+function wOrgRow(org,depth){ const w=S.wiz, o=orgInfo(org), z=scopeOfOrg(org), grp=selHas(w.sel,org);
+  return `<li><div class="trow" style="padding-left:${depth*18}px"><span class="tg blank"></span><label class="wck ${z?'dis':''}"><input type="checkbox" data-wp="${org}" ${w.p1s.includes(org)||grp?'checked':''} ${z||grp?'disabled':''}><span><span class="mono">${org}</span> ${esc(o.name)}${z?` <span class="tag">${esc(z.code)}</span> <span class="muted small">należy do innego projektu</span>`:''}</span></label></div></li>`; }
+function selChips(sel,orgs,x){ return [...sel.map(p=>`<span class="tag" title="grupa – wszystkie jej PROJORG">${esc(p.join(' › '))} · ${nf(pathCount(p))}${x?` <button class="x-btn" data-a="wunsel" data-x="${esc(p.join('|'))}" aria-label="Usuń ${esc(p.join(' › '))}">×</button>`:''}</span>`),
+  ...orgs.filter(o=>!selHas(sel,o)).map(o=>`<span class="tag">${o} · ${esc(orgInfo(o)?.name||'')}${x?` <button class="x-btn" data-a="wunpick" data-x="${o}" aria-label="Usuń ${o}">×</button>`:''}</span>`)].join(' '); }
+
+/* ---------- słowniki projektu z Excela ----------
+   Jeden plik z arkuszami (jak szablon) albo osobne pliki / CSV. Kolumny rozpoznawane po nagłówkach. Walidacja jak przy zapisie w aplikacji. */
+const XLSX_URL='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+let XLSXP=null;
+function loadXLSX(){ return XLSXP ||= new Promise((res,rej)=>{ if(window.XLSX) return res(window.XLSX); const s=document.createElement('script'); s.src=XLSX_URL; s.onload=()=>res(window.XLSX); s.onerror=()=>{ XLSXP=null; rej(new Error('nie udało się wczytać biblioteki Excel')); }; document.head.appendChild(s); }); }
+const XDEF={
+  wp:{sheet:['wp i cam','wp','cam'], cols:{wp:['wp','work package','pakiet pracy'], p1s:['element p1s','element','wbs','wbs element','psp','p1s'], cam:['cam','control account manager'], cat:['cost category','kategoria kosztu','kategoria','cat']}},
+  harm:{sheet:['harmonogram i budzet','harmonogram','budzet','budget'], cols:{wp:['wp','work package'], bac:['bac','budzet','budget'], start:['start','od','poczatek'], finish:['koniec','finish','do','end']}},
+  cas:{sheet:['stawki cas','cas'], cols:{dept:['wydzial','dept'], year:['rok','year'], rate:['stawka cas','stawka','rate']}}
+};
+const nrm=s=>String(s??'').toLowerCase().replace(/ł/g,'l').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\[.*?\]|\(.*?\)/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+function parseCSV(txt){ const L=txt.replace(/\r/g,'').split('\n').filter(l=>l.trim()), f=L[0]||'', d=[';','\t',','].sort((a,b)=>f.split(b).length-f.split(a).length)[0];
+  return L.map(l=>{ const out=[]; let cur='', q=false; for(const ch of l){ if(ch==='"') q=!q; else if(ch===d && !q){ out.push(cur); cur=''; } else cur+=ch; } out.push(cur); return out.map(x=>x.trim()); }); }
+async function readBook(file){
+  if(/\.csv$/i.test(file.name)) return [{name:file.name.replace(/\.csv$/i,''), rows:parseCSV(await file.text())}];
+  const X=await loadXLSX(), wb=X.read(await file.arrayBuffer(), {type:'array'});
+  return wb.SheetNames.map(n=>({name:n, rows:X.utils.sheet_to_json(wb.Sheets[n], {header:1, raw:true, defval:''})}));
+}
+function headerIdx(kind,rows){ const hi=rows.findIndex(r=>r.filter(v=>String(v).trim()).length>=2); if(hi<0) return null;
+  const H=rows[hi].map(nrm), idx={}, miss=[]; for(const [k,syn] of Object.entries(XDEF[kind].cols)){ const i=H.findIndex(h=>syn.includes(h)); if(i<0) miss.push(k); else idx[k]=i; } return {hi, idx, miss}; }
+function pickSheet(kind,sheets){ const named=sheets.find(s=>XDEF[kind].sheet.some(n=>nrm(s.name)===n)) || sheets.find(s=>XDEF[kind].sheet.some(n=>nrm(s.name).includes(n)) && !headerIdx(kind,s.rows)?.miss.length);
+  return named || sheets.find(s=>{ const h=headerIdx(kind,s.rows); return h && !h.miss.length; }) || null; }
+function toYmd(x){ if(typeof x==='number' && x>20000 && x<80000) return new Date(Math.round((x-25569)*864e5)).toISOString().slice(0,10);
+  const s=String(x??'').trim(), m=/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/.exec(s); return m? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : s.slice(0,10); }
+const CATSET=['Labor','Material','Subcontract'];
+/* ctx: inScope(org), owner(org) → projekt, który już ma ten PROJORG (poza bieżącym), wps: Set WP z „WP i CAM” albo null (nie wczytano) */
+function parseDict(kind,raw,ctx){
+  const def=DEFS[kind], out={rows:[], issues:[], miss:[]}, h=headerIdx(kind,raw||[]);
+  if(!h){ out.miss=Object.keys(XDEF[kind].cols); return out; } if(h.miss.length){ out.miss=h.miss; return out; }
+  const seen={}, seenEl={}, lab=k=>def.cols.find(c=>c.k===k).l;
+  raw.slice(h.hi+1).forEach((r,ri)=>{ if(!r.some(v=>String(v).trim())) return;
+    const line=h.hi+ri+2, v={}, iss=[], E=m=>iss.push({line,lvl:'err',msg:m}), Wn=m=>iss.push({line,lvl:'warn',msg:m});
+    for(const c of def.cols){ const x=r[h.idx[c.k]]; v[c.k]= c.t==='date'? toYmd(x) : String(x??'').trim(); }
+    for(const c of def.cols){ const x=v[c.k];
+      if(!x){ if(!c.opt) E(`brak „${c.l}”`); continue; }
+      if(c.t==='num'||c.t==='int'){ const n=Number(x.replace(/\s/g,'').replace(',','.')); if(isNaN(n)||(c.t==='int'&&!Number.isInteger(n))) E(`„${c.l}”: „${x}” nie jest liczbą`); else if(c.min!=null && n<c.min) E(`„${c.l}” musi być ${c.min>0?'większe od 0':'nieujemne'}`); else v[c.k]=String(n); }
+      if(c.t==='date' && !/^\d{4}-\d{2}-\d{2}$/.test(x)) E(`„${c.l}”: „${x}” nie jest datą`); }
+    if(kind==='wp'){
+      if(v.cat){ const cc=CATSET.find(c=>c.toLowerCase()===v.cat.toLowerCase()); if(cc) v.cat=cc; else E(`Cost Category „${v.cat}” – dozwolone: ${CATSET.join(', ')}`); }
+      if(v.p1s){ v.p1s=v.p1s.toUpperCase(); const n=nodeOf(v.p1s), ow=n&&ctx.owner(n.org);
+        if(!n) E(`nie ma elementu ${v.p1s} w P1S`); else if(ow) E(`${v.p1s} należy do projektu ${ow.code}`); else if(!ctx.inScope(n.org)) E(`${v.p1s} jest poza zakresem projektu (${n.org})`);
+        else if(seenEl[v.p1s]) E(`${v.p1s} ma już WP ${seenEl[v.p1s]} – jeden element P1S = jeden WP`); else seenEl[v.p1s]=v.wp; }
+      if(v.cam && !PEOPLE.includes(v.cam)) Wn(`CAM „${v.cam}” spoza listy osób – sprawdź pisownię`);
+    }
+    if(kind==='harm'){ if(v.wp && ctx.wps && !ctx.wps.has(v.wp)) E(`WP ${v.wp} nie ma w „WP i CAM”`); else if(v.wp && !ctx.wps) Wn('nie wczytano „WP i CAM” – nie sprawdzono WP');
+      if(/^\d{4}/.test(v.start) && /^\d{4}/.test(v.finish) && v.start>v.finish) E('„Start” później niż „Koniec”'); }
+    const key=def.key.map(k=>String(v[k]).toLowerCase()).join('|'); if(def.key.every(k=>v[k])){ if(seen[key]) E(`powtórzony klucz ${def.key.map(k=>lab(k)+' '+v[k]).join(', ')} (wiersz ${seen[key]})`); else seen[key]=line; }
+    out.rows.push({line, v, bad:iss.some(i=>i.lvl==='err')}); out.issues.push(...iss);
+  });
+  return out;
+}
+function wizCtx(w){ return {inScope:o=>wInScope(w,o), owner:o=>scopeOfOrg(o), wps:null}; }
+function wizParsed(w){ const ctx=wizCtx(w), P={};
+  if(w.imp.wp) P.wp=parseDict('wp',w.imp.wp.raw,ctx);
+  const wps = P.wp ? new Set(P.wp.rows.filter(r=>!r.bad).map(r=>r.v.wp)) : null;
+  if(w.imp.harm) P.harm=parseDict('harm',w.imp.harm.raw,{...ctx, wps});
+  if(w.imp.cas && w.type==='CAS') P.cas=parseDict('cas',w.imp.cas.raw,ctx);
+  return P; }
+const bad = p => p && (p.miss.length || p.issues.some(i=>i.lvl==='err'));
+function impPanel(kind,imp,p){
+  const def=DEFS[kind];
+  if(!imp) return `<section class="panel flat"><div class="row between"><h3>${def.name}</h3>${pill('todo','nie wczytano')}</div><p class="muted small">Kolumny: ${def.cols.map(c=>c.l).join(' · ')}. Bez słownika pierwszy przebieg będzie zablokowany.</p></section>`;
+  const errs=p.issues.filter(i=>i.lvl==='err'), warns=p.issues.filter(i=>i.lvl==='warn');
+  const st = p.miss.length? pill('crit','brak kolumn') : errs.length? pill('crit',errs.length+' błędów') : pill('ok',p.rows.length+' wierszy');
+  return `<section class="panel flat"><div class="row between"><h3>${def.name}</h3><span class="row">${st}${warns.length?pill('warn',warns.length+' ostrzeżeń'):''}<button class="btn small" data-a="ximpDel" data-x="${kind}">Usuń</button></span></div>
+    <p class="muted small">Plik <span class="mono">${esc(imp.file)}</span> · arkusz „${esc(imp.sheet)}”</p>
+    ${p.miss.length?`<div class="note crit">Brak kolumn: ${p.miss.map(k=>def.cols.find(c=>c.k===k).l).join(', ')}. Nagłówki jak w szablonie.</div>`:''}
+    ${p.issues.length?`<ul class="checks">${p.issues.slice(0,8).map(i=>`<li><span class="ic ${i.lvl==='err'?'crit':'warn'}">!</span><span>wiersz ${i.line}: ${esc(i.msg)}</span></li>`).join('')}${p.issues.length>8?`<li><span class="ic todo">…</span><span>i ${p.issues.length-8} więcej</span></li>`:''}</ul>`:''}
+    ${p.rows.length?`<div class="tbl-wrap"><table><thead><tr><th class="r">Wiersz</th>${def.cols.map(c=>`<th>${esc(c.l)}</th>`).join('')}</tr></thead><tbody>${p.rows.slice(0,8).map(r=>`<tr${r.bad?' style="color:var(--crit)"':''}><td class="r num">${r.line}</td>${def.cols.map(c=>`<td class="${c.k==='p1s'||c.k==='wp'?'mono':''}">${esc(r.v[c.k])}</td>`).join('')}</tr>`).join('')}${p.rows.length>8?`<tr><td colspan="${def.cols.length+1}" class="muted small">i ${p.rows.length-8} kolejnych wierszy</td></tr>`:''}</tbody></table></div>`:''}</section>`;
+}
+/* Pobieranie pliku: capability `downloads` w claude.ai (widz potwierdza zapis), poza nim zwykły link. */
+async function saveFile(filename,data){
+  let dl=null; try{ dl = window.claude?.use ? await window.claude.use('downloads') : null; }catch(e){}
+  if(dl){ try{ await dl.save({filename, data}); }catch(e){ if(e?.code!=='declined') toast('Nie udało się zapisać pliku ('+(e?.code||'błąd')+').'); } return; }
+  const url=URL.createObjectURL(data instanceof Blob? data : new Blob([data])), a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+async function saveBook(filename,sheets){ // sheets: [[nazwa, [[nagłówki], ...wiersze]]]
+  let X; try{ X=await loadXLSX(); }catch(e){ return toast('Nie udało się wczytać biblioteki Excel.'); }
+  const wb=X.utils.book_new(); for(const [n,aoa] of sheets) X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(aoa), n.slice(0,31));
+  await saveFile(filename, new Blob([X.write(wb,{type:'array',bookType:'xlsx'})]));
+}
+/* Przykład / szablon dla zakresu: WP na elementach poziomu 2 PROJORG z zakresu (w próbce danych). */
+function sampleDicts(code,orgs,type,fill){
+  const nodes=orgs.flatMap(o=>orgInfo(o).nodes.filter(n=>n[2]===2)).slice(0,40), C=code.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const wp=nodes.map((n,i)=>[C+'-WP-'+(101+i), n[0], fill?PEOPLE[(i*3+2)%PEOPLE.length]:'', 'Labor']);
+  const src=fill? wp.slice(0,-1) : wp; // w przykładzie ostatni element bez WP
+  const harm=(fill? src.slice(0,-1) : src).map((r,i)=>[r[0], fill? 600+i*150 : '', fill?'2026-10-01':'', fill?'2027-06-30':'']); // w przykładzie ostatni WP bez budżetu
+  const S_=[['WP i CAM',[DEFS.wp.cols.map(c=>c.l),...src]],['Harmonogram i budżet',[DEFS.harm.cols.map(c=>c.l),...harm]]];
+  if(type==='CAS') S_.push(['Stawki CAS',[DEFS.cas.cols.map(c=>c.l),...(fill?[['W-101','2026','55.20']]:[])]]);
+  return S_;
+}
+const wizOrgs = w => [...new Set([...w.p1s, ...Object.keys(P1S_ORG).filter(o=>selHas(w.sel,o))])].filter(o=>!scopeOfOrg(o));
+
+/* Baza analityczna: drzewo P1S (kategoria → PROJORG → element) połączone z WP, CAM, budżetem, harmonogramem i elementami CES. */
+function analytic(orgs,wpRows,harmRows){
+  const byEl={}, byWp={}, cesN={};
+  for(const v of wpRows) byEl[v.p1s]=v; for(const v of harmRows) byWp[v.wp]=v;
+  for(const x of allCes()) if(x.r.t) cesN[x.r.t]=(cesN[x.r.t]||0)+1;
+  const rows=[], issues={noWp:[], noBud:[], orphanH:harmRows.filter(h=>!wpRows.some(v=>v.wp===h.wp)).map(h=>h.wp)};
+  for(const org of orgs){ const k=rawCat(org), o=orgInfo(org);
+    for(const n of o.nodes){ const w=byEl[n[0]], h=w&&byWp[w.wp], ces=cesN[n[0]]||0;
+      const st = w ? (h && h.bac!=='' ? 'ok' : 'noBud') : (ces||n[3]) ? 'noWp' : '';
+      if(st==='noWp') issues.noWp.push(n[0]); if(st==='noBud') issues.noBud.push(w.wp);
+      rows.push({kz:k?.kz||'', kat:k?.kat||'', opis:k?.opis||'', org, c:n[0], n:n[1], l:n[2], wp:w?.wp||'', cam:w?.cam||'', cat:w?.cat||'', bac:h?.bac??'', start:h?.start||'', finish:h?.finish||'', ces, st}); } }
+  const cams={}; for(const v of wpRows){ const h=byWp[v.wp], c=(cams[v.cam] ||= {wp:0, bac:0, start:'', finish:''}); c.wp++; if(h){ c.bac+=Number(h.bac)||0; if(h.start&&(!c.start||h.start<c.start)) c.start=h.start; if(h.finish&&h.finish>c.finish) c.finish=h.finish; } }
+  return {rows, issues, cams};
+}
+function analyticHtml(A){
+  const mp=S.wiz||{}, open=mp.aopen||{}, stl={ok:pill('ok','WP + budżet'), noBud:pill('warn','WP bez budżetu'), noWp:pill('warn','brak WP'), '':'<span class="muted small">—</span>'};
+  const G=new Map(); for(const r of A.rows){ const k=r.kz?[r.kz,r.kat,r.opis].join(' › '):'Bez kategorii w WBS'; (G.get(k)||G.set(k,new Map()).get(k)); const M=G.get(k); (M.get(r.org)||M.set(r.org,[]).get(r.org)).push(r); }
+  const sumB=rs=>sum(rs.map(r=>Number(r.bac)||0)), roll=rs=>`<td class="num">${rs.filter(r=>r.wp).length} WP</td><td class="num">${new Set(rs.filter(r=>r.cam).map(r=>r.cam)).size} CAM</td><td></td><td class="r num">${nf(sumB(rs))}</td><td></td><td></td><td class="r num">${sum(rs.map(r=>r.ces))}</td>`;
+  let body='';
+  for(const [k,M] of G){ const all=[...M.values()].flat();
+    body+=`<tr class="l1"><td><b>${esc(k)}</b></td>${roll(all)}<td>${all.some(r=>r.st==='noWp'||r.st==='noBud')?pill('warn','do uzupełnienia'):pill('ok','kompletne')}</td></tr>`;
+    for(const [org,rs] of M){ const op=!!open[org];
+      body+=`<tr class="l2"><td style="padding-left:22px"><button class="tg" data-a="atog" data-x="${org}" aria-label="${op?'Zwiń':'Rozwiń'} ${org}">${op?'▾':'▸'}</button> <span class="mono"><b>${org}</b></span> ${esc(orgInfo(org).name)}</td>${roll(rs)}<td>${rs.some(r=>r.st==='noWp'||r.st==='noBud')?pill('warn','do uzupełnienia'):''}</td></tr>`;
+      if(op) body+=rs.filter(r=>r.l>1).map(r=>`<tr><td style="padding-left:${30+r.l*14}px"><span class="mono">${r.c}</span> <span class="small">${esc(r.n)}</span></td><td class="mono">${esc(r.wp)||'—'}</td><td>${esc(r.cam)||'—'}</td><td>${esc(r.cat)}</td><td class="r num">${r.bac===''?'—':nf(Number(r.bac))}</td><td class="num">${r.start||'—'}</td><td class="num">${r.finish||'—'}</td><td class="r num">${r.ces||''}</td><td>${stl[r.st]}</td></tr>`).join('');
+    } }
+  return `<div class="tbl-wrap"><table class="atree"><thead><tr><th>Kategoria › PROJORG › element P1S</th><th>WP</th><th>CAM</th><th>Cost Category</th><th class="r">BAC [h]</th><th>Start</th><th>Koniec</th><th class="r">El. CES</th><th>Stan</th></tr></thead><tbody>${body||'<tr><td colspan="9" class="muted">Brak elementów P1S w próbce danych dla zakresu.</td></tr>'}</tbody></table></div>`;
+}
 function vWizard(){
-  const w=S.wiz || (S.wiz=newWiz());
+  const w=S.wiz || (S.wiz=newWiz()); w.sel ||= []; w.open ||= {}; w.page ||= {}; w.imp ||= {};
   const steps=`<ol class="wsteps">${WSTEPS.map((s,i)=>`<li class="${i===w.step?'on':i<w.step?'past':''}">${i+1}. ${s}</li>`).join('')}</ol>`;
   const dup=Object.values(S.zakresy).some(z=>z.code.toUpperCase()===w.code.toUpperCase());
+  const total=selCount(w.sel,w.p1s), P=wizParsed(w), errs=wDicts(w).filter(k=>bad(P[k]));
   let body='';
   if(w.step===0) body=`
     <div class="grid g2"><div class="field"><label for="w-code">Kod projektu</label><input type="text" id="w-code" data-w="code" value="${esc(w.code)}"><span class="hint">Używany w nazwach folderów, plików i przebiegów. Unikalny.</span></div>
@@ -1302,47 +1463,69 @@ function vWizard(){
     <div class="field"><label>Typ projektu EV</label><div class="choice">${Object.entries(TYPES).map(([k,t])=>`<button class="opt" data-a="wset" data-f="type" data-x="${k}" aria-pressed="${w.type===k}"><b>${t.label}</b><span>${t.desc}</span></button>`).join('')}</div></div>
     <div class="note info">Typ wyznacza szablon etapów: przebieg tygodniowy ma ${stageDefs(w.type,'weekly').length} etapów, zamknięcie miesiąca ${stageDefs(w.type,'close').length}.</div>`;
   if(w.step===1){
+    const taken=Object.keys(P1S_ORG).filter(o=>selHas(w.sel,o) && scopeOfOrg(o));
     body=`
-    <label class="chk"><input type="checkbox" id="w-pool" data-wc="pool" ${w.pool?'checked':''}><span><b>Program indywidualny / pula</b><br><span class="muted">Kilka małych projektów liczonych razem jako jeden projekt.</span></span></label>
-    <div class="field"><label>Wybrane projekty P1S (PROJORG)</label>
-      <div class="row">${w.p1s.map(o=>`<span class="tag">${o} · ${esc(orgInfo(o)?.name||'')} <button class="x-btn" data-a="wunpick" data-x="${o}" aria-label="Usuń ${o}">×</button></span>`).join('')||'<span class="muted">brak – wybierz w katalogu poniżej</span>'}</div>
-      <span class="hint">Projekt P1S należy do co najwyżej jednego projektu. Koszty CES przypiszesz w ADMIN → Mapowanie CES↔P1S.</span></div>
-    <section class="panel flat"><h3>Katalog P1S · ${nf(P1S_TOTAL)} projektów · wg kategorii P1S</h3>${p1sCatalog(true)}</section>`;
+    <div class="field"><label>Zakres projektu · ${nf(total)} PROJORG</label>
+      <div class="row">${selChips(w.sel,w.p1s,true)||'<span class="muted">nic nie zaznaczono – zaznacz w drzewie poniżej</span>'}</div>
+      <span class="hint">Zaznacz całe grupy albo pojedyncze PROJORG – na dowolnym poziomie. Grupa obejmuje wszystkie swoje PROJORG i ich elementy WBS/PSP. PROJORG należący do innego projektu jest pomijany.</span></div>
+    ${taken.length?`<div class="note warn">W zaznaczonych grupach ${taken.length} PROJORG należy już do innych projektów i zostanie pominięte: ${taken.map(o=>o+' ('+scopeOfOrg(o).code+')').join(', ')}.</div>`:''}
+    <section class="panel flat"><div class="row between"><h3>Drzewo P1S · Z_KAT_ZBIORCZA › Z_KATEGORIA › Z_OPIS › PROJORG</h3><span class="muted small">${nf(P1S_TOTAL)} PROJORG</span></div>${p1sInput()}
+      ${S.mp.pq.trim().length>=3? `${p1sCatalog(true,true)}<button class="btn small" data-a="pqClear">Wyczyść wyszukiwanie</button>` : `<ul class="mt">${wizTree()}</ul>`}</section>`;
   }
-  if(w.step===2) body=`<div class="grid g2"><div class="stack"><h3>Słowniki projektu</h3>
-      ${wDicts(w).map(d=>`<label class="chk"><input type="checkbox" checked disabled><span><b>${DEFS[d].name}</b> <span class="muted">– wymagany, uzupełniany w aplikacji</span><br><span class="muted small">${DEFS[d].cols.map(c=>c.l).join(' · ')} · Ważny od / do</span></span></label>`).join('')}
-      </div><div class="stack"><h3>Słowniki globalne</h3><p class="muted">Przypinane razem ze słownikami projektu w każdym przebiegu.</p>
-      <ul class="checks">${['stawki','kalendarz','kursy'].map(d=>`<li><span class="ic ok">✓</span><span>${dname(d)} <span class="tag">${rowsOf(d)} wierszy · zmiana ${esc(S.dicts[d].lastAt)}</span></span></li>`).join('')}</ul></div></div>
-      <div class="note">Słowniki są w bazie (SQLite na dysku sieciowym), nie w plikach Excel. Nowy projekt ma puste słowniki – to blokuje pierwszy przebieg do czasu uzupełnienia.</div>`;
-  if(w.step===3) body=`
-    <div class="note info">Nie ma osobnych uprawnień: każda osoba z finansów może prowadzić każdy projekt. Wszystkie akcje trafiają do dziennika z nazwą użytkownika AD.</div>
-    <p>CAM przypisujesz do WP w słowniku <b>„WP i CAM”</b>, wybierając osobę z listy. Na tej podstawie aplikacja:</p>
-    <ul class="checks"><li><span class="ic ok">✓</span><span>generuje jeden plik na CAM z jego WP,</span></li>
-    <li><span class="ic ok">✓</span><span>pokazuje status zwrotu plików per CAM,</span></li>
-    <li><span class="ic ok">✓</span><span>nie pozwala zapisać WP bez CAM (walidacja przy zapisie),</span></li>
-    <li><span class="ic ok">✓</span><span>nie dopuszcza wariantów zapisu tej samej osoby – wybór z listy.</span></li></ul>`;
-  if(w.step===4) body=`<pre class="tree">${esc(folderTree(w.code||'KOD'))}</pre>
+  if(w.step===2) body=`
+    <p>Słowniki projektu wczytujesz z Excela: jeden plik z arkuszami (jak w szablonie) albo osobne pliki / CSV. Po utworzeniu projektu edytujesz je w aplikacji i możesz wczytać ponownie – każda zmiana zostaje w historii.</p>
+    <div class="row"><button class="btn" data-a="xlsTpl">Pobierz szablon Excel</button><label class="btn primary">Wczytaj Excel<input type="file" accept=".xlsx,.xls,.csv" data-xls="wiz" hidden></label><button class="btn" data-a="xlsDemo">Użyj przykładowych danych</button>
+      <span class="muted small">Szablon ma elementy P1S z zakresu (poziom 2) – uzupełnij CAM, budżet i daty.</span></div>
+    ${wDicts(w).map(k=>impPanel(k,w.imp[k],P[k])).join('')}
+    <div class="stack"><h3>Słowniki globalne</h3><p class="muted small">Przypinane razem ze słownikami projektu w każdym przebiegu.</p>
+      <ul class="checks">${['stawki','kalendarz','kursy'].map(d=>`<li><span class="ic ok">✓</span><span>${dname(d)} <span class="tag">${rowsOf(d)} wierszy · zmiana ${esc(S.dicts[d].lastAt)}</span></span></li>`).join('')}</ul></div>
+    <div class="note">CAM przypisujesz do WP w arkuszu „WP i CAM” – na tej podstawie powstają pliki dla CAM. Słownik z błędami nie zostanie zapisany; bez słowników pierwszy przebieg jest zablokowany.</div>`;
+  if(w.step===3) body=`<pre class="tree">${esc(folderTree(w.code||'KOD'))}</pre>
     <ul class="checks"><li><span class="ic ok">✓</span><span>Korzeń <span class="mono">${esc(ROOT)}</span> dostępny (ścieżka UNC)</span></li>
       <li><span class="ic ok">✓</span><span>Masz prawo zapisu w <span class="mono">Projekty\\</span></span></li>
       <li><span class="ic ${dup?'crit':'ok'}">${dup?'!':'✓'}</span><span>Folder <span class="mono">${esc(w.code)}</span> jeszcze nie istnieje</span></li>
       <li><span class="ic warn">!</span><span>Dostęp CAM do folderu <span class="mono">CAM\\…\\Zwrocone</span> nadaje IT. Aplikacja przygotuje treść zgłoszenia.</span></li></ul>`;
-  if(w.step===5){
-    const rules=Object.entries(w.cesR).filter(([,o])=>o && w.p1s.includes(o));
+  if(w.step===4){
+    const orgs=wizOrgs(w), ok=k=>P[k] && !bad(P[k]) ? P[k].rows.map(r=>r.v) : [], A=analytic(orgs, ok('wp'), ok('harm'));
+    const inCes=allCes().filter(x=>x.r.t && wInScope(w,nodeOf(x.r.t)?.org) && !scopeOfOrg(nodeOf(x.r.t)?.org)), unm=unmapped().filter(x=>x.prop && wInScope(w,x.prop));
+    const chk=(ok,txt,lvl='warn')=>`<li><span class="ic ${ok?'ok':lvl}">${ok?'✓':'!'}</span><span>${txt}</span></li>`;
     body = w.busy||w.progress.length ? `<ul class="checks">${w.progress.map(p=>`<li><span class="ic ok">✓</span><span>${esc(p)}</span></li>`).join('')}</ul>${w.busy?'<div class="progress"><i></i></div>':''}` :
     `<dl class="kv"><dt>Kod</dt><dd><b>${esc(w.code)}</b></dd><dt>Nazwa</dt><dd>${esc(w.name)}</dd><dt>Typ</dt><dd>${TYPES[w.type].label}</dd>
-     <dt>Projekty P1S</dt><dd>${w.p1s.map(p=>`<span class="tag">${p}</span>`).join(' ')||'<span class="muted">brak</span>'}</dd>
-     <dt>Koszty CES</dt><dd class="muted">przypisanie w etapie „Mapowanie” pierwszego przebiegu</dd>
-     <dt>Słowniki projektu</dt><dd>${wDicts(w).map(d=>DEFS[d].name).join(', ')} <span class="muted">(puste)</span></dd>
+     <dt>Zakres</dt><dd>${selChips(w.sel,w.p1s,false)||'<span class="muted">brak</span>'} <span class="muted small">· ${nf(total)} PROJORG</span></dd>
      <dt>Folder</dt><dd class="mono">${esc(ROOT)}\\Projekty\\${esc(w.code)}</dd></dl>
+     <ul class="checks">
+      ${chk(total>0,'Zakres: '+nf(total)+' PROJORG'+(orgs.length?` (w próbce danych: ${orgs.length}, ${A.rows.length} elementów WBS/PSP)`:''),'crit')}
+      ${chk(ok('wp').length>0, ok('wp').length? `WP i CAM: ${ok('wp').length} WP, ${Object.keys(A.cams).length} CAM` : bad(P.wp)?'WP i CAM: plik z błędami – nie zostanie zapisany':'WP i CAM: nie wczytano – słownik pusty, pierwszy przebieg zablokowany')}
+      ${chk(ok('harm').length>0 && !A.issues.noBud.length, ok('harm').length? `Harmonogram i budżet: ${ok('harm').length} WP, BAC ${nf(sum(ok('harm').map(v=>Number(v.bac)||0)))} h${A.issues.noBud.length?` · bez budżetu: ${A.issues.noBud.join(', ')}`:''}` : 'Harmonogram i budżet: nie wczytano')}
+      ${A.issues.noWp.length? chk(false,`Elementy z kosztami CES lub zaawansowaniem bez WP: ${A.issues.noWp.join(', ')} – nie trafią do żadnego WP w EV`) : ''}
+      ${chk(true,`Koszty CES: ${inCes.length} elementów CES przypisanych do zakresu (ADMIN → Mapowanie)${unm.length?` · ${unm.length} UNMAPPED z propozycją w zakresie`:''}`)}
+     </ul>
      ${dup?'<div class="note crit">Projekt o tym kodzie już istnieje. Zmień kod w kroku 1.</div>':''}
-     ${!w.p1s.length?'<div class="note crit">Wybierz co najmniej jeden projekt P1S w kroku 2.</div>':''}
-     <div class="note">Przebieg będzie możliwy po uzupełnieniu słowników projektu (WP i CAM, harmonogram i budżet).</div>`;
+     ${!total?'<div class="note crit">Zaznacz co najmniej jedną grupę albo PROJORG w kroku 2.</div>':''}
+     ${errs.length?`<div class="note crit">Słowniki z błędami: ${errs.map(k=>DEFS[k].name).join(', ')}. Popraw plik albo usuń import w kroku 3.</div>`:''}
+     <section class="panel flat"><div class="row between"><h3>Baza analityczna · drzewo ↔ WP ↔ CAM ↔ budżet ↔ harmonogram</h3><button class="btn small" data-a="anExp">Pobierz (xlsx)</button></div>
+       <p class="muted small">Tak zostanie połączone w bazie: element P1S z drzewa → WP (WP i CAM) → budżet i daty (Harmonogram i budżet) → elementy CES przypisane w mapowaniu. Rozwiń PROJORG, aby zobaczyć elementy.</p>
+       ${analyticHtml(A)}
+       ${Object.keys(A.cams).length?`<h3>Wg CAM</h3><div class="tbl-wrap"><table><thead><tr><th>CAM</th><th class="r">WP</th><th class="r">BAC [h]</th><th>Start</th><th>Koniec</th></tr></thead><tbody>${Object.entries(A.cams).sort().map(([c,v])=>`<tr><td>${esc(c)}</td><td class="r num">${v.wp}</td><td class="r num">${nf(v.bac)}</td><td class="num">${v.start||'—'}</td><td class="num">${v.finish||'—'}</td></tr>`).join('')}</tbody></table></div>`:''}</section>`;
   }
-  const canCreate=!dup && w.code.trim() && w.p1s.length;
-  return `<div class="head"><div><div class="eyebrow"><a href="#" data-a="nav" data-x="zakresy">Projekty</a> / nowy</div><h1>Nowy projekt</h1><p class="sub">Kreator rejestruje projekt, przypisuje projekty P1S i tworzy foldery.</p></div></div>
+  const canCreate=!dup && w.code.trim() && total>0 && !errs.length;
+  return `<div class="head"><div><div class="eyebrow"><a href="#" data-a="nav" data-x="zakresy">Projekty</a> / nowy</div><h1>Nowy projekt</h1><p class="sub">Kreator rejestruje projekt, zapisuje zakres z drzewa P1S, wczytuje słowniki projektu z Excela i tworzy foldery.</p></div></div>
   ${steps}<section class="panel">${body}
   <div class="row between"><button class="btn" data-a="wback" ${w.step===0||w.busy?'disabled':''}>Wstecz</button>
-  ${w.step<5?`<button class="btn primary" data-a="wnext">Dalej</button>`: w.progress.length&&!w.busy? `<button class="btn primary" data-a="zakres" data-x="${esc(w.code.toUpperCase())}">Przejdź do projektu</button>` : `<button class="btn primary" data-a="wcreate" ${canCreate&&!w.busy?'':'disabled'}>Utwórz projekt</button>`}</div></section>`;
+  ${w.step<WSTEPS.length-1?`<button class="btn primary" data-a="wnext">Dalej</button>`: w.progress.length&&!w.busy? `<button class="btn primary" data-a="zakres" data-x="${esc(w.code.toUpperCase())}">Przejdź do projektu</button>` : `<button class="btn primary" data-a="wcreate" ${canCreate&&!w.busy?'':'disabled'}>Utwórz projekt</button>`}</div></section>`;
+}
+/* Słownik projektu w edytorze: eksport do Excela i ponowne wczytanie (zastąpienie z historią: +nowe, ~zmienione, −usunięte). */
+function dictCtx(d){ const z=S.zakresy[d.scope]; return {inScope:o=>zHas(z,o), owner:o=>{ const s=scopeOfOrg(o); return s && s!==z ? s : null; }, wps:new Set(active(S.dicts[d.scope+':wp']).map(r=>r.v.wp))}; }
+function ximpDiff(d,p){ const def=DEFS[d.kind], K=v=>def.key.map(k=>String(v[k]).toLowerCase()).join('|'), cur=new Map(active(d).map(r=>[K(r.v),r])), nw=new Map(p.rows.map(r=>[K(r.v),r.v]));
+  const add=[], chg=[], same=[], del=[...cur.keys()].filter(k=>!nw.has(k)).map(k=>cur.get(k));
+  for(const [k,v] of nw){ const o=cur.get(k); if(!o) add.push(v); else if(def.cols.some(c=>String(o.v[c.k]??'')!==String(v[c.k]??''))) chg.push([o,v]); else same.push(v); }
+  return {add, chg, del, same}; }
+function xlsDictPanel(d){
+  if(!XDEF[d.kind] || !S.zakresy[d.scope]) return '';
+  const x=S.view.ximp, p=x && parseDict(d.kind,x.raw,dictCtx(d)), D=p && !bad(p) && ximpDiff(d,p);
+  return `<section class="panel"><div class="row between"><h2>Excel</h2><span class="row"><button class="btn small" data-a="xlsDictExp" data-x="${d.id}">Pobierz jako Excel</button><label class="btn small primary">Wczytaj z Excela<input type="file" accept=".xlsx,.xls,.csv" data-xls="dict:${d.id}" hidden></label></span></div>
+    ${x? impPanel(d.kind,x,p) + (D?`<div class="note info">Po zapisie: <b>+${D.add.length}</b> nowych · <b>~${D.chg.length}</b> zmienionych · <b>−${D.del.length}</b> usuniętych · ${D.same.length} bez zmian. Zmienione i usunięte wiersze zostaną zamknięte z dniem ${YESTERDAY}, nowe ważne od ${TODAY}.</div>
+      <div class="row"><button class="btn primary" data-a="ximpSave" ${D.add.length+D.chg.length+D.del.length?'':'disabled'}>Zastąp słownik</button><button class="btn" data-a="ximpDel" data-x="dict">Anuluj</button></div>` : '') : '<p class="muted small">Pobierz obecny stan, popraw w Excelu i wczytaj ponownie – przed zapisem zobaczysz, co się zmieni.</p>'}</section>`;
 }
 
 /* ---------- NOWY PRZEBIEG (modal) ---------- */
@@ -1511,7 +1694,7 @@ const STAGE = {
   },
   ev(r,st,z){
     if(st==='ready') return `<p>Kalkulacja w bazie na migawce słowników <span class="mono">#${r.pinRev}</span> i przypiętych plikach, więc wynik można odtworzyć 1:1.</p><div class="row">${actBtn(r,'doEv', r.rev?'Przelicz – nowa rewizja':'Generuj EV')}</div>`;
-    const rows=z.p1s.map(p=>{ const bac=seedN(r,p+'b',40,160)*1e6, bcws=bac*seedN(r,p+'s',30,70)/100, bcwp=bcws*seedN(r,p+'p',88,106)/100, acwp=bcwp*seedN(r,p+'a',92,112)/100; return {p,bac,bcws,bcwp,acwp}; });
+    const rows=(zOrgs(z).length? zOrgs(z) : (z.sel||[]).map(p=>p.join(' › '))).map(p=>{ const bac=seedN(r,p+'b',40,160)*1e6, bcws=bac*seedN(r,p+'s',30,70)/100, bcwp=bcws*seedN(r,p+'p',88,106)/100, acwp=bcwp*seedN(r,p+'a',92,112)/100; return {p,bac,bcws,bcwp,acwp}; });
     const f=x=>nf(Math.round(x/1000));
     return `<div class="row between"><span>Rewizja <b>R${r.rev||1}</b> · ${r.kind==='weekly'?'EV wstępne (nieformalne)':'EV formalne'} · stan słowników #${r.pinRev}</span><span class="mono muted">${esc(z.code)}_EV_${r.week?'T'+r.week:r.period}_R${r.rev||1}.xlsx</span></div>
       <div class="tbl-wrap"><table><thead><tr><th>Projekt P1S</th><th class="r">BAC</th><th class="r">BCWS</th><th class="r">BCWP</th><th class="r">ACWP</th><th class="r">CPI</th><th class="r">SPI</th></tr></thead><tbody>
@@ -1551,6 +1734,7 @@ function vDict(id){
   <div class="head"><div><div class="eyebrow">${back}${crumb}</div><h1>${esc(def.name)}</h1>
     <p class="sub">Klucz: ${def.key.map(k=>def.cols.find(c=>c.k===k).l).join(' + ')}. Ostatnia zmiana ${esc(d.lastAt)} · ${esc(d.lastBy)} · stan #${d.lastRev||'—'}.</p></div>
     <label class="inline"><input type="checkbox" id="d-all" data-dall ${v.all?'checked':''}> pokaż historię (wiersze zamknięte)</label></div>
+  ${xlsDictPanel(d)}
   <section class="panel"><div class="row between"><h2>${edit?'Zmiana wiersza':'Nowy wiersz'}</h2>${edit?`<span class="muted small">Poprzedni wiersz zostanie zamknięty z dniem poprzedzającym „Ważny od”.</span>`:''}</div>
     <div class="form-grid">${def.cols.map(field).join('')}<div class="field"><label for="df-vf">Ważny od</label><input type="text" id="df-vf" value="${esc(pf.vf||TODAY)}" placeholder="RRRR-MM-DD"></div></div>
     ${v.err?`<div class="note crit"><b>Nie zapisano.</b><ul style="margin:4px 0 0;padding-left:18px">${v.err.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`:''}
@@ -1598,6 +1782,7 @@ function vInfo(){
     <li><b>Projekt CES spoza raportu:</b> w węźle „Nieprzypisane” drzewa CES → „Przyjmij” przy <span class="mono">4F16C0</span>. Podgląd: 3 WBS z UNMAPPED na INHERITED → „Zapisz korektę”.</li>
     <li><b>Kategoria P1S:</b> w katalogu wejdź PWC › PWC › PWC, przeciągnij projekt <span class="mono">4PW1Q0</span> na <span class="mono">SP-CRDDQ</span> – podgląd pokazuje kategorię P1S elementu docelowego. Potem kliknij <span class="mono">SP-CRDDQ</span> i nadaj nazwę grupy.</li>
     <li><b>Import RABIT:</b> pobierz i zaimportuj – nowy WBS <span class="mono">4D03H1000013</span> jest spoza raportu, więc sam dziedziczy odpowiednik projektu CES (INHERITED).</li>
+    <li><b>Nowy projekt:</b> Projekty → „+ Nowy projekt” → krok 2: rozwiń PZL i zaznacz całą grupę M28 (albo kilka grup na dowolnym poziomie) → krok 3: „Pobierz szablon Excel”, uzupełnij i „Wczytaj Excel” (albo „Użyj przykładowych danych”) → krok 5: baza analityczna drzewo ↔ WP ↔ CAM ↔ budżet ↔ harmonogram → „Utwórz projekt”. Słownik projektu można potem wczytać ponownie z Excela – podgląd pokaże +nowe / ~zmienione / −usunięte.</li>
     <li><b>F16 → Nowy przebieg T40:</b> walidacja zatrzyma brak stawki W-417 (ADMIN → Słowniki → Stawki).</li></ol></section>
   </div>
   <div class="note">Stan demo zapisuje się w tej przeglądarce; „Resetuj dane demo” w menu bocznym przywraca stan początkowy.</div>`;
@@ -1619,6 +1804,7 @@ function render(){
   else if(v.name==='dict') html=vDict(v.id);
   else html=vInfo();
   $('#main').innerHTML=html;
+  document.querySelectorAll('[data-indet]').forEach(e=>e.indeterminate=true);
   $('#overlay').innerHTML = S.modal? vNewRun() : '';
 }
 
@@ -1720,7 +1906,7 @@ const A={
     S.view={...S.view, err:null, edit:null, prefill:null}; save(); render(); toast('Zapisano (stan #'+S.dbRev+'). Walidacja przy zapisie bez błędów.');
   },
   fillDicts:x=>{
-    const z=S.zakresy[x], nodes=z.p1s.flatMap(o=>P1S_ORG[o].nodes.filter(n=>n[2]===2)), ppl=['T. Sikora','W. Mróz'];
+    const z=S.zakresy[x], nodes=zOrgs(z).flatMap(o=>orgInfo(o).nodes.filter(n=>n[2]===2)), ppl=['T. Sikora','W. Mróz'];
     const wp=S.dicts[x+':wp'], hm=S.dicts[x+':harm'];
     nodes.forEach((n,i)=>{ const code=z.code.toUpperCase()+'-WP-'+String(101+i); wp.rows.push({id:rid(), v:{wp:code,p1s:n[0],cam:ppl[i%2],cat:'Labor'}, vf:TODAY, vt:null, by:ME_S, at:'29.09.2026'}); hm.rows.push({id:rid(), v:{wp:code,bac:String(600+i*150),start:'2026-10-01',finish:'2027-06-30'}, vf:TODAY, vt:null, by:ME_S, at:'29.09.2026'}); });
     bump(x+':wp','Dodano '+nodes.length+' WP z CAM'); bump(x+':harm','Dodano budżety '+nodes.length+' WP');
@@ -1734,11 +1920,31 @@ const A={
   wback:()=>{ S.wiz.step--; render(); },
   wcreate:()=>{
     const w=S.wiz; w.busy=true; w.progress=[];
-    const rules=Object.entries(w.cesR).filter(([,o])=>o && w.p1s.includes(o));
-    const steps=['Zarejestrowano projekt w bazie słowników i w MS SQL (meta.Zakres)','Przypisano projekty P1S: '+w.p1s.join(', ')].concat(rules.length?['Zapisano reguły projektu: '+rules.map(([c,o])=>c+' → '+o).join(', ')]:[],['Utworzono puste słowniki projektu: '+wDicts(w).map(d=>DEFS[d].name).join(', '),'Utworzono foldery w '+ROOT+'\\Przeliczenia\\'+w.code,'Przygotowano treść zgłoszenia do IT (dostęp CAM do folderu Zwrocone)']);
+    const P=wizParsed(w), got=wDicts(w).filter(k=>P[k] && !bad(P[k]) && P[k].rows.length);
+    const steps=['Zarejestrowano projekt w bazie słowników i w MS SQL (meta.Zakres)',
+      'Zapisano zakres P1S: '+[...w.sel.map(p=>p.join(' › ')), ...w.p1s.filter(o=>!selHas(w.sel,o))].join(', ')+' ('+nf(selCount(w.sel,w.p1s))+' PROJORG)',
+      got.length? 'Wczytano słowniki projektu z Excela: '+got.map(k=>DEFS[k].name+' ('+P[k].rows.length+')').join(', ') : 'Utworzono puste słowniki projektu: '+wDicts(w).map(d=>DEFS[d].name).join(', '),
+      'Utworzono foldery w '+ROOT+'\\Przeliczenia\\'+w.code,'Przygotowano treść zgłoszenia do IT (dostęp CAM do folderu Zwrocone)'];
     render();
-    steps.forEach((t,i)=>setTimeout(()=>{ w.progress.push(t); if(i===steps.length-1){ w.busy=false; finishCreate(rules); } render(); }, 400*(i+1)));
+    steps.forEach((t,i)=>setTimeout(()=>{ w.progress.push(t); if(i===steps.length-1){ w.busy=false; finishCreate(P); } render(); }, 400*(i+1)));
   },
+  wtog:x=>{ const w=S.wiz; w.open[x]=!w.open[x]; render(); },
+  wunsel:x=>{ const w=S.wiz, p=x.split('|'); w.sel=w.sel.filter(q=>!eqP(q,p)); render(); },
+  wpage:x=>{ const w=S.wiz, [px,d]=x.split('|'); w.page[px]=Math.max(0,Math.min((w.page[px]||0)+Number(d),Math.ceil(CAT[px].cnt/25)-1)); render(); },
+  atog:x=>{ const w=S.wiz; (w.aopen ||= {})[x]=!w.aopen[x]; render(); },
+  xlsTpl:()=>{ const w=S.wiz; saveBook(w.code.toUpperCase()+'_slowniki_projektu.xlsx', sampleDicts(w.code,wizOrgs(w),w.type,false)); },
+  xlsDemo:()=>{ const w=S.wiz; for(const [n,aoa] of sampleDicts(w.code,wizOrgs(w),w.type,true)){ const k=n==='WP i CAM'?'wp':n==='Stawki CAS'?'cas':'harm'; w.imp[k]={file:'przykład (wygenerowany)', sheet:n, raw:aoa}; } render(); },
+  ximpDel:x=>{ if(S.view.name==='dict') S.view={...S.view, ximp:null}; else delete S.wiz.imp[x]; render(); },
+  ximpSave:()=>{ const d=S.dicts[S.view.id], x=S.view.ximp, p=parseDict(d.kind,x.raw,dictCtx(d)); if(bad(p)) return;
+    const D=ximpDiff(d,p);
+    for(const r of D.del) r.vt=YESTERDAY; for(const [o] of D.chg) o.vt=YESTERDAY;
+    for(const v of [...D.add, ...D.chg.map(c=>c[1])]) d.rows.push({id:rid(), v:{...v}, vf:TODAY, vt:null, by:ME_S, at:'29.09.2026'});
+    bump(d.id,`Import z Excela „${x.file}”: +${D.add.length} ~${D.chg.length} −${D.del.length}`);
+    S.view={...S.view, ximp:null}; save(); render(); toast('Słownik zastąpiony (stan #'+S.dbRev+').'); },
+  xlsDictExp:x=>{ const d=S.dicts[x], def=DEFS[d.kind]; saveBook(S.zakresy[d.scope].code+'_'+def.name.replace(/\s+/g,'_')+'.xlsx', [[def.name,[def.cols.map(c=>c.l), ...active(d).map(r=>def.cols.map(c=>r.v[c.k]))]]]); },
+  anExp:()=>{ const w=S.wiz, P=wizParsed(w), ok=k=>P[k] && !bad(P[k]) ? P[k].rows.map(r=>r.v) : [], A=analytic(wizOrgs(w),ok('wp'),ok('harm'));
+    saveBook(w.code.toUpperCase()+'_baza_analityczna.xlsx', [['Baza analityczna',[['Z_KAT_ZBIORCZA','Z_KATEGORIA','Z_OPIS','PROJORG','Element P1S','Opis','STUFE','WP','CAM','Cost Category','BAC [h]','Start','Koniec','Elementy CES','Stan'],
+      ...A.rows.map(r=>[r.kz,r.kat,r.opis,r.org,r.c,r.n,r.l,r.wp,r.cam,r.cat,r.bac===''?'':Number(r.bac),r.start,r.finish,r.ces,{ok:'WP + budżet',noBud:'WP bez budżetu',noWp:'brak WP'}[r.st]||''])]]]); },
 
   /* przebieg */
   newrun:x=>{ S.modal={zid:x, kind:'weekly'}; render(); },
@@ -1784,12 +1990,12 @@ const A={
   doCobra:()=>{ const r=R(); work(r,'cobra','Generowanie pliku dla Cobra…',900,()=>{ complete(r,'cobra'); r.sel='cobra'; logRun(r,'Wygenerowano plik dla Cobra.'); }); },
   freeze:()=>{ const r=R(); r.frozen=true; r.sel='ev'; logRun(r,'Zatwierdzono zamknięcie okresu '+r.period+'. Przebieg zamrożony.'); save(); render(); }
 };
-function finishCreate(rules){
+function finishCreate(P){
   const w=S.wiz, id=w.code.toUpperCase();
-  S.zakresy[id]={id, code:w.code, name:w.name, type:w.type, pool:w.pool, p1s:w.p1s.slice(), created:'29.09.2026 · '+ME_S, isNew:true};
-  for(const k of wDicts(w)) S.dicts[id+':'+k]=mkDict(k,id,[],0);
-  for(const [c,o] of rules) if(!projRule(c)){ addRule('proj',c,o); }
-  if(rules.length) bump('map','Korekty projektów CES z kreatora '+w.code+': '+rules.map(([c,o])=>c+' → '+o).join(', '));
+  S.zakresy[id]={id, code:w.code, name:w.name, type:w.type, sel:w.sel.map(p=>p.slice()), p1s:w.p1s.filter(o=>!selHas(w.sel,o)), created:'29.09.2026 · '+ME_S, isNew:true};
+  for(const k of wDicts(w)){ const ok=P[k] && !bad(P[k]) ? P[k].rows : [];
+    S.dicts[id+':'+k]=mkDict(k,id,ok.map(r=>({id:rid(), v:{...r.v}, vf:TODAY, vt:null, by:ME_S, at:'29.09.2026'})),0);
+    if(ok.length) bump(id+':'+k,'Wczytano z Excela „'+w.imp[k].file+'”: '+ok.length+' wierszy'); }
   ev(w.code,'Utworzono projekt '+w.code+' ('+TYPES[w.type].label+')');
   save();
 }
@@ -1810,7 +2016,10 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset.wc!==undefined){ S.wiz[t.dataset.wc]=t.checked; render(); }
   if(t.dataset.wp!==undefined){ const p=t.dataset.wp, w=S.wiz; w.p1s = t.checked? [...new Set([...w.p1s,p])] : w.p1s.filter(x=>x!==p); render(); }
-  if(t.dataset.wr!==undefined){ S.wiz.cesR[t.dataset.wr]=t.value; }
+  if(t.dataset.wsel!==undefined){ const path=t.dataset.wsel.split('|'), w=S.wiz;
+    if(t.checked){ w.sel=w.sel.filter(p=>!preP(path,p)); w.p1s=w.p1s.filter(o=>!pathHas(path,rawCat(o))); w.sel.push(path); } else w.sel=w.sel.filter(p=>!eqP(p,path));
+    render(); }
+  if(t.dataset.xls!==undefined){ const f=t.files?.[0], tg=t.dataset.xls; t.value=''; if(f) xlsLoad(tg,f); }
   if(t.dataset.aold!==undefined){ S.adm.old=t.checked; render(); }
   if(t.dataset.mz!==undefined){ S.mp.z=t.value; S.mp.cpage=0; render(); }
   if(t.dataset.dall!==undefined){ S.view={...S.view, all:t.checked}; render(); }
@@ -1826,6 +2035,15 @@ document.addEventListener('drop',e=>{ const t=e.target.closest?.('[data-drop]');
   mp.pend = tgt==='__unmap' ? {op:'remove', src} : {op:'assign', src, target:tgt}; render(); $('#work')?.scrollIntoView({block:'nearest'}); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && S.modal){ S.modal=null; render(); }
   const t=e.target; if((e.key==='Enter'||e.key===' ') && t.matches?.('[role="button"][data-a]')){ e.preventDefault(); t.click(); } });
+async function xlsLoad(tg,file){
+  let sheets; try{ sheets=await readBook(file); }catch(e){ return toast('Nie udało się odczytać pliku: '+(e.message||e)); }
+  if(tg==='wiz'){ const w=S.wiz, hit=[];
+    for(const k of wDicts(w)){ const sh=pickSheet(k,sheets); if(sh){ w.imp[k]={file:file.name, sheet:sh.name, raw:sh.rows}; hit.push(DEFS[k].name); } }
+    toast(hit.length? 'Wczytano: '+hit.join(', ') : 'W pliku nie ma arkusza ani kolumn słowników projektu – sprawdź nagłówki (jak w szablonie).');
+  } else { const d=S.dicts[tg.slice(5)], sh=pickSheet(d.kind,sheets);
+    if(!sh) toast('W pliku nie ma kolumn słownika „'+DEFS[d.kind].name+'”.'); else S.view={...S.view, ximp:{file:file.name, sheet:sh.name, raw:sh.rows}}; }
+  save(); render();
+}
 S = load() || seed();
 S.mp={...{f:'all', z:'all', cp:[], page:{}, pq:'', open:{}, q:'', cpage:0, pend:null, props:false, manual:false, mk:'w', mc:'', mpc:''}, ...S.mp}; S.adm=S.adm||{q:''}; S.pul=S.pul||{q:'',sort:'code',dir:1,all:false};
 for(const r of Object.values(S.runs)) for(const k in r.st) if(r.st[k].s==='running') r.st[k].s='ready';
