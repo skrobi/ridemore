@@ -250,8 +250,10 @@ details.ready .checks{margin-top:8px}
 .filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 .filters select{width:auto}
 .map3{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1.15fr);gap:14px;align-items:start}
-.map3 .panel{padding:12px;gap:8px}
-@media (max-width:1100px){.map3{grid-template-columns:minmax(0,1fr)}}
+.map3 .panel,.map2 .panel{padding:12px;gap:8px}
+.map2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.map2 .mt.scroll{max-height:720px}
+@media (max-width:1100px){.map3,.map2{grid-template-columns:minmax(0,1fr)}}
 .dropzone{border:2px dashed var(--line);border-radius:8px;padding:12px;text-align:center;color:var(--muted);font-size:.85rem}
 body.dragging .dropzone{border-color:var(--crit);color:var(--crit)}
 .dropzone.over{background:var(--crit-soft)!important;outline:none!important;border-color:var(--crit)}
@@ -1195,7 +1197,7 @@ function workPanel(){
       ${si?`<dt>Z raportu (SAP)</dt><dd class="small">${si}</dd>`:''}
       <dt>Powiązane CES</dt><dd>${links.length? links.slice(0,max).map(l=>`${linkChip(l)} <span class="muted small">${l.proj?'odpowiednik projektu':MSTL[l.s]}</span>${l.s==='OVERRIDE'?` <button class="btn small" data-a="mUnmap" data-x="${l.k}">Usuń korektę</button>`:''}`).join('<br>')+(links.length>max?`<br><span class="muted small">i ${links.length-max} więcej</span>`:'') : '<span class="muted">brak – żaden element CES nie jest tu przypisany</span>'}</dd></dl>
       ${grpForm(n)}
-      <div class="note info">Aby coś tu przypisać: wybierz element CES (lewa kolumna albo „Do przypisania”), potem kliknij ten element – albo przeciągnij.</div></section>`;
+      <div class="note info">Aby coś tu przypisać: wybierz element CES (np. z węzła „Nieprzypisane”), potem kliknij ten element – albo przeciągnij.</div></section>`;
   }
   return `<section class="panel work" id="work"><h3>Jak działa mapowanie</h3>
     <ol class="steps"><li><b>Raport mapowań</b> (zapytanie do bazy, tylko odczyt) jest źródłem prawdy: element CES ↔ odpowiednik 1:1 w SAP albo element tylko w CES wskazany w SAP.</li>
@@ -1204,31 +1206,50 @@ function workPanel(){
     <div class="tbl-wrap"><table><thead><tr><th>Co przeciągasz</th><th>Na co</th><th>Co powstaje</th></tr></thead><tbody>
       <tr><td>Element CES</td><td>dowolny element P1S</td><td><b>Korekta elementu</b> – ma pierwszeństwo przed raportem (OVERRIDE)</td></tr>
       <tr><td>Projekt CES</td><td>dowolny element P1S</td><td><b>Korekta projektu</b> – nowy cel WBS projektu spoza raportu (INHERITED)</td></tr>
-      <tr><td>Element albo projekt z korektą</td><td>kolumnę „Do przypisania”</td><td><b>Usunięcie korekty</b> – wraca raport albo dziedziczenie</td></tr></tbody></table></div>
-    <div class="row"><button class="btn" data-a="mManual">+ Dodaj korektę ręcznie</button><span class="muted small">albo przyjmij propozycję dla projektu CES spoza raportu: „Zaproponuj” w środkowej kolumnie.</span></div></section>`;
+      <tr><td>Element albo projekt z korektą</td><td>pole „Upuść tu…” nad drzewem CES</td><td><b>Usunięcie korekty</b> – wraca raport albo dziedziczenie</td></tr></tbody></table></div>
+    <div class="row"><button class="btn" data-a="mManual">+ Dodaj korektę ręcznie</button><span class="muted small">albo przyjmij propozycję dla projektu CES spoza raportu w węźle „Nieprzypisane”.</span></div></section>`;
 }
-function proposals(items){
-  const pds=[...new Set(items.filter(x=>x.r.s==='UNMAPPED').map(x=>x.pd))];
-  return pds.map(pd=>{ const p=S.ces.find(c=>c.pd===pd); return {p, prop:p.prop && !projRule(pd) ? p.prop : null}; });
+/* Drzewo CES – ta sama struktura co P1S: kategoria WBS elementu docelowego (przez przypisanie CES → P1S) → PROJORG → projekt CES → elementy.
+   Elementy bez celu w P1S trafiają do jednego węzła „Nieprzypisane” (na górze – to kolejka pracy admina). */
+function cesCatTree(items){
+  const mp=S.mp, busy=!!(mp.q.trim() || mp.f!=='all'), selC=mp.selCes, selT=nodeOf(mp.selP1s||'');
+  const autoOrg=new Set([selTarget(), mp.pend?.target, mp.selP1s].filter(Boolean).map(c=>nodeOf(c)?.org));
+  const hlOf = x => !!(selT && x.r.t && (x.r.t===selT.c || (selT.l===1 && nodeOf(x.r.t)?.org===selT.c)));
+  const hot = xs => xs.some(x=>selC==='w:'+x.c || hlOf(x));
+  const put=(m,k,v)=>m.has(k)? m.get(k) : m.set(k,v).get(k), T=new Map(), un=[];
+  for(const x of items){ if(!x.r.t){ un.push(x); continue; } const org=nodeOf(x.r.t)?.org, k=catOf(org);
+    put(put(put(put(T,k?k.kz:null,new Map()),k?k.kat:null,new Map()),k?k.grp:null,{ov:k?.ov, opis:k?.opis, orgs:new Map()}).orgs,org,[]).push(x); }
+  const cesRow=(x,pad)=>`<div role="button" tabindex="0" class="nd ${hlOf(x)?'hl':''}" draggable="true" data-drag="w:${x.c}" data-a="mces" data-x="w:${x.c}" aria-pressed="${selC==='w:'+x.c}" style="padding-left:${pad}px"><span class="grip" aria-hidden="true">⋮⋮</span><span class="c">${x.c}</span><span>${esc(x.n)}</span>${mpill(x.r.s)}${x.r.t?`<span class="lk ${x.r.s==='OVERRIDE'?'ov':''}">${x.r.s==='REPORT'&&x.r.twin?'↔':'→'} ${x.r.t}</span>`:''}${x.isNew?'<span class="x">nowy</span>':''}</div>`;
+  const tnode=(key,label,xs,depth,def,force,inner)=>{ const open = force || (key in mp.open ? !!mp.open[key] : def);
+    return `<li><div class="trow" style="padding-left:${depth*14}px"><button class="tg" data-a="ntog" data-x="${esc(key)}" data-open="${open?1:0}" aria-label="${open?'Zwiń':'Rozwiń'}">${open?'▾':'▸'}</button><span class="zl">${label} <span class="muted small">${xs.length} el. CES</span></span></div>${open?`<ul class="mt">${inner()}</ul>`:''}</li>`; };
+  const projNode=(scope,pd,xs,depth)=>{
+    const p=S.ces.find(c=>c.pd===pd), pt=projTarget(pd), key='c:'+scope+'|'+pd, hlP=selT && pt && pt.t===selT.c;
+    const open = hot(xs) || selC==='pd:'+pd || (key in mp.open ? !!mp.open[key] : busy || scope==='∅');
+    const prop = scope==='∅' && p.prop && !projRule(pd) ? orgInfo(p.prop) : null;
+    return `<li><div class="trow" style="padding-left:${depth*14}px"><button class="tg" data-a="ntog" data-x="${esc(key)}" data-open="${open?1:0}" aria-label="${open?'Zwiń':'Rozwiń'} ${pd}">${open?'▾':'▸'}</button>
+      <div role="button" tabindex="0" class="nd ${hlP?'hl':''}" draggable="true" data-drag="pd:${pd}" data-a="mces" data-x="pd:${pd}" aria-pressed="${selC==='pd:'+pd}"><span class="grip" aria-hidden="true">⋮⋮</span><span class="c"><b>${pd}</b></span><span>${esc(p.name)}</span>
+      ${pt?`<span class="lk ${pt.k?'ov':''}" title="odpowiednik projektu CES w SAP – cel WBS spoza raportu">⇢ ${pt.t}${pt.k?' ✎':''}</span>`:'<span class="x">brak w raporcie</span>'}<span class="amt">${xs.length<p.wbs.length?xs.length+' z '+p.wbs.length:xs.length} WBS</span></div></div>
+      ${open?`<ul class="mt">${prop?`<li><div class="prop" style="margin-left:${depth*14+22}px"><span>propozycja ⇢ <span class="mono"><b>${p.prop}</b></span> · ${esc(prop.name)}<br><span class="muted small">projekt CES spoza raportu · zgodność kodu i opisu</span></span><button class="btn small primary" data-a="mPropGo" data-x="${pd}">Przyjmij</button></div></li>`:''}${xs.map(x=>`<li><div class="trow" style="padding-left:${depth*14}px"><span class="tg blank"></span>${cesRow(x,18+((x.lvl||1)-1)*14)}</div></li>`).join('')}</ul>`:''}</li>`;
+  };
+  const byPd=(xs,scope,depth)=>{ const m=new Map(); for(const x of xs) put(m,x.pd,[]).push(x); return [...m].map(([pd,ys])=>projNode(scope,pd,ys,depth)).join(''); };
+  const byName=m=>[...m].sort((x,y)=> x[0]===null? 1 : y[0]===null? -1 : String(x[0]).localeCompare(String(y[0]),'pl'));
+  const flat=m=>[...m.values()].flatMap(v=> v instanceof Map ? flat(v) : [...v.orgs.values()].flat());
+  const orgNodes=(orgs,depth)=>[...orgs].sort((x,y)=>(scopeOfOrg(x[0])?.code||'~').localeCompare(scopeOfOrg(y[0])?.code||'~')||x[0].localeCompare(y[0])).map(([org,xs])=>{ const z=scopeOfOrg(org);
+    return tnode('co:'+org, `<span class="mono"><b>${org}</b></span> ${esc(orgInfo(org).name)} ${z?`<span class="tag">${esc(z.code)}</span>`:'<span class="x">bez projektu EV</span>'}`, xs, depth, busy, autoOrg.has(org)||hot(xs), ()=>byPd(xs,org,depth+1)); }).join('');
+  const out=[];
+  if(un.length) out.push(tnode('cu', `<b>Nieprzypisane</b> ${mpill('UNMAPPED')}`, un, 0, true, hot(un), ()=>`<li class="small muted" style="padding:2px 8px 6px 22px">Brak w raporcie i brak odpowiednika projektu CES – nie trafią do EV, dopóki nie zostaną przypisane (M9).</li>`+byPd(un,'∅',1)));
+  for(const [kz,A] of byName(T)){ const xa=flat(A), fa=[...new Set(xa.map(x=>nodeOf(x.r.t)?.org))].some(o=>autoOrg.has(o))||hot(xa);
+    if(kz===null){ out.push(tnode('c1:∅','<b>Bez kategorii w WBS</b> <span class="muted small">(brak w próbce danych)</span>',xa,0,true,fa,()=>orgNodes([...A.get(null).get(null).orgs],1))); continue; }
+    out.push(tnode('c1:'+kz,`<b>${esc(kz)}</b>`,xa,0,true,fa,()=>byName(A).map(([kat,B])=>{ const xb=flat(B), fb=[...new Set(xb.map(x=>nodeOf(x.r.t)?.org))].some(o=>autoOrg.has(o))||hot(xb);
+      return tnode('c2:'+kz+'|'+kat,esc(kat),xb,1,true,fb,()=>byName(B).map(([g,c])=>{ const xc=[...c.orgs.values()].flat(), fc=[...c.orgs.keys()].some(o=>autoOrg.has(o))||hot(xc);
+        return tnode('c3:'+kz+'|'+kat+'|'+g, c.ov?`<span title="nazwa grupy zamiast Z_OPIS „${esc(c.opis)}”">✎ <b>${esc(g)}</b></span>`:esc(g), xc, 2, true, fc, ()=>orgNodes(c.orgs,3)); }).join('')); }).join(''))); }
+  return out.join('');
 }
 function vMapa(){
   const mp=S.mp; LIX=null; AUTO=new Set(); autoOpen([selTarget(), mp.pend?.target, mp.selP1s]);
-  const V=cesView(), tot=V.items.length, unm=V.items.filter(x=>x.r.s==='UNMAPPED'), inh=V.items.filter(x=>x.r.s==='INHERITED'), all=allCes();
+  const V=cesView(), tot=V.items.length, unm=V.items.filter(x=>x.r.s==='UNMAPPED'), all=allCes();
   const back = S.view.back && S.runs[S.view.back] ? `<a href="#" data-a="run" data-x="${S.view.back}">← Wróć do przebiegu ${esc(S.view.back)}</a> · ` : '';
-  const pages=Math.max(1,Math.ceil(V.groups.length/20)), cp=Math.min(mp.cpage,pages-1), groups=V.groups.slice(cp*20,cp*20+20);
-  const selT=nodeOf(mp.selP1s||'');
-  const cesRow=(x,pad)=>{ const sel=mp.selCes==='w:'+x.c, hl=selT && x.r.t && (x.r.t===selT.c || (selT.l===1 && nodeOf(x.r.t)?.org===selT.c));
-    return `<div role="button" tabindex="0" class="nd ${hl?'hl':''}" draggable="true" data-drag="w:${x.c}" data-a="mces" data-x="w:${x.c}" aria-pressed="${sel}" style="padding-left:${pad}px"><span class="grip" aria-hidden="true">⋮⋮</span><span class="c">${x.c}</span><span>${esc(x.n)}</span>${mpill(x.r.s)}${x.r.t?`<span class="lk ${x.r.s==='OVERRIDE'?'ov':''}">${x.r.s==='REPORT'&&x.r.twin?'↔':'→'} ${x.r.t}</span>${catChip(x.r.t)}`:''}${x.isNew?'<span class="x">nowy</span>':''}</div>`; };
-  const cesTree = groups.map(({p,items})=>{
-    const pt=projTarget(p.pd), open = mp.open['c:'+p.pd] || mp.q || mp.f!=='all' || (mp.selCes && (mp.selCes==='pd:'+p.pd || p.wbs.some(w=>mp.selCes==='w:'+w.c)));
-    const hlP = selT && pt && pt.t===selT.c, cU=p.wbs.filter(w=>resolve(p.pd,w.c).s==='UNMAPPED').length;
-    return `<li><div class="trow"><button class="tg" data-a="mtog" data-x="c:${p.pd}" aria-label="${open?'Zwiń':'Rozwiń'} ${p.pd}">${open?'▾':'▸'}</button>
-      <div role="button" tabindex="0" class="nd ${hlP?'hl':''}" draggable="true" data-drag="pd:${p.pd}" data-a="mces" data-x="pd:${p.pd}" aria-pressed="${mp.selCes==='pd:'+p.pd}"><span class="grip" aria-hidden="true">⋮⋮</span><span class="c"><b>${p.pd}</b></span><span>${esc(p.name)}</span>
-      ${pt?`<span class="lk ${pt.k?'ov':''}" title="odpowiednik projektu CES w SAP – cel WBS spoza raportu">⇢ ${pt.t}${pt.k?' ✎':''}</span>`:'<span class="x">brak w raporcie</span>'}<span class="amt">${p.wbs.length} WBS${cU?` · <b style="color:var(--crit)">${cU} UNMAPPED</b>`:''}</span></div></div>
-      ${open?`<ul class="mt">${items.map(x=>`<li><div class="trow"><span class="tg blank"></span>${cesRow(x,18+((x.lvl||1)-1)*14)}</div></li>`).join('')}</ul>`:''}</li>`;
-  }).join('');
-  const qGroups={}; for(const x of unm) (qGroups[x.pd] ||= []).push(x);
-  const props=proposals(V.items);
+  const items = V.items.filter(x=>mp.f==='all'||x.r.s===mp.f);
   const chip=(k,l)=>`<button data-a="mfil" data-x="${k}" aria-pressed="${mp.f===k}" ${k==='all'?'':`title="${esc(MSTL[k])}"`}>${k==='all'?l:mpill(k)} <b class="num">${k==='all'?tot:(V.counts[k]||0)}</b></button>`;
   return `
   <div class="head"><div><div class="eyebrow">${back}ADMIN</div><h1>Mapowanie CES ↔ P1S</h1>
@@ -1242,25 +1263,15 @@ function vMapa(){
   <p class="small muted">${['REPORT','INHERITED','OVERRIDE','UNMAPPED'].map(s=>mpill(s)+' '+esc(MSTL[s])).join(' · ')}<br>↔ odpowiednik 1:1 · → element tylko w CES wskazany w raporcie · ⇢ odpowiednik projektu CES (cel WBS spoza raportu) · ✎ korekta</p>
   ${mp.msg?`<div class="note ${mp.msg.lvl}">${esc(mp.msg.txt)}</div>`:''}
   ${workPanel()}
-  <div class="map3">
-    <section class="panel"><div class="row between"><h3>CES · projekty</h3><span class="muted small">${V.groups.length} projektów CES</span></div>
-      <ul class="mt scroll">${cesTree||'<li class="muted">Brak elementów dla filtrów.</li>'}</ul>
-      ${pages>1?`<div class="row"><button class="btn small" data-a="cpage" data-x="-1" ${cp?'':'disabled'}>‹</button><span class="small">strona ${cp+1} z ${pages}</span><button class="btn small" data-a="cpage" data-x="1" ${cp<pages-1?'':'disabled'}>›</button></div>`:''}
-      <button class="btn small" data-a="mManual">+ Dodaj korektę ręcznie</button></section>
-    <section class="panel"><div class="row between"><h3>Do przypisania</h3><span class="pill ${unm.length?'s-crit':'s-ok'}">${unm.length} WBS</span></div>
+  <p class="small muted">Obie strony w tej samej strukturze kategoryzacji z tabeli WBS P1S: Z_KAT_ZBIORCZA › Z_KATEGORIA › Z_OPIS › PROJORG. Element CES jest w gałęzi elementu P1S, do którego jest przypisany.</p>
+  <div class="map2">
+    <section class="panel"><div class="row between"><h3>CES</h3><span class="pill ${unm.length?'s-crit':'s-ok'}">${unm.length} nieprzypisanych</span></div>
       <div class="dropzone" data-drop="__unmap">Upuść tu element albo projekt z korektą, aby usunąć korektę</div>
-      ${unm.length?'<p class="small">Brak w raporcie i brak odpowiednika projektu CES – nie trafią do EV, dopóki nie zostaną przypisane (M9).</p>':'<p class="muted small">Wszystko ma cel w P1S.</p>'}
-      <ul class="mt scroll">${Object.entries(qGroups).map(([pd,xs])=>`<li><div class="eyebrow" style="padding:6px 8px 2px">${pd} · ${esc(S.ces.find(p=>p.pd===pd).name)}</div><ul class="mt">${xs.map(x=>`<li>${cesRow(x,8)}</li>`).join('')}</ul></li>`).join('')}</ul>
-      ${props.length?`<button class="btn small" data-a="mProps">${mp.props?'Ukryj propozycje':'Zaproponuj'}</button>`:''}
-      ${mp.props?`<div class="stack">${props.map(({p,prop})=>`<div class="prop">${prop?`<span><span class="mono"><b>${p.pd}</b></span> ⇢ <span class="mono"><b>${prop}</b></span> · ${esc(orgInfo(prop).name)}<br><span class="muted small">projekt CES spoza raportu · zgodność kodu i opisu: „${esc(p.name)}” ~ „${esc(orgInfo(prop).name)}”</span></span>
-          <span class="row"><button class="btn small primary" data-a="mPropGo" data-x="${p.pd}">Przyjmij</button><button class="btn small" data-a="mces" data-x="pd:${p.pd}">Edytuj</button></span>`
-          : `<span><span class="mono"><b>${p.pd}</b></span> · ${esc(p.name)}<br><span class="muted small">brak propozycji – kod i opis nie pasują do żadnego PROJORG; przypisz ręcznie</span></span><span><button class="btn small" data-a="mces" data-x="pd:${p.pd}">Wybierz</button></span>`}</div>`).join('')}</div>`:''}
-      ${inh.length?`<details class="cat"><summary>Spoza raportu – dziedziczą (${inh.length})</summary><ul class="mt">${inh.map(x=>`<li>${cesRow(x,8)}</li>`).join('')}</ul></details>`:''}
-    </section>
+      <ul class="mt scroll">${cesCatTree(items)||'<li class="muted">Brak elementów dla filtrów.</li>'}</ul>
+      <button class="btn small" data-a="mManual">+ Dodaj korektę ręcznie</button></section>
     <section class="panel"><h3>P1S</h3>${p1sInput()}
       ${mp.pq.trim().length>=3 ? `${p1sCatalog(false,true)}<button class="btn small" data-a="pqClear">Wyczyść wyszukiwanie</button>` : `
-      <div class="eyebrow">W mapowaniu · Z_KAT_ZBIORCZA › Z_KATEGORIA › Z_OPIS › PROJORG</div>
-      <p class="muted small">Kategoryzacja z tabeli WBS P1S. PROJORG projektów EV oraz cele i propozycje elementów CES${mp.z==='all'?'':' – wg filtra Projekt'}.</p>
+      <p class="muted small">PROJORG projektów EV oraz cele i propozycje elementów CES${mp.z==='all'?'':' – wg filtra Projekt'}.</p>
       <ul class="mt scroll">${p1sCatTree()||'<li class="muted">Brak PROJORG dla filtra projektu.</li>'}</ul>
       <details class="cat" ${mp.cp?.length?'open':''}><summary>Katalog P1S · ${nf(P1S_TOTAL)} projektów · Z_KAT_ZBIORCZA → Z_KATEGORIA → Z_OPIS</summary>${p1sCatalog(false,true)}</details>`}
     </section>
@@ -1609,8 +1620,8 @@ function vInfo(){
   <section class="panel"><h2>Do przejścia</h2><ol style="margin:0;padding-left:20px;display:grid;gap:6px">
     <li><b>Raport mapowań:</b> ADMIN → Mapowanie → kliknij projekt CES <span class="mono">4D02U8</span> (fragment prawdziwego raportu AC-LH8). ↔ = odpowiednik 1:1 w SAP, → = element tylko w CES (<span class="mono">.RA</span>, <span class="mono">.02</span>), ⇢ = odpowiednik projektu CES <span class="mono">AC-LH8.1.01</span>.</li>
     <li><b>Korekta elementu:</b> przeciągnij <span class="mono">4D03GZ000040</span> na <span class="mono">AC-I39.01.01</span> – zmiana względem raportu wymaga uzasadnienia, status OVERRIDE.</li>
-    <li><b>Usunięcie korekty:</b> przeciągnij <span class="mono">4D03GZ000039</span> (OVERRIDE) na „Do przypisania” – wraca przypisanie z raportu <span class="mono">AC-I39.01</span>.</li>
-    <li><b>Projekt CES spoza raportu:</b> „Zaproponuj” → „Przyjmij” przy <span class="mono">4F16C0</span>. Podgląd: 3 WBS z UNMAPPED na INHERITED → „Zapisz korektę”.</li>
+    <li><b>Usunięcie korekty:</b> przeciągnij <span class="mono">4D03GZ000039</span> (OVERRIDE) na pole „Upuść tu…” nad drzewem CES – wraca przypisanie z raportu <span class="mono">AC-I39.01</span>.</li>
+    <li><b>Projekt CES spoza raportu:</b> w węźle „Nieprzypisane” drzewa CES → „Przyjmij” przy <span class="mono">4F16C0</span>. Podgląd: 3 WBS z UNMAPPED na INHERITED → „Zapisz korektę”.</li>
     <li><b>Kategoria P1S:</b> w katalogu wejdź PWC › PWC › PWC, przeciągnij projekt <span class="mono">4PW1Q0</span> na <span class="mono">SP-CRDDQ</span> – podgląd pokazuje kategorię P1S elementu docelowego. Potem kliknij <span class="mono">SP-CRDDQ</span> i nadaj nazwę grupy.</li>
     <li><b>Import RABIT:</b> pobierz i zaimportuj – nowy WBS <span class="mono">4D03H1000013</span> jest spoza raportu, więc sam dziedziczy odpowiednik projektu CES (INHERITED).</li>
     <li><b>F16 → Nowy przebieg T40:</b> walidacja zatrzyma brak stawki W-417 (ADMIN → Słowniki → Stawki).</li></ol></section>
@@ -1698,7 +1709,6 @@ const A={
   mUnmap:x=>{ S.mp.pend={op:'remove', src:x}; S.mp.msg=null; render(); $('#work')?.scrollIntoView({block:'nearest'}); },
   pSave:()=>{ if(commitPend()===false) return; save(); render(); },
   pCancel:()=>{ S.mp.pend=null; render(); },
-  mProps:()=>{ S.mp.props=!S.mp.props; render(); },
   mPropGo:x=>{ const p=S.ces.find(c=>c.pd===x); S.mp.selCes='pd:'+x; S.mp.pend={op:'assign', src:'pd:'+x, target:p.prop}; render(); $('#work')?.scrollIntoView({block:'nearest'}); },
   mManual:()=>{ const mp=S.mp; mp.manual=!mp.manual; mp.pend=null; mp.selCes=null; mp.selP1s=null; render(); },
   mManualGo:()=>{ const mp=S.mp, k=$('#mfk')?.value==='pd'?'pd':'w', c=($('#mfc')?.value||'').trim().toUpperCase(), t=($('#mfp')?.value||'').trim().toUpperCase(); mp.mk=k; mp.mc=c; mp.mpc=t;

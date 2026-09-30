@@ -25,7 +25,8 @@ Model wynikający z raportu mapowań SAP↔CES:
 - **Korekty globalne** (potrzeby finansów) – z historią, mają pierwszeństwo przed raportem: korekta elementu (OVERRIDE) albo korekta projektu CES (nowy cel dla jego WBS spoza raportu). Zmiana względem raportu wymaga uzasadnienia. Usunięcie korekty przywraca raport / dziedziczenie.
 - Statusy: REPORT → INHERITED → OVERRIDE → UNMAPPED (brak w raporcie i brak odpowiednika projektu CES).
 - Kategoria P1S nie jest przypisywana w mapowaniu – dochodzi z WBS P1S po połączeniu (`PSPNR` = `pspnr_sap`).
-- Widok: CES (projekty i elementy) | Do przypisania | drzewo P1S, atrybuty SAP z raportu w panelu elementu, rejestr korekt.
+- Widok: dwa drzewa w tej samej strukturze – CES | P1S; atrybuty SAP z raportu w panelu elementu, rejestr korekt.
+- Drzewo CES odwzorowuje strukturę P1S przez przypisanie CES → P1S: kategoria WBS elementu docelowego → PROJORG → projekt CES → elementy (projekt CES pojawia się w każdej gałęzi, do której trafiają jego elementy). Elementy bez celu – jeden węzeł „Nieprzypisane” na górze, z propozycją dla projektów CES spoza raportu. Zaznaczenie PROJORG w P1S rozwija i podświetla jego gałąź w CES.
 - Drzewo P1S wg kategoryzacji z tabeli WBS (`PZLPROD.LOG.WBS`): Z_KAT_ZBIORCZA → Z_KATEGORIA → Z_OPIS (albo nazwa ze słownika „Grupy kategorii”, ✎) → PROJORG → elementy. Pokazuje PROJORG „w mapowaniu”: projekty EV oraz cele i propozycje elementów CES, zawężane filtrem Projekt; PROJORG bez kategorii – grupa „Bez kategorii w WBS”. Łączenie z raportem: `PSPNR` = `pspnr_sap`; hierarchia elementów docelowo wg `PARENT`.
 - Dane: AC-LH8 z fragmentu raportu (11 z 20 projektów CES, bez kategorii – nie ma jej w próbce), reszta przykładowa z raportem dopisanym do danych v2.
 
